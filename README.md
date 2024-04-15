@@ -89,3 +89,26 @@ En los diagramas de actividad se muestra el flujo de la actividad de cada consul
 ## <span style="color:#9669f0"> División de tareas </span>
 
 
+## <span style="color:#9669f0"> Division de tareas </span>
+| Container  | Tarea                               | Integrante    |   |   |
+|------------|-------------------------------------|---------------|---|---|
+| Middleware | Protocolo de comunicacion           | Diego/Facundo |   |   |
+|            | Modulo de serializacion             | Diego         |   |   |
+|            | Modulo de comunicacion              | Diego/Facundo |   |   |
+| Client     | Web-Scraper                         | Facundo       |   |   |
+|            | Results Receiver                    | Facundo       |   |   |
+| Server     | Client Manager                      | Diego         |   |   |
+|            | Data redirectioner                  | Facundo       |   |   |
+| Worker     | Filtro categoria                    | Diego         |   |   |
+|            | Filtro titulo con "distributed"     | Facundo       |   |   |
+|            | Filtro entre 2000 y 2023            | Diego         |   |   |
+|            | Contador de decadas por autor       | Facundo       |   |   |
+|            | Acumulador de contadores de decadas | Diego         |   |   |
+|            | Filtro decada 90'                   | Facundo       |   |   |
+|            | Contador reseñas                    | Diego         |   |   |
+|            | Filtro 500 reseñas                  | Facundo       |   |   |
+|            | Calculador promedio de rating       | Diego         |   |   |
+|            | Creador top 10                      | Facundo       |   |   |
+|            | Calculador de sentimiento           | Diego         |   |   |
+|            | Acumulador de sentimientos          | Facundo       |   |   |
+|            | Calculador del percentil 90         | Diego         |   |   |
