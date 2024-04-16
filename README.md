@@ -14,7 +14,7 @@ También hemos decidido que en el sistema las consultas se harán _X (secuencial
 
 ## <span style="color:#9669f0"> Sistema completo </span>
 En la siguiente imagen se puede ver como sera la estructura del sistema completo.  
-<p align="center"><img src="./images/SistemaCompleto4.png" /> </p>
+<p align="center"><img src="./images/SistemaCompleto5.png" /> </p>
 
 Empezando por los clients, estos inician el servicio mandando su request y data. Estos mensajes llegaran a traves del middleware el cual juntara todos en una cola la de cual iran sacando a medida que puedan los diferentes servers. Estos ultimos, se encargaran de separar los datos como reviews o titulos y los enviaran, a traves de exchanges del middleware, a los diferentes pipelines.  
 <p align="center"><img src="./images/SistemaCompletoClient-Server.png" /> </p>
@@ -40,7 +40,9 @@ En este caso se reutiliza los resultados de la query 3, y estos son mandados a t
 
 <span style="color:#09ff05">**Query 5**</span>: _Títulos en categoría "Fiction" cuyo sentimiento de reseña promedio esté en
 el percentil 90 más alto._
-Parecido a la query 3, se necesitan los datos de ambas tablas. Se aplica un primer filtro con un pool de workers y desde con un exchange con topico se mandan los diferentes titulos. Los workers que calculan sentimiento reciben las reseñas y con una libreria de NLTK calculan el sentimiento
+Parecido a la query 3, se necesitan los datos de ambas tablas. Se aplica un primer filtro a los titulos y reseñas con dos pool de workers diferentes para cada uno ya que necesitan dos diferentes filtros. Despues de eso, titulos y reseñas son enviados a traves de un exchange con topico a workers que acumularan valores y generaran un promedio por cada titulo. Finalmente estos ultimos workers le mandan sus promedios a un ultimo que calculara el percentil 90.  
+<p align="center"><img src="./images/SistemaCompletoQ5.png" /> </p>  
+
 
 
 ## <span style="color:#9669f0"> Arquitectura C4 </span>
