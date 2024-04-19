@@ -14,3 +14,24 @@ def filter_by(dataset, condition, values):
     """
     return [row for row in dataset if condition(row, values)]
 
+def title_condition(item, value):
+    """
+    Check if the title of the item is in the values list
+    """
+    return value.lower() in item[0].lower()
+
+def category_condition(item, value):
+    """
+    Check if the category of the item is in the values list
+    """
+    return value.lower() == item[8].lower() 
+
+def year_range_condition(item, values):
+    """
+    Check if the published date of the item is in the values list
+    """
+    year_info = item[6].split('-')[0]
+    return values[0] <= int(year_info) <= values[1]
+
+
+
