@@ -14,12 +14,14 @@ def read_csv_batch(file_reader, threshold=100):
     """
     Read a batch of rows from a CSV file
     """
-    batch = []
+    batch = ''
     # EOF reached
     if file_reader is None:
         return batch
     for i, row in enumerate(file_reader):
         if i >= threshold:
             break
-        batch.append(row.rstrip('\n'))
-    return batch
+        
+        batch += row.rstrip('\n') + '|'
+    return batch[:len(batch)-1]
+

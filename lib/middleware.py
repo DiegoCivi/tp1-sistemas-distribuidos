@@ -1,5 +1,7 @@
 import pika
 
+ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
+
 class Middleware:
 
     def __init__(self):
@@ -11,6 +13,9 @@ class Middleware:
 
 
     def declare_exchange(self, name, type):
+        if type not in ALLOWED_TYPES:
+            raise Exception(f'Type {type} is not allowed')
+        
         self._exchanges.add(name)
         self._channel.exchange_declare(exchange=name, exchange_type=type)
 
