@@ -12,6 +12,7 @@ def main():
     time.sleep(20)
     print('Me conecto a rabbitmq')
     mid = Middleware()
+    mid.declare_queue("chan")
     mid.receive_messages("chan", foo)
     
     #connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
