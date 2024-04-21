@@ -41,7 +41,7 @@ class Middleware:
         
         self._consume(queue, callback)
 
-    def subscribe(self, exchange, routing_key, callback):
+    def subscribe(self, exchange, callback, routing_key=''):
         if exchange not in self._exchanges:
             raise Exception(f'Exchange {exchange} not declared before')
         

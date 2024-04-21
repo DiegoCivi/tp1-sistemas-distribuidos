@@ -9,8 +9,11 @@ def main():
 
     mid = Middleware()
     mid.declare_queue("chan")
-    for i in range(10):
-        mid.send_message('chan', str(i))
+
+    dictionary = {'d': 10, 'b': 10, 'p': 2}
+    mid.send_message('chan', dictionary)
+    #for i in range(10):
+    #    mid.send_message('chan', str(i))
 
     #connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
     #channel = connection.channel()

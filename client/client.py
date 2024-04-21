@@ -1,6 +1,7 @@
 from communications import write_socket, sendEOF
 from files import create_file_reader, read_csv_batch
 import socket
+from serialization import serialize_message
 
 
 def scrape_and_send_file(file_reader, socket):
@@ -9,9 +10,10 @@ def scrape_and_send_file(file_reader, socket):
     """
     while True:
         file_batch = read_csv_batch(file_reader)
+        serialized_message = serialize_message(file_batch)
         if not file_batch:
             break
-        write_socket(socket, file_batch)
+        write_socket(socket, serialized_message)
 
 def main():
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

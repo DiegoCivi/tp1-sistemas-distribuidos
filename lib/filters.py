@@ -47,7 +47,7 @@ def different_decade_counter(batch):
         year = int(row[6].split('-')[0])
         if author not in authors:
             authors[author] = set()
-        authors[author].add(year - year%10)
+        authors[author].add(str(year - year%10))
     return authors
 
 def calculate_review_sentiment(batch):
