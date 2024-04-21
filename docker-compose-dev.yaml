@@ -1,0 +1,39 @@
+version: '3'
+services:
+
+  rabbitmq:
+    container_name: rabbit
+    build:
+      context: ./rabbitmq
+      dockerfile: rabbitmq.dockerfile
+    ports:
+      - 15672:15672
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:15672"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+
+  producer:
+    container_name: producer
+    build:
+      context: .
+      dockerfile: ./producer/producer.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  consumer:
+    container_name: consumer
+    build:
+      context: .
+      dockerfile: ./consumer/consumer.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
