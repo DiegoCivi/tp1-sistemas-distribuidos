@@ -3,7 +3,7 @@ from serialization import deserialize_message, serialize_message
 from filters import filter_by, category_condition
 import os
 
-def handle_titles_data(body, counter_dict, data_output_name, middleware):
+def handle_titles_data(body, counter_dict, middleware):
     """
     Acumulates the quantity of reviews for each book 
     """
@@ -14,26 +14,54 @@ def handle_titles_data(body, counter_dict, data_output_name, middleware):
     
     # For title batches
     for row in data:
-        key = (row[0], row[2])
-        counter_dict[key] = counter_dict.get(key, 0) + 1
-        
-    middleware.send_message(data_output_name, serialized_data)
-    
+        key = row[0]
+        counter_dict[key] = (0, 0, row[2]) # (reviews_quantity, ratings_summation, authors)
+
+def handle_reviews_data(body, counter_dict, data_output_name, middleware):
+    data = deserialize_message(body)
+    if data == 'EOF':
+        middleware.stop_consuming()
+        return
+
+    for row in data:
+        key = row[1]
+        if key in counter_dict:
+            # Update counters_dict with reviews data
+            reviews_quantity = counter_dict[key][0] + 1
+            ratings_summation = counter_dict[key][1] + row[6]
+            authors = counter_dict[key][2]
+            counter_dict[key] = (reviews_quantity, ratings_summation, authors)
+
+            
+            
+            
+            
 def main():
     middleware = Middleware()
 
     data_source1_name, data_source2_name = os.getenv('DATA_SOURCE_NAME').split(',')
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
+    worker_id = os.getenv('WORKER_ID')
     counter_dict = {} 
 
-    # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_titles_data(body, counter_dict, data_output_name, middleware)
+    # Define a callback wrappers
+    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(body, counter_dict, middleware)
+    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, data_output_name, middleware)
     
     # Declare the output queue
     middleware.declare_queue(data_output_name)
 
     # Declare and subscribe to the titles exchange
     middleware.declare_exchange(data_source1_name, 'direct')
-    middleware.subscribe(data_source1_name, callback_with_params)
+    middleware.subscribe(data_source1_name, callback_with_params_titles, worker_id)
 
+    # Declare and subscribe to the reviews exchange
+    middleware.declare_exchange(data_source2_name, 'direct')
+    middleware.subscribe(data_source2_name, callback_with_params_reviews, worker_id)
+
+    # Once all the reviews where received, the counter_dict needs to be sent to the next stage
+    parsed_pairs = []
+    for title, info_tuple in counter_dict.items():
+        msg = title + ',' + '/'.join([str(value) for value in info_tuple])
+        parsed_pairs.append(msg)
     
