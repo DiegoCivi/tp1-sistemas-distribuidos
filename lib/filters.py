@@ -73,11 +73,11 @@ def calculate_percentile(sentiment_scores, percentile):
     return titles
     
 
-def hash_row(batch, title_index):
+def hash_title(batch, title_index):
     for row in batch:
         title = row[title_index]
         hashed_title = hash(title) # TODO: This returns an int. Maybe we need a string
-        row[title_index] = hashed_title
+        row.append(hashed_title)  
 
     return batch
     
