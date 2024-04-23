@@ -2,6 +2,7 @@ from middleware import Middleware
 from serialization import deserialize_message, serialize_message
 from filters import hash_title
 import os
+import time
 
 ####
 #### TODO: This worker reads reviews from an exchange and titles from a queue. To do that, do we need another process?  
@@ -15,6 +16,8 @@ def handle_data(body, data_output_name, middleware, hash_modulus):
         middleware.publish_message(data_output_name, routing_key, row) # TODO: I think the row is a list so we have to make it a string
     
 def main():
+    time.sleep(15)
+
     middleware = Middleware()
 
     data_source_name = os.getenv('DATA_SOURCE_NAME')
@@ -31,4 +34,4 @@ def main():
     middleware.declare_exchange(data_source_name, 'fanout')
     middleware.subscribe(data_source_name, callback_with_params)
 
-    
+main()   

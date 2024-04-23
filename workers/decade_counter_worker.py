@@ -2,6 +2,7 @@ from middleware import Middleware
 from serialization import deserialize_message, serialize_message
 from filters import different_decade_counter
 import os
+import time
 
 def handle_data(body, data_output_name, middleware):
     data = deserialize_message(body)
@@ -17,6 +18,8 @@ def handle_data(body, data_output_name, middleware):
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
+    time.sleep(15)
+
     middleware = Middleware()
 
     data_source_name = os.getenv('DATA_SOURCE_NAME')
@@ -31,5 +34,7 @@ def main():
     # Declare and subscribe to the titles exchange
     middleware.declare_exchange(data_source_name, 'fanout')
     middleware.subscribe(data_source_name, callback_with_params)
+
+main()
 
     

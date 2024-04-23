@@ -14,26 +14,81 @@ services:
         timeout: 5s
         retries: 10
 
-  producer:
-    container_name: producer
+  server:
+    container_name: server
     build:
       context: .
-      dockerfile: ./producer/producer.dockerfile
+      dockerfile: ./server/server.dockerfile
     depends_on:
       - rabbitmq
     links: 
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
+      - HOST=server
+      - PORT=12345
+      - LISTEN_BACKLOG=1
 
-  consumer:
-    container_name: consumer
+  client:
+    container_name: client
     build:
       context: .
-      dockerfile: ./consumer/consumer.dockerfile
+      dockerfile: ./client/client.dockerfile
+    depends_on:
+      - server
+    links: 
+      - server
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=server
+      - PORT=12345
+      - TITLES_FILEPATH=./datasets/books_data.csv
+      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
+    volumes:
+      - ./datasets:/datasets
+
+  filter_category_worker:
+    container_name: filter_category_worker
+    build:
+      context: .
+      dockerfile: ./pipelineQ1/filter_category_worker.dockerfile
     depends_on:
       - rabbitmq
     links: 
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
+      - CATEGORY=Computers
+      - DATA_SOURCE_NAME=titles
+      - DATA_OUTPUT_NAME=Q1|filter_title_worker
+
+  filter_title_worker:
+    container_name: filter_title_worker
+    build:
+      context: .
+      dockerfile: ./pipelineQ1/filter_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TITLE_TO_FILTER=distributed
+      - DATA_SOURCE_NAME=Q1|filter_title_worker
+      - DATA_OUTPUT_NAME=Q1|filter_year_worker
+  
+  filter_year_worker:
+    container_name: filter_year_worker
+    build:
+      context: .
+      dockerfile: ./pipelineQ1/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - YEAR_RANGE_TO_FILTER=2000,2023
+      - DATA_SOURCE_NAME=Q1|filter_year_worker
+      - DATA_OUTPUT_NAME=Q1|server
+      

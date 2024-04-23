@@ -2,6 +2,7 @@ from middleware import Middleware
 from serialization import deserialize_message, serialize_message
 from filters import filter_by, year_range_condition
 import os
+import time
 
 def handle_data(body, years, data_output_name, middleware):
     data = deserialize_message(body)
@@ -10,6 +11,8 @@ def handle_data(body, years, data_output_name, middleware):
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
+    time.sleep(15)
+
     middleware = Middleware()
 
     years = os.getenv('YEAR_RANGE_TO_FILTER').split(',')
@@ -26,4 +29,4 @@ def main():
     middleware.declare_queue(data_output_name)
     middleware.receive_messages(data_source_name, callback_with_params)
 
-    
+main()  

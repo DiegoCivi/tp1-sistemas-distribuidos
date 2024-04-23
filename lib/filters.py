@@ -8,8 +8,6 @@
 # title, description, authors, image, preview_link, publisher, published_date, info_link, categories, ratings_count
 # 0    , 1          , 2      , 3    , 4           , 5        , 6             , 7        , 8         , 9
 
-import nltk
-
 # Generic filter that returns the desired rows from a dataset according to a given condition and value
 def filter_by(batch, condition, values):
     """
@@ -59,7 +57,7 @@ def calculate_review_sentiment(batch):
         text = row[9]
         title = row[1]
         tokens = nltk.word_tokenize(text)
-        sentiment[title] = nltk.sentiment.util.demo_liu_hu_lexicon(tokens)
+        #sentiment[title] = nltk.sentiment.util.demo_liu_hu_lexicon(tokens)
     return sentiment
 
 def calculate_percentile(sentiment_scores, percentile):

@@ -2,6 +2,7 @@ from middleware import Middleware
 from serialization import deserialize_message, serialize_message
 from filters import filter_by, category_condition
 import os
+import time
 
 def handle_titles_data(body, counter_dict, middleware):
     """
@@ -31,12 +32,11 @@ def handle_reviews_data(body, counter_dict, data_output_name, middleware):
             ratings_summation = counter_dict[key][1] + row[6]
             authors = counter_dict[key][2]
             counter_dict[key] = (reviews_quantity, ratings_summation, authors)
-
-            
-            
-            
+      
             
 def main():
+    time.sleep(15)
+
     middleware = Middleware()
 
     data_source1_name, data_source2_name = os.getenv('DATA_SOURCE_NAME').split(',')
@@ -65,3 +65,4 @@ def main():
         msg = title + ',' + '/'.join([str(value) for value in info_tuple])
         parsed_pairs.append(msg)
     
+main()

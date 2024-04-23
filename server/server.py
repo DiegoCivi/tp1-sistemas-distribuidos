@@ -2,6 +2,7 @@ import socket
 from communications import read_socket
 from middleware import Middleware
 import os
+import time
 
 class Server:
     def __init__(self, host, port, listen_backlog):
@@ -41,10 +42,12 @@ class Server:
             self.middleware.declare_exchange(exchange, type)
             self.middleware.publish_message(exchange, '', msg)
 
-        
-
 def main():
+    time.sleep(15)
+    
     HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG') 
-    server = Server(HOST, PORT, LISTEN_BACKLOG)
+    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
     server.run()
+
+main()
     

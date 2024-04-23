@@ -1,4 +1,4 @@
-
+SEPARATOR = "@|@"
 
 def serialize_item(item):
     """
@@ -12,7 +12,8 @@ def serialize_message(message_items):
     Serialize a message (list of items) by adding a separator
     on each item and deleting the newline character
     """
-    return (''.join([serialize_item(item) for item in message_items]))[:-1]
+    return '||'.join(message_items)
+    #return (''.join([serialize_item(item) for item in message_items]))[:-1]
 
 def deserialize_item(item):
     """
@@ -27,3 +28,10 @@ def deserialize_message(message):
     it using the separator
     """
     return [deserialize_item(item) for item in message.split('|')]
+
+def serialize_dict(dict):
+    msg = ''
+    for value in dict.values():
+        msg += value + SEPARATOR
+    
+    return msg[:-1]
