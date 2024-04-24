@@ -12,29 +12,39 @@ def scrape_and_send_file(file_reader, socket):
     Gets batches of info from reading a file and sends it through the socket
     """
     while True:
+        #print("Voy a leer un batch")
         file_batch = read_csv_batch(file_reader)
+        #print("Lei un batch del archivo")
         serialized_message = serialize_message(file_batch)
         if not file_batch:
+            print("[scrape_and_send_file] Termine de leer el archivo")
             break
+        if "Microsoft Ole" in serialized_message:
+            print(serialize_message)
+        #print(f"Voy a mandar el batch con un largo de: {len(serialized_message)} y en bytes tiene un largo de: {len(bytes(serialized_message, 'utf-8'))}")
         write_socket(socket, serialized_message)
 
 def main():
+    #print("Empezando")
     time.sleep(15)
-
+    #print("Termine de dormir")
     host = os.getenv('HOST')
     port = os.getenv('PORT')
     titles_filepath = os.getenv('TITLES_FILEPATH')
-    reviews_filepath = os.getenv('REVIEWS_FILEPATH')
+    #reviews_filepath = os.getenv('REVIEWS_FILEPATH')
 
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.connect((host, int(port))) 
+    conn.connect((host, int(port)))
+    #print("Me conecte al server")
     titles_file_reader = create_file_reader(titles_filepath) 
-    reviews_file_reader = create_file_reader(reviews_filepath) 
+    #print("Cree el file_reader")
+    #reviews_file_reader = create_file_reader(reviews_filepath) 
     
     scrape_and_send_file(titles_file_reader, conn)
     sendEOF(conn)
-    scrape_and_send_file(reviews_file_reader, conn)
-    sendEOF(conn)
+    print("[CLIENT] Ya mande todo el archivo titles")
+    #scrape_and_send_file(reviews_file_reader, conn)
+    #sendEOF(conn)
 
     # TODO: Listen the server response and print it (Ponele colorcitos flaco)
     

@@ -8,12 +8,14 @@
 # title, description, authors, image, preview_link, publisher, published_date, info_link, categories, ratings_count
 # 0    , 1          , 2      , 3    , 4           , 5        , 6             , 7        , 8         , 9
 
+import re
+
 # Generic filter that returns the desired rows from a dataset according to a given condition and value
 def filter_by(batch, condition, values):
     """
     Filter the batch by a given condition function and values
     """
-    return [row for row in batch if condition(row, values)]
+    return [row_dictionary for row_dictionary in batch if condition(row_dictionary, values)]
 
 def title_condition(item, value):
     """
@@ -21,11 +23,18 @@ def title_condition(item, value):
     """
     return value.lower() in item[0].lower()
 
-def category_condition(item, value):
+def category_condition(row_dictionary, value):
     """
     Check if the category of the item is in the values list
     """
-    return value.lower() == item[8].lower() 
+    #if row_dictionary['title'] == 'Windows 98 Hints & Hacks':
+    #    print(f'La categoria del titulo es: {row_dictionary['categories']} y la categoria a buscar es: {value}')
+    title_category = row_dictionary['categories']
+    title_category = re.sub(r'[^a-zA-Z]', '', title_category)
+    #if 'Microsoft OL' in row_dictionary['title']:
+    #    print(row_dictionary)
+
+    return value == title_category 
 
 def year_range_condition(item, values):
     """
