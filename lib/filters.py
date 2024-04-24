@@ -31,8 +31,6 @@ def category_condition(row_dictionary, value):
     #    print(f'La categoria del titulo es: {row_dictionary['categories']} y la categoria a buscar es: {value}')
     title_category = row_dictionary['categories']
     title_category = re.sub(r'[^a-zA-Z]', '', title_category)
-    #if 'Microsoft OL' in row_dictionary['title']:
-    #    print(row_dictionary)
 
     return value == title_category 
 
@@ -87,4 +85,4 @@ def hash_title(batch, title_index):
         row.append(hashed_title)  
 
     return batch
-    
+

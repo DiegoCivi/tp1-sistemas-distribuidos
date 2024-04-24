@@ -20,7 +20,7 @@ def handle_data(body, category, data_output_name, middleware, counter):
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
-    time.sleep(15)
+    time.sleep(10)
 
     middleware = Middleware()
 
@@ -40,9 +40,5 @@ def main():
     middleware.subscribe(data_source_name, callback_with_params)
 
     print(f"La cantidad de libros con la category COMPUTERS es: [{counter[0]}]")
-    f = open('datasets/results.txt', 'w')
-    for title in counter[1:]:
-        f.write(f'{title}\n')
-    f.close()
 
 main()

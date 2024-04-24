@@ -28,6 +28,8 @@ services:
       - HOST=server
       - PORT=12345
       - LISTEN_BACKLOG=1
+    volumes:
+      - ./datasets:/datasets
 
   client:
     container_name: client

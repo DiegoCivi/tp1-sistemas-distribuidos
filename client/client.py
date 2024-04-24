@@ -19,14 +19,12 @@ def scrape_and_send_file(file_reader, socket):
         if not file_batch:
             print("[scrape_and_send_file] Termine de leer el archivo")
             break
-        if "Microsoft Ole" in serialized_message:
-            print(serialize_message)
         #print(f"Voy a mandar el batch con un largo de: {len(serialized_message)} y en bytes tiene un largo de: {len(bytes(serialized_message, 'utf-8'))}")
         write_socket(socket, serialized_message)
 
 def main():
     #print("Empezando")
-    time.sleep(15)
+    time.sleep(10)
     #print("Termine de dormir")
     host = os.getenv('HOST')
     port = os.getenv('PORT')

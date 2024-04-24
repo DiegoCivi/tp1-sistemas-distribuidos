@@ -13,7 +13,7 @@ def create_file_reader(file_path):
     reader = DictReader(file)
     return reader
 
-def read_csv_batch(file_reader, threshold=10):
+def read_csv_batch(file_reader, threshold=100):
     """
     Read a batch of rows from a CSV file
     """
@@ -23,12 +23,11 @@ def read_csv_batch(file_reader, threshold=10):
         return batch
     
     for i, dictionary in enumerate(file_reader):
-        if i >= threshold:
-            break
-        #if 'Microsoft' in dictionary['Title'] and dictionary['ratingsCount'] == '1.0':
-        #    print(dictionary['Title'])
         serialized_dict = serialize_dict(dictionary)
         batch.append(serialized_dict)
 
+        if i >= threshold:
+            break
+        
     return batch
 
