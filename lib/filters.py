@@ -17,11 +17,11 @@ def filter_by(batch, condition, values):
     """
     return [row_dictionary for row_dictionary in batch if condition(row_dictionary, values)]
 
-def title_condition(item, value):
+def title_condition(row_dictionary, value):
     """
     Check if the title of the item is in the values list
     """
-    return value.lower() in item[0].lower()
+    return value.lower() in row_dictionary['title'].lower()
 
 def category_condition(row_dictionary, value):
     """
@@ -34,12 +34,17 @@ def category_condition(row_dictionary, value):
 
     return value == title_category 
 
-def year_range_condition(item, values):
+def year_range_condition(row_dictionary, values):
     """
     Check if the published date of the item is in the values list
     """
-    year_info = item[6].split('-')[0]
-    return values[0] <= int(year_info) <= values[1]
+    year_info = row_dictionary['published_date'].split('-')[0]
+    try:
+        year = int(year_info)
+    except:
+        return False
+ 
+    return values[0] <= year <= values[1]
 
 def different_decade_counter(batch):
     """

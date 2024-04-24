@@ -4,7 +4,7 @@ import pika
 
 def main():
     print('Empeze soy producer')
-    time.sleep(20)
+    time.sleep(30)
     print('Me conecto a rabbitmq')
 
     mid = Middleware()

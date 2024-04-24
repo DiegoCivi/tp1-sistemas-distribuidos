@@ -1,8 +1,9 @@
-FROM rabbitmq:latest
+FROM rabbitmq:3.9.16-management-alpine
 
 RUN apk update && \
     apk add --no-cache python3 py3-pip && \
     rm -rf /var/cache/apk/*
+
 
 RUN python3 -m pip install pika
 

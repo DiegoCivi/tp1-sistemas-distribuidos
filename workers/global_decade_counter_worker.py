@@ -19,7 +19,7 @@ def handle_data(body, data_output_name, middleware, counter_dict):
             counter_dict[key] += 1
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
     
     middleware = Middleware()
 

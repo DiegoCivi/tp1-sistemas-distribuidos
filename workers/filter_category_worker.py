@@ -5,22 +5,20 @@ import os
 import time
 
 def handle_data(body, category, data_output_name, middleware, counter):
-    #print('[handle_data] LLego un mensaje')
     if body == b'EOF':
         middleware.stop_consuming()
+        middleware.send_message(data_output_name, "EOF")
         return
     data = deserialize_titles_message(body)
     
     desired_data = filter_by(data, category_condition, category)
     counter[0] = counter[0] + len(desired_data)
-    for d in desired_data:
-        counter.append(d['title'])
     #print(f"[handle_data] El contador va: {counter}")
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
-    time.sleep(10)
+    time.sleep(30)
 
     middleware = Middleware()
 
