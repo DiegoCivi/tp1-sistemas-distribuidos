@@ -32,11 +32,16 @@ def main():
     middleware.receive_messages(data_source_name, callback_with_params)
 
     # Collect the results
+    print(counter_dict[''])
+    print(counter_dict['Agatha Christie'], len(counter_dict['Charles Dickens']))
+    print(counter_dict['Agatha Christie'], len(counter_dict['Charles Dickens']))
+    print(counter_dict['Zane Grey'], len(counter_dict['Charles Dickens']))
     results = []
     for key, value in counter_dict.items():
-        if len(value) > 10:
+        if len(value) >= 10:
             results.append(key)
     print(len(results))
+    print(results)
     # Send the results to the output queue
     serialized_message = serialize_message(results)
     middleware.send_message(data_output_name, serialized_message)
