@@ -46,6 +46,9 @@ class Server:
                 print(f"Hubo un error en la lectura del socker del cliente. El error fue: {e}")
                 return
             
+            if msg.startswith('b"'):
+                print(msg)
+
             self.middleware.publish_message(exchange, '', msg)
 
 

@@ -21,7 +21,8 @@ def title_condition(row_dictionary, value):
     """
     Check if the title of the item is in the values list
     """
-    return value.lower() in row_dictionary['title'].lower()
+    #print(row_dictionary)
+    return value.lower() in row_dictionary['Title'].lower()
 
 def category_condition(row_dictionary, value):
     """
@@ -38,7 +39,7 @@ def year_range_condition(row_dictionary, values):
     """
     Check if the published date of the item is in the values list
     """
-    year_info = row_dictionary['published_date'].split('-')[0]
+    year_info = row_dictionary['publishedDate'].split('-')[0]
     try:
         year = int(year_info)
     except:
@@ -52,12 +53,14 @@ def different_decade_counter(batch):
     each author published a book
     """
     authors = {}
-    for row in batch:
-        author = row[2]
-        year = int(row[6].split('-')[0])
-        if author not in authors:
-            authors[author] = set()
-        authors[author].add(str(year - year%10))
+    for row_dict in batch:
+        authors = row_dict['authors']
+        parsed_authors = re.sub(r'[^a-zA-Z,]', '', authors).split(',')
+        year = int(row_dict['published_date'].split('-')[0])
+        for author in parsed_authors:
+            if author not in authors:
+                authors[author] = set()
+            authors[author].add(str(year - year%10))
     return authors
 
 def calculate_review_sentiment(batch):

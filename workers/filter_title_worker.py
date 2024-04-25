@@ -12,6 +12,8 @@ def handle_data(body, title, data_output_name, middleware, counter):
     data = deserialize_titles_message(body)
 
     desired_data = filter_by(data, title_condition, title)
+    if not desired_data:
+        return
     counter[0] = counter[0] + len(desired_data)
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
