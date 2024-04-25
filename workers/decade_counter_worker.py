@@ -1,24 +1,26 @@
 from middleware import Middleware
-from serialization import deserialize_message, serialize_message
+from serialization import deserialize_titles_message, serialize_message, serialize_dict
 from filters import different_decade_counter
 import os
 import time
 
 def handle_data(body, data_output_name, middleware):
-    data = deserialize_message(body)
-    desired_data = different_decade_counter(data)
-    
-    # We have a dictionary with the desired data
-    parsed_pairs = []
-    for author, decades_set in desired_data.items():
-        msg = author + ',' + '/'.join(decades_set)
-        parsed_pairs.append(msg)
+    if body == b'EOF':
+        middleware.stop_consuming()
+        middleware.send_message(data_output_name, "EOF")
+        return
+    data = deserialize_titles_message(body)
 
-    serialized_data = serialize_message(parsed_pairs)
+    desired_data = different_decade_counter(data)
+
+    if not desired_data:
+        return
+
+    serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 

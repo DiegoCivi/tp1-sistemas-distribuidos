@@ -10,6 +10,8 @@ Then each row has to be splitted by the FIELD_SEPARATOR = "@|@"
 
 FIELD_SEPARATOR = "@|@"
 ROW_SEPARATOR = "-|-"
+KEY_VAL_SEPARATOR = ":"
+VALUES_SEPARATOR = ","
 
 def serialize_item(item):
     """
@@ -45,22 +47,30 @@ def deserialize_titles_message(bytes):
 def serialize_dict(dict):
     msg = ''
     for key, value in dict.items():
-        msg += key + ':' + value + FIELD_SEPARATOR
+        if isinstance(value, set):
+            value = serialize_set(value)
+        msg += key + KEY_VAL_SEPARATOR + value + FIELD_SEPARATOR
     return msg[:-len(FIELD_SEPARATOR)]
+
+def serialize_set(item):
+    serialized_set = ''
+    for element in item:
+        serialized_set += element + VALUES_SEPARATOR
+    
+    return serialized_set[:-len(VALUES_SEPARATOR)]
 
 def deserialize_into_titles_dict(row):
     splitted_row = row.split(FIELD_SEPARATOR)
     title_dict = {}
     for field in splitted_row:
         try:
-            key, value = field.split(':', 1)
+            key, value = field.split(KEY_VAL_SEPARATOR, 1)
             title_dict[key] = value
         except Exception as e:
             print(f'El error es: {e} con la row: {row}')
+            raise e
 
     return title_dict
-
-
 
 #def deserialize_into_reviews_dict(row):
 

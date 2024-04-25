@@ -52,16 +52,43 @@ def different_decade_counter(batch):
     Summarize the number of different decades in which
     each author published a book
     """
-    authors = {}
+    authors_dict = {}
+    # Get the decades for each author
     for row_dict in batch:
+        if not row_dict['publishedDate'] or not row_dict['authors']:
+            continue
         authors = row_dict['authors']
-        parsed_authors = re.sub(r'[^a-zA-Z,]', '', authors).split(',')
-        year = int(row_dict['published_date'].split('-')[0])
-        for author in parsed_authors:
-            if author not in authors:
-                authors[author] = set()
-            authors[author].add(str(year - year%10))
-    return authors
+        splitted_authors = re.sub(r'[^a-zA-Z,]', '', authors).split(',')
+        year = row_dict['publishedDate'].split('-')[0]
+        year = re.sub(r'\D', '', year)
+        year = int(year)
+        for author in splitted_authors:
+            if author not in authors_dict:
+                authors_dict[author] = set()
+
+            authors_dict[author].add(str(year - year%10))
+
+    return [authors_dict]
+
+def parse_authors_dict(authors_dict):
+    authors_decades = {}
+    for author, decades_str in authors_dict.items():
+        splitted_val = decades_str.split(',')
+        decades = set()
+        for decade in splitted_val:
+            decades.add(decade)
+        authors_decades[author] = decades
+
+    return authors_decades
+
+def accumulate_authors_decades(batch, decades_accumulator):
+    authors_decades = parse_authors_dict(batch[0])
+
+    for author, decades_set in authors_decades.items():
+        if author not in decades_accumulator:
+            decades_accumulator[author] = set()
+        decades_accumulator[author] = decades_accumulator[author].union(decades_set)
+
 
 def calculate_review_sentiment(batch):
     """

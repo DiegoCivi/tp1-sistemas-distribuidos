@@ -49,50 +49,77 @@ services:
     volumes:
       - ./datasets:/datasets
 
-  filter_category_worker:
-    container_name: filter_category_worker
+  #filter_category_worker:
+  #  container_name: filter_category_worker
+  #  build:
+  #    context: .
+  #    dockerfile: ./pipelineQ1/filter_category_worker.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - CATEGORY=Computers
+  #    - DATA_SOURCE_NAME=titles
+  #    - DATA_OUTPUT_NAME=Q1|filter_title_worker
+  #  volumes:
+  #    - ./datasets:/datasets
+#
+  #filter_title_worker:
+  #  container_name: filter_title_worker
+  #  build:
+  #    context: .
+  #    dockerfile: ./pipelineQ1/filter_title_worker.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - TITLE_TO_FILTER=distributed
+  #    - DATA_SOURCE_NAME=Q1|filter_title_worker
+  #    - DATA_OUTPUT_NAME=Q1|filter_year_worker
+  #
+  #filter_year_worker:
+  #  container_name: filter_year_worker
+  #  build:
+  #    context: .
+  #    dockerfile: ./pipelineQ1/filter_year_worker.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - YEAR_RANGE_TO_FILTER=2000,2023
+  #    - DATA_SOURCE_NAME=Q1|filter_year_worker
+  #    - DATA_OUTPUT_NAME=Q1|server
+  #    
+  decade_counter_worker:
+    container_name: decade_counter_worker
     build:
       context: .
-      dockerfile: ./pipelineQ1/filter_category_worker.dockerfile
+      dockerfile: ./pipelineQ2/decade_counter_worker.dockerfile
     depends_on:
       - rabbitmq
     links: 
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - CATEGORY=Computers
       - DATA_SOURCE_NAME=titles
-      - DATA_OUTPUT_NAME=Q1|filter_title_worker
-    volumes:
-      - ./datasets:/datasets
+      - DATA_OUTPUT_NAME=Q2|global_decade_counter_worker
 
-  filter_title_worker:
-    container_name: filter_title_worker
+  global_decade_counter_worker:
+    container_name: global_decade_counter_worker
     build:
       context: .
-      dockerfile: ./pipelineQ1/filter_title_worker.dockerfile
+      dockerfile: ./pipelineQ2/global_decade_counter_worker.dockerfile
     depends_on:
       - rabbitmq
     links: 
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=Q1|filter_year_worker
-  
-  filter_year_worker:
-    container_name: filter_year_worker
-    build:
-      context: .
-      dockerfile: ./pipelineQ1/filter_year_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - PYTHONUNBUFFERED=1
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=Q1|server
-      
+      - DATA_SOURCE_NAME=Q2|global_decade_counter_worker
+      - DATA_OUTPUT_NAME=server    

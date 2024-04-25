@@ -9,7 +9,7 @@ def foo(ch, method, properties, body):
 
 def main():
     print('Empeze soy consumer')
-    time.sleep(30)
+    time.sleep(15)
     print('Me conecto a rabbitmq')
     mid = Middleware()
     mid.declare_queue("chan")

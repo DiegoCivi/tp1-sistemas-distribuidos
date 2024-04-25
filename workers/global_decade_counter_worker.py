@@ -1,25 +1,19 @@
 from middleware import Middleware
-from serialization import deserialize_message, serialize_message
+from serialization import deserialize_titles_message, serialize_message
+from filters import accumulate_authors_decades
 import os
 import time
 
 def handle_data(body, data_output_name, middleware, counter_dict):
-    data = deserialize_message(body)
-    if data == 'EOF':
+    if body == b'EOF':
         middleware.stop_consuming()
         return
-    for pair in data:
-        key = pair[0]
-        values = pair[1].split('/')
-        if key not in counter_dict:
-            counter_dict[key] = 0
-        for value in values:
-            if value in counter_dict[key]:
-                continue
-            counter_dict[key] += 1
+    data = deserialize_titles_message(body)
+
+    accumulate_authors_decades(data, counter_dict)
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
     
     middleware = Middleware()
 
@@ -40,9 +34,9 @@ def main():
     # Collect the results
     results = []
     for key, value in counter_dict.items():
-        if value > 10:
+        if len(value) > 10:
             results.append(key)
-    
+    print(len(results))
     # Send the results to the output queue
     serialized_message = serialize_message(results)
     middleware.send_message(data_output_name, serialized_message)

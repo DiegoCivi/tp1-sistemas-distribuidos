@@ -35,7 +35,7 @@ def handle_reviews_data(body, counter_dict, data_output_name, middleware):
       
             
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 
