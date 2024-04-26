@@ -14,11 +14,10 @@ services:
         timeout: 5s
         retries: 10
 
-  server:
-    container_name: server
+  producer:
     build:
       context: .
-      dockerfile: ./server/server.dockerfile
+      dockerfile: ./producer/producer.dockerfile
     depends_on:
       - rabbitmq
     links: 
@@ -28,32 +27,63 @@ services:
       - HOST=server
       - PORT=12345
       - LISTEN_BACKLOG=1
-    volumes:
-      - ./datasets:/datasets
 
-  client:
-    container_name: client
-    build:
-      context: .
-      dockerfile: ./client/client.dockerfile
-    depends_on:
-      - server
-    links: 
-      - server
-    environment:
-      - PYTHONUNBUFFERED=1
-      - HOST=server
-      - PORT=12345
-      - TITLES_FILEPATH=./datasets/books_data.csv
-      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
-    volumes:
-      - ./datasets:/datasets
-
-  #filter_category_worker:
-  #  container_name: filter_category_worker
+  #consumer:
   #  build:
   #    context: .
-  #    dockerfile: ./pipelineQ1/filter_category_worker.dockerfile
+  #    dockerfile: ./consumer/consumer.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - HOST=server
+  #    - PORT=12345
+  #    - LISTEN_BACKLOG=1
+
+
+
+  #server:
+  #  container_name: server
+  #  build:
+  #    context: .
+  #    dockerfile: ./server/server.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - HOST=server
+  #    - PORT=12345
+  #    - LISTEN_BACKLOG=1
+  #  volumes:
+  #    - ./datasets:/datasets
+#
+  #client:
+  #  container_name: client
+  #  build:
+  #    context: .
+  #    dockerfile: ./client/client.dockerfile
+  #  depends_on:
+  #    - server
+  #  links: 
+  #    - server
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - HOST=server
+  #    - PORT=12345
+  #    - TITLES_FILEPATH=./datasets/books_data.csv
+  #    - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
+  #  volumes:
+  #    - ./datasets:/datasets
+#
+  ##filter_category_worker:
+  ##  container_name: filter_category_worker
+  #  build:
+  #    context: .
+  #    dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
   #  depends_on:
   #    - rabbitmq
   #  links: 
@@ -70,7 +100,7 @@ services:
   #  container_name: filter_title_worker
   #  build:
   #    context: .
-  #    dockerfile: ./pipelineQ1/filter_title_worker.dockerfile
+  #    dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
   #  depends_on:
   #    - rabbitmq
   #  links: 
@@ -85,7 +115,7 @@ services:
   #  container_name: filter_year_worker
   #  build:
   #    context: .
-  #    dockerfile: ./pipelineQ1/filter_year_worker.dockerfile
+  #    dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
   #  depends_on:
   #    - rabbitmq
   #  links: 
@@ -96,30 +126,30 @@ services:
   #    - DATA_SOURCE_NAME=Q1|filter_year_worker
   #    - DATA_OUTPUT_NAME=Q1|server
   #    
-  decade_counter_worker:
-    container_name: decade_counter_worker
-    build:
-      context: .
-      dockerfile: ./pipelineQ2/decade_counter_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=titles
-      - DATA_OUTPUT_NAME=Q2|global_decade_counter_worker
-
-  global_decade_counter_worker:
-    container_name: global_decade_counter_worker
-    build:
-      context: .
-      dockerfile: ./pipelineQ2/global_decade_counter_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=Q2|global_decade_counter_worker
-      - DATA_OUTPUT_NAME=server    
+  #decade_counter_worker:
+  #  container_name: decade_counter_worker
+  #  build:
+  #    context: .
+  #    dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - DATA_SOURCE_NAME=titles
+  #    - DATA_OUTPUT_NAME=Q2|global_decade_counter_worker
+#
+  #global_decade_counter_worker:
+  #  container_name: global_decade_counter_worker
+  #  build:
+  #    context: .
+  #    dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
+  #  depends_on:
+  #    - rabbitmq
+  #  links: 
+  #    - rabbitmq
+  #  environment:
+  #    - PYTHONUNBUFFERED=1
+  #    - DATA_SOURCE_NAME=Q2|global_decade_counter_worker
+  #    - DATA_OUTPUT_NAME=server

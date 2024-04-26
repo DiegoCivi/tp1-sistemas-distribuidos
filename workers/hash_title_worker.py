@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import deserialize_message, serialize_message
+from serialization import deserialize_titles_message, serialize_titles_message
 from filters import hash_title
 import os
 import time
@@ -9,11 +9,17 @@ import time
 ####
 
 def handle_data(body, data_output_name, middleware, hash_modulus):
-    data = deserialize_message(body)
+    if body == b'EOF':
+        middleware.stop_consuming()
+        middleware.send_message(data_output_name, "EOF")
+        return
+    data = deserialize_titles_message(body)
+
     desired_data = hash_title(data) # TODO: There has to be a way to identify if the batch is from reviews or from titles, so as to know the index
-    for row in desired_data:
-        routing_key = row[-1] % hash_modulus
-        middleware.publish_message(data_output_name, routing_key, row) # TODO: I think the row is a list so we have to make it a string
+    for row_dictionary in desired_data:
+        routing_key = row_dictionary['hashed_title'] % hash_modulus
+        serialized_message = serialize_titles_message([row_dictionary])
+        middleware.publish_message(data_output_name, routing_key, serialized_message) # TODO: I think the row is a list so we have to make it a string
     
 def main():
     time.sleep(30)

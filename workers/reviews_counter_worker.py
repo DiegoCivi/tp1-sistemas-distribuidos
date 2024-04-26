@@ -4,19 +4,20 @@ from filters import filter_by, category_condition
 import os
 import time
 
-def handle_titles_data(body, counter_dict, middleware):
+def handle_titles_data(body, data_output_name, counter_dict, middleware):
     """
     Acumulates the quantity of reviews for each book 
     """
-    data = deserialize_message(body)
-    if data == 'EOF':
+    if body == b'EOF':
         middleware.stop_consuming()
+        middleware.send_message(data_output_name, "EOF")
         return
+    data = deserialize_message(body)
     
     # For title batches
-    for row in data:
-        key = row[0]
-        counter_dict[key] = (0, 0, row[2]) # (reviews_quantity, ratings_summation, authors)
+    for row_dictionary in data:
+        key = row_dictionary['Title']
+        counter_dict[key] = (0, 0, row_dictionary['authors']) # (reviews_quantity, ratings_summation, authors)
 
 def handle_reviews_data(body, counter_dict, data_output_name, middleware):
     data = deserialize_message(body)
