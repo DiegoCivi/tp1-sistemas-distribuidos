@@ -49,12 +49,19 @@ def serialize_dict(dict):
     for key, value in dict.items():
         if isinstance(value, set):
             value = serialize_set(value)
+        elif isinstance(value, list):
+            value = serialize_list(value)
+
         msg += key + KEY_VAL_SEPARATOR + value + FIELD_SEPARATOR
+        
     return msg[:-len(FIELD_SEPARATOR)]
 
-def serialize_set(item):
+def serialize_list(list_to_serialize):
+    return VALUES_SEPARATOR.join(list_to_serialize)
+
+def serialize_set(set_to_serialize):
     serialized_set = ''
-    for element in item:
+    for element in set_to_serialize:
         serialized_set += element + VALUES_SEPARATOR
     
     return serialized_set[:-len(VALUES_SEPARATOR)]

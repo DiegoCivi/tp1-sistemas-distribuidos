@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import deserialize_message, serialize_message
+from serialization import deserialize_titles_message, serialize_message, serialize_dict
 import os
 import time
 
@@ -10,7 +10,7 @@ def handle_titles_data(body, counter_dict, middleware):
     if body == b'EOF':
         middleware.stop_consuming()
         return
-    data = deserialize_message(body)
+    data = deserialize_titles_message(body)
     
     # For title batches
     for row_dictionary in data:
@@ -21,7 +21,7 @@ def handle_reviews_data(body, counter_dict, middleware):
     if body == b'EOF':
         middleware.stop_consuming()
         return
-    data = deserialize_message(body)
+    data = deserialize_titles_message(body)
 
     for row_dictionary in data:
         if row_dictionary['Title'] not in counter_dict:
@@ -82,9 +82,7 @@ def main():
     middleware.subscribe(data_source2_name, callback_with_params_reviews, worker_id)
 
     # Once all the reviews where received, the counter_dict needs to be sent to the next stage
-    parsed_pairs = []
-    for title, info_tuple in counter_dict.items():
-        msg = title + ',' + '/'.join([str(value) for value in info_tuple])
-        parsed_pairs.append(msg)
+    serialized_message = serialize_message([serialize_dict(counter_dict)])
+    middleware.send_message(data_output_name, serialized_message)
     
 main()
