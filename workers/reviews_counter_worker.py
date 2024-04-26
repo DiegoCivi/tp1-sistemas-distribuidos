@@ -1,23 +1,44 @@
 from middleware import Middleware
 from serialization import deserialize_message, serialize_message
-from filters import filter_by, category_condition
 import os
 import time
 
-def handle_titles_data(body, data_output_name, counter_dict, middleware):
+def handle_titles_data(body, counter_dict, middleware):
     """
     Acumulates the quantity of reviews for each book 
     """
     if body == b'EOF':
         middleware.stop_consuming()
-        middleware.send_message(data_output_name, "EOF")
         return
     data = deserialize_message(body)
     
     # For title batches
     for row_dictionary in data:
-        key = row_dictionary['Title']
-        counter_dict[key] = (0, 0, row_dictionary['authors']) # (reviews_quantity, ratings_summation, authors)
+        title = row_dictionary['Title']
+        counter_dict[title] = (0, 0, row_dictionary['authors']) # (reviews_quantity, ratings_summation, authors)
+
+def handle_reviews_data(body, counter_dict, middleware):
+    if body == b'EOF':
+        middleware.stop_consuming()
+        return
+    data = deserialize_message(body)
+
+    for row_dictionary in data:
+        if row_dictionary['Title'] not in counter_dict:
+            continue
+
+        try:
+            title_rating = float(row_dictionary['review/score'])
+        except Exception as e:
+            print(f"Error: [{e}] when parsing 'review/score' to float.")
+            continue
+
+        title = row_dictionary['Title']
+        counter = counter_dict[title]
+        counter[0] += 1
+        counter[1] += title_rating
+
+        counter_dict[title] = counter
 
 def handle_reviews_data(body, counter_dict, data_output_name, middleware):
     data = deserialize_message(body)
