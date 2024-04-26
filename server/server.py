@@ -53,7 +53,7 @@ class Server:
 
 
 def main():
-    time.sleep(15)
+    time.sleep(30)
     
     HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG') 
     server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))

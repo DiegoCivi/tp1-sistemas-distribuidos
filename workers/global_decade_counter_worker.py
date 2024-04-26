@@ -13,7 +13,7 @@ def handle_data(body, data_output_name, middleware, counter_dict):
     accumulate_authors_decades(data, counter_dict)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
     
     middleware = Middleware()
 
@@ -32,10 +32,8 @@ def main():
     middleware.receive_messages(data_source_name, callback_with_params)
 
     # Collect the results
-    print(counter_dict[''])
-    print(counter_dict['Agatha Christie'], len(counter_dict['Charles Dickens']))
-    print(counter_dict['Agatha Christie'], len(counter_dict['Charles Dickens']))
-    print(counter_dict['Zane Grey'], len(counter_dict['Charles Dickens']))
+    print(counter_dict['Jules Verne'], len(counter_dict['Jules Verne']))
+    print(counter_dict['Professor Jules Verne'], len(counter_dict['Professor Jules Verne']))
     results = []
     for key, value in counter_dict.items():
         if len(value) >= 10:

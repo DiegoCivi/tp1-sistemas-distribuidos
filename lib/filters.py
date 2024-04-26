@@ -64,6 +64,11 @@ def different_decade_counter(batch):
         year = re.sub(r'\D', '', year)
         year = int(year)
         for author in splitted_authors:
+            if author == '':
+                continue
+            elif author.startswith(' ') or author.endswith(' '):
+                author = author.lstrip(' ').rstrip(' ')
+            
             if author not in authors_dict:
                 authors_dict[author] = set()
 
