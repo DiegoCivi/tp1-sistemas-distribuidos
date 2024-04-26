@@ -26,7 +26,7 @@ def main():
 
     middleware = Middleware()
 
-    data_source_name = os.getenv('DATA_SOURCE_NAME')
+    data_source1_name, data_source2_name = os.getenv('DATA_SOURCE_NAME').split(',')
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
     hash_modulus = os.getenv('HASH_MODULUS')
 
@@ -36,8 +36,12 @@ def main():
     # Declare the output exchange
     middleware.declare_exchange(data_output_name, 'direct')
 
-    # Declare and subscribe to the titles exchange
-    middleware.declare_exchange(data_source_name, 'fanout')
-    middleware.subscribe(data_source_name, callback_with_params)
+    # Declare the source queue
+    middleware.declare_queue(data_source1_name)
+    middleware.receive_messages(data_source1_name, callback_with_params)
+
+    # Declare and subscribe to the reviews exchange
+    middleware.declare_exchange(data_source2_name, 'fanout')
+    middleware.subscribe(data_source2_name, callback_with_params)
 
 main()   

@@ -33,7 +33,7 @@ class Server:
         self._receive_and_forward_data(client_socket, 'titles', 'fanout')
         print("Ya mande todo el archvio titles")
         ## Then read the reviews dataset
-        #self._receive_and_forward_data(client_socket, 'reviews', 'fanout')        
+        self._receive_and_forward_data(client_socket, 'reviews', 'fanout')        
         
     def _receive_and_forward_data(self, client_socket, exchange, type):
         msg = None

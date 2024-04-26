@@ -14,10 +14,11 @@ services:
         timeout: 5s
         retries: 10
 
-  producer:
+  server:
+    container_name: server
     build:
       context: .
-      dockerfile: ./producer/producer.dockerfile
+      dockerfile: ./server/server.dockerfile
     depends_on:
       - rabbitmq
     links: 
@@ -28,59 +29,24 @@ services:
       - PORT=12345
       - LISTEN_BACKLOG=1
 
-  #consumer:
-  #  build:
-  #    context: .
-  #    dockerfile: ./consumer/consumer.dockerfile
-  #  depends_on:
-  #    - rabbitmq
-  #  links: 
-  #    - rabbitmq
-  #  environment:
-  #    - PYTHONUNBUFFERED=1
-  #    - HOST=server
-  #    - PORT=12345
-  #    - LISTEN_BACKLOG=1
+  client:
+    container_name: client
+    build:
+      context: .
+      dockerfile: ./client/client.dockerfile
+    depends_on:
+      - server
+    links: 
+      - server
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=server
+      - PORT=12345
+      - TITLES_FILEPATH=./datasets/books_data.csv
+      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
 
-
-
-  #server:
-  #  container_name: server
-  #  build:
-  #    context: .
-  #    dockerfile: ./server/server.dockerfile
-  #  depends_on:
-  #    - rabbitmq
-  #  links: 
-  #    - rabbitmq
-  #  environment:
-  #    - PYTHONUNBUFFERED=1
-  #    - HOST=server
-  #    - PORT=12345
-  #    - LISTEN_BACKLOG=1
-  #  volumes:
-  #    - ./datasets:/datasets
-#
-  #client:
-  #  container_name: client
-  #  build:
-  #    context: .
-  #    dockerfile: ./client/client.dockerfile
-  #  depends_on:
-  #    - server
-  #  links: 
-  #    - server
-  #  environment:
-  #    - PYTHONUNBUFFERED=1
-  #    - HOST=server
-  #    - PORT=12345
-  #    - TITLES_FILEPATH=./datasets/books_data.csv
-  #    - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
-  #  volumes:
-  #    - ./datasets:/datasets
-#
-  ##filter_category_worker:
-  ##  container_name: filter_category_worker
+  #filter_category_worker:
+  #  container_name: filter_category_worker
   #  build:
   #    context: .
   #    dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
@@ -95,7 +61,7 @@ services:
   #    - DATA_OUTPUT_NAME=Q1|filter_title_worker
   #  volumes:
   #    - ./datasets:/datasets
-#
+
   #filter_title_worker:
   #  container_name: filter_title_worker
   #  build:
@@ -153,3 +119,104 @@ services:
   #    - PYTHONUNBUFFERED=1
   #    - DATA_SOURCE_NAME=Q2|global_decade_counter_worker
   #    - DATA_OUTPUT_NAME=server
+  
+  hash_title_worker:
+    container_name: hash_title_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=Q3|hash_title_worker,reviews
+      - DATA_OUTPUT_NAME=Q3|reviews_counter_worker
+
+  filter_year_worker:
+    container_name: filter_year_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - YEAR_RANGE_TO_FILTER=1990,1999
+      - DATA_SOURCE_NAME=titles
+      - DATA_OUTPUT_NAME=Q3|hash_title_worker
+
+  reviews_counter_worker:
+    container_name: reviews_counter_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=1
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+      
+  reviews_counter_worker:
+    container_name: reviews_counter_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKERE_ID=1
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+      
+  reviews_counter_worker:
+    container_name: reviews_counter_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKERE_ID=2
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+  
+  reviews_counter_worker:
+    container_name: reviews_counter_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKERE_ID=3
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+
+  filter_review_quantity_worker:
+    container_name: filter_review_quantity
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_review_quantity_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKERE_ID=1
+      - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+
+

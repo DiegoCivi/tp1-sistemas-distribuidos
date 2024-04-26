@@ -24,7 +24,8 @@ def handle_reviews_data(body, counter_dict, middleware):
     data = deserialize_titles_message(body)
 
     for row_dictionary in data:
-        if row_dictionary['Title'] not in counter_dict:
+        title = row_dictionary['Title']
+        if title not in counter_dict:
             continue
 
         try:
@@ -33,27 +34,26 @@ def handle_reviews_data(body, counter_dict, middleware):
             print(f"Error: [{e}] when parsing 'review/score' to float.")
             continue
 
-        title = row_dictionary['Title']
         counter = counter_dict[title]
         counter[0] += 1
         counter[1] += title_rating
 
         counter_dict[title] = counter
 
-def handle_reviews_data(body, counter_dict, data_output_name, middleware):
-    data = deserialize_message(body)
-    if data == 'EOF':
-        middleware.stop_consuming()
-        return
-
-    for row in data:
-        key = row[1]
-        if key in counter_dict:
-            # Update counters_dict with reviews data
-            reviews_quantity = counter_dict[key][0] + 1
-            ratings_summation = counter_dict[key][1] + row[6]
-            authors = counter_dict[key][2]
-            counter_dict[key] = (reviews_quantity, ratings_summation, authors)
+#def handle_reviews_data(body, counter_dict, data_output_name, middleware):
+#    data = deserialize_message(body)
+#    if data == 'EOF':
+#        middleware.stop_consuming()
+#        return
+#
+#    for row in data:
+#        key = row[1]
+#        if key in counter_dict:
+#            # Update counters_dict with reviews data
+#            reviews_quantity = counter_dict[key][0] + 1
+#            ratings_summation = counter_dict[key][1] + row[6]
+#            authors = counter_dict[key][2]
+#            counter_dict[key] = (reviews_quantity, ratings_summation, authors)
       
             
 def main():

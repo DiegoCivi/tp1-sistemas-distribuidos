@@ -29,20 +29,18 @@ def main():
     host = os.getenv('HOST')
     port = os.getenv('PORT')
     titles_filepath = os.getenv('TITLES_FILEPATH')
-    #reviews_filepath = os.getenv('REVIEWS_FILEPATH')
+    reviews_filepath = os.getenv('REVIEWS_FILEPATH')
 
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conn.connect((host, int(port)))
-    #print("Me conecte al server")
     titles_file_reader = create_file_reader(titles_filepath) 
-    #print("Cree el file_reader")
-    #reviews_file_reader = create_file_reader(reviews_filepath) 
+    reviews_file_reader = create_file_reader(reviews_filepath) 
     
     scrape_and_send_file(titles_file_reader, conn)
     sendEOF(conn)
     print("[CLIENT] Ya mande todo el archivo titles")
-    #scrape_and_send_file(reviews_file_reader, conn)
-    #sendEOF(conn)
+    scrape_and_send_file(reviews_file_reader, conn)
+    sendEOF(conn)
 
     # TODO: Listen the server response and print it (Ponele colorcitos flaco)
     

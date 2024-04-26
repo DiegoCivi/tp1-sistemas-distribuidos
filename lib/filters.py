@@ -35,6 +35,18 @@ def category_condition(row_dictionary, value):
 
     return value == title_category 
 
+def review_quantity_value(row_dictionary, value):
+    """
+    Check if the the review quantity is greater than the value
+    If it is, then we add it to the result list of titles information
+    """
+    filtered_dict = {}
+    for title, values in row_dictionary.items():
+        if values.split(',')[0] > value:
+            filtered_dict[title] = values
+            
+    return [filtered_dict]
+
 def year_range_condition(row_dictionary, values):
     """
     Check if the published date of the item is in the values list
