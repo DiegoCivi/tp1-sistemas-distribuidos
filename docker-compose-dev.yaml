@@ -128,21 +128,6 @@ services:
 
 # QUERY 3
 
-  hash_title_worker:
-    container_name: hash_title_worker
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,reviews
-      - DATA_OUTPUT_NAME=Q3|titles,Q3|reviews
-      - HASH_MODULUS=4
-
   filter_year_worker:
     container_name: filter_year_worker
     build:
@@ -158,76 +143,92 @@ services:
       - DATA_SOURCE_NAME=titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
+      
+  hash_title_worker:
+    container_name: hash_title_worker
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,reviews
+      - DATA_OUTPUT_NAME=Q3|titles,Q3|reviews
+      - HASH_MODULUS=4
 
-  # reviews_counter_worker1:
-  #   container_name: reviews_counter_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - WORKER_ID=0
-  #     - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
-  #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+
+  reviews_counter_worker1:
+    container_name: reviews_counter_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=0
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       
-  # reviews_counter_worker2:
-  #   container_name: reviews_counter_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - WORKER_ID=1
-  #     - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
-  #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+  reviews_counter_worker2:
+    container_name: reviews_counter_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=1
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       
-  # reviews_counter_worker3:
-  #   container_name: reviews_counter_worker3
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - WORKER_ID=2
-  #     - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
-  #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+  reviews_counter_worker3:
+    container_name: reviews_counter_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=2
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
   
-  # reviews_counter_worker4:
-  #   container_name: reviews_counter_worker4
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - WORKER_ID=3
-  #     - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
-  #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+  reviews_counter_worker4:
+    container_name: reviews_counter_worker4
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=3
+      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
 
-  # filter_review_quantity_worker:
-  #   container_name: filter_review_quantity
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_review_quantity_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - WORKERS_QUANTITY=4
-  #     - MIN_QUANTITY=500
-  #     - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
-  #     - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+  filter_review_quantity_worker:
+    container_name: filter_review_quantity
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_review_quantity_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKERS_QUANTITY=4
+      - MIN_QUANTITY=500
+      - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
 
 

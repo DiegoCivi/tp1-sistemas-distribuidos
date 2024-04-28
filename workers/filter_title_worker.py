@@ -19,7 +19,7 @@ def handle_data(body, title, data_output_name, middleware, counter):
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 

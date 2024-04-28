@@ -33,7 +33,7 @@ def handle_data(body, data_output_name, middleware, hash_modulus, temp):
         middleware.publish_message(data_output_name, routing_key, serialized_message) # TODO: I think the row is a list so we have to make it a string
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 

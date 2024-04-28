@@ -15,6 +15,8 @@ def handle_titles_data(body, counter_dict, middleware):
     # For title batches
     for row_dictionary in data:
         title = row_dictionary['Title']
+        if title in counter_dict:
+            print("######### El titulo: ", title, " Ya estaba en el dict con los valores: ", counter_dict[title], " #########")
         counter_dict[title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
 
 def handle_reviews_data(body, counter_dict, middleware):
@@ -35,10 +37,13 @@ def handle_reviews_data(body, counter_dict, middleware):
             continue
 
         counter = counter_dict[title]
+        # print("Title: ", title, "Rating: ", title_rating, "Counter: ", counter)
         counter[0] += 1
         counter[1] += title_rating
 
         counter_dict[title] = counter
+
+        # print("Title: ", title, "new counter is: ", counter_dict[title])
 
 #def handle_reviews_data(body, counter_dict, data_output_name, middleware):
 #    data = deserialize_message(body)
@@ -57,7 +62,7 @@ def handle_reviews_data(body, counter_dict, middleware):
       
             
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -76,14 +81,14 @@ def main():
     # Declare and subscribe to the titles exchange
     print("Voy a leer titles")
     middleware.declare_exchange(data_source1_name, 'direct')
-    middleware.subscribe(data_source1_name, callback_with_params_titles, [worker_id, "EOF"])
+    middleware.subscribe(data_source1_name, data_source1_name + "_worker" + worker_id, callback_with_params_titles, [worker_id, "EOF"])
 
     # Declare and subscribe to the reviews exchange
     print("Voy a leer reviews")
     middleware.declare_exchange(data_source2_name, 'direct')
-    middleware.subscribe(data_source2_name, callback_with_params_reviews, [worker_id, "EOF"])
+    middleware.subscribe(data_source2_name, data_source2_name + "_worker" + worker_id,  callback_with_params_reviews, [worker_id, "EOF"])
 
-    # print(len(counter_dict))
+    print(counter_dict)
 
     # Once all the reviews were received, the counter_dict needs to be sent to the next stage
     batch_size = 0
