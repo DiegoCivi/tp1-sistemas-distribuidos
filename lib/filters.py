@@ -53,8 +53,6 @@ def year_range_condition(row_dictionary, values):
     """
     Check if the published date of the item is in the values list
     """
-    if not row_dictionary['Title'] or not row_dictionary['authors'] or not row_dictionary['categories'] or not row_dictionary['publishedDate']:
-        return False
     year_regex = re.compile('(?<!\*)[^\d]*(\d{4})[^\d]*(?<!\*)')
     result = year_regex.search(row_dictionary['publishedDate'])
     try:

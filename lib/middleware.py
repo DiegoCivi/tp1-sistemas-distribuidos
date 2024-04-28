@@ -12,50 +12,51 @@ class Middleware:
         self._exchanges = set()
 
 
-    def declare_exchange(self, name, type):
+    def _declare_exchange(self, name, type):
         if type not in ALLOWED_TYPES:
             raise Exception(f'Type {type} is not allowed')
         
         self._exchanges.add(name)
         self._channel.exchange_declare(exchange=name, exchange_type=type)
 
-    def declare_queue(self, name):
+    def _declare_queue(self, name):
         self._queues.add(name)
         self._channel.queue_declare(queue=name)
 
-    def publish_message(self, exchange, routing_key, message):
+    def publish_message(self, exchange, type, routing_key, message):
         if exchange not in self._exchanges:
-            raise Exception(f'Exchange {exchange} not declared before')
+            self._declare_exchange(exchange, type)
         
         self._channel.basic_publish(exchange=exchange, routing_key=routing_key, body=message)
 
     def send_message(self, queue, message):
         if queue not in self._queues:
-            raise Exception(f'Queue {queue} not declared before')
+            self._declare_queue(queue)
         
         self._channel.basic_publish(exchange='', routing_key=queue, body=message)
         
     def receive_messages(self, queue, callback):
         if queue not in self._queues:
-            raise Exception(f'Queue {queue} not declared before')
+            self._declare_queue(queue)
         
         self._consume(queue, callback)
 
-    def subscribe(self, exchange, queue, callback, routing_keys=[]):
+    def subscribe(self, exchange, queue, callback):
         if exchange not in self._exchanges:
             raise Exception(f'Exchange {exchange} not declared before')
-        
-        self._channel.queue_declare(queue)
-        if len(routing_keys) == 0:
-            self._channel.queue_bind(exchange=exchange, queue=queue, routing_key='')
-        else:
-            for routing_key in routing_keys:
-                self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=routing_key)
+        elif queue not in self._queues:
+            raise Exception(f'Queue {queue} not declared/binded before')
             
         self._consume(queue, callback)
 
+    def define_exchange(self, exchange, queues_dict):
+        self._declare_exchange(exchange, 'direct') # TODO: agregar esto a los parametros
+        for queue, routing_keys in queues_dict.items():
+            self._declare_queue(queue)
+            for rk in routing_keys:
+                self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=rk)
+
     def _consume(self, queue, callback):
-        print("[_consume] Start")
         self._channel.basic_consume(queue, callback, auto_ack=True)
         self._channel.start_consuming()
 

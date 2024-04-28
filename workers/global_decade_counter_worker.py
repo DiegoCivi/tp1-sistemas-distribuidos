@@ -4,9 +4,10 @@ from filters import accumulate_authors_decades
 import os
 import time
 
-def handle_data(body, data_output_name, middleware, counter_dict):
+def handle_data(body, middleware, counter_dict):
     if body == b'EOF':
         middleware.stop_consuming()
+        print("ME LLEGA EL EOF SOY EL GLOBAL DECADER")
         return
     data = deserialize_titles_message(body)
 
@@ -22,18 +23,18 @@ def main():
     counter_dict = {} 
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output_name, middleware, counter_dict)
+    callback_with_params = lambda ch, method, properties, body: handle_data(body, middleware, counter_dict)
     
     # Declare the source queue
-    middleware.declare_queue(data_source_name)
+    #middleware.declare_queue(data_source_name)
     
     # Declare the output queue
-    middleware.declare_queue(data_output_name)
+    # middleware.declare_queue(data_output_name)
     middleware.receive_messages(data_source_name, callback_with_params)
 
     # Collect the results
-    print(counter_dict['Jules Verne'], len(counter_dict['Jules Verne']))
-    print(counter_dict['Professor Jules Verne'], len(counter_dict['Professor Jules Verne']))
+    #print(counter_dict['Jules Verne'], len(counter_dict['Jules Verne']))
+    #print(counter_dict['Professor Jules Verne'], len(counter_dict['Professor Jules Verne']))
     results = []
     for key, value in counter_dict.items():
         if len(value) >= 10:

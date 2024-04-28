@@ -32,11 +32,12 @@ def main():
     callback_with_params = lambda ch, method, properties, body: handle_data(body, category_to_filter, data_output_name, middleware, counter)
     
     # Declare the output queue
-    middleware.declare_queue(data_output_name)
+    #middleware.declare_queue(data_output_name)
 
     # Declare and subscribe to the titles exchange
-    middleware.declare_exchange(data_source_name, 'fanout')
-    middleware.subscribe(data_source_name, callback_with_params)
+    #middleware.declare_exchange(data_source_name, 'fanout')
+    middleware.define_exchange(data_source_name, {'q1_titles': ['q1_titles']})
+    middleware.subscribe(data_source_name, 'q1_titles', callback_with_params)
 
     print(f"La cantidad de libros con la category COMPUTERS es: [{counter[0]}]")
 

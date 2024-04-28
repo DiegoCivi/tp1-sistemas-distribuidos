@@ -29,6 +29,9 @@ class Server:
         """
         Reads the client data and fordwards it to the corresponding parts of the system
         """
+        # Declare the queue to send the data to the query_coordinator
+
+
         # First read the titles dataset
         self._receive_and_forward_data(client_socket, 'titles', 'fanout')
         print("Ya mande todo el archvio titles")
@@ -37,19 +40,7 @@ class Server:
         
     def _receive_and_forward_data(self, client_socket, exchange, type):
         msg = None
-        self.middleware.declare_exchange(exchange, type)
-        # Also declare the queues that will be binded with the exchange
-        #self.middleware._channel.queue_declare(queue='q1')
-        #self.middleware._channel.queue_declare(queue='q2')
-        self.middleware._channel.queue_declare(queue='q3' + exchange)
-        #self.middleware._channel.queue_declare(queue='q4')
-        #self.middleware._channel.queue_declare(queue='q5')
-
-        #self.middleware._channel.queue_bind(exchange=exchange, queue='q1', routing_key='')
-        #self.middleware._channel.queue_bind(exchange=exchange, queue='q2', routing_key='')
-        self.middleware._channel.queue_bind(exchange=exchange, queue='q3' + exchange, routing_key='')
-        #self.middleware._channel.queue_bind(exchange=exchange, queue='q4', routing_key='')
-        #self.middleware._channel.queue_bind(exchange=exchange, queue='q5', routing_key='')
+        
 
         temp = 0
         while msg != "EOF":
@@ -66,7 +57,7 @@ class Server:
                     if d['Title'] == 'Pride and Prejudice':
                         temp += 1
 
-            self.middleware.publish_message(exchange, '', msg)
+            self.middleware.send_message('query_coordinator', msg)
 
         print("Pasaron por el server: ", temp)
 

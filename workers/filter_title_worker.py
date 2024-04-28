@@ -32,10 +32,10 @@ def main():
     callback_with_params = lambda ch, method, properties, body: handle_data(body, title_to_filter, data_output_name, middleware, counter)
     
     # Declare the source queue
-    middleware.declare_queue(data_source_name)
+    #middleware.declare_queue(data_source_name)
     
     # Declare the output queue
-    middleware.declare_queue(data_output_name)
+    #middleware.declare_queue(data_output_name)
     middleware.receive_messages(data_source_name, callback_with_params)
     print(f"La cantidad de libros con 'distributed' en el título es: [{counter[0]}]")
 

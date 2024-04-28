@@ -33,23 +33,24 @@ def main():
     callback_with_params = lambda ch, method, properties, body: handle_data(body, years, data_output_name, middleware, counter)
     
     # Declare the source
-    if data_source_name.startswith("QUEUE_"):
-        middleware.declare_queue(data_source_name)
-    else:
-        middleware.declare_exchange(data_source_name, exchange_type)
+    #if data_source_name.startswith("QUEUE_"):
+    #    middleware.declare_queue(data_source_name)
+    #else:
+    #    middleware.declare_exchange(data_source_name, exchange_type)
         
     
     # Declare the output queue
     print("Voy a leer titulos")
-    if data_output_name.startswith("QUEUE_"):
-        middleware.declare_queue(data_output_name)
-    else:
-        middleware.declare_exchange(data_output_name, exchange_type)
+    #if data_output_name.startswith("QUEUE_"):
+    #    middleware.declare_queue(data_output_name)
+    #else:
+    #    middleware.declare_exchange(data_output_name, exchange_type)
 
-    if data_source_name.startswith("QUEUE_"):
-        middleware.receive_messages(data_source_name, callback_with_params)
-    else:
-        middleware.subscribe(data_source_name, 'q3' + 'titles', callback_with_params)
+    middleware.receive_messages(data_source_name, callback_with_params)
+    #if data_source_name.startswith("QUEUE_"):
+    #    middleware.receive_messages(data_source_name, callback_with_params)
+    #else:
+    #    middleware.subscribe(data_source_name, 'q3' + 'titles', callback_with_params)
 
     print(f"La cantidad de libros con años entre {years[0]} y {years[1]} es: [{counter[0]}]")
 
