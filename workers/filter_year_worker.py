@@ -19,24 +19,38 @@ def handle_data(body, years, data_output_name, middleware, counter):
     middleware.send_message(data_output_name, serialized_data)
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 
     years = [int(value) for value in os.getenv('YEAR_RANGE_TO_FILTER').split(',')]
     data_source_name = os.getenv('DATA_SOURCE_NAME')
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
+    exchange_type = os.getenv('EXCHANGE_TYPE')
     counter = [0]
 
     # Define a callback wrapper
     callback_with_params = lambda ch, method, properties, body: handle_data(body, years, data_output_name, middleware, counter)
     
-    # Declare the source queue
-    middleware.declare_queue(data_source_name)
+    # Declare the source
+    if data_source_name.startswith("QUEUE_"):
+        middleware.declare_queue(data_source_name)
+    else:
+        middleware.declare_exchange(data_source_name, exchange_type)
+        
     
     # Declare the output queue
-    middleware.declare_queue(data_output_name)
-    middleware.receive_messages(data_source_name, callback_with_params)
+    print("Voy a leer titulos")
+    if data_output_name.startswith("QUEUE_"):
+        middleware.declare_queue(data_output_name)
+    else:
+        middleware.declare_exchange(data_output_name, exchange_type)
+
+    if data_source_name.startswith("QUEUE_"):
+        middleware.receive_messages(data_source_name, callback_with_params)
+    else:
+        middleware.subscribe(data_source_name, 'q3' + 'titles', callback_with_params)
+
     print(f"La cantidad de libros con años entre {years[0]} y {years[1]} es: [{counter[0]}]")
 
 main()  

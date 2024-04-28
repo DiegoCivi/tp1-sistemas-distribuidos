@@ -41,13 +41,18 @@ class Middleware:
         
         self._consume(queue, callback)
 
-    def subscribe(self, exchange, callback, routing_key=''):
+    def subscribe(self, exchange, queue, callback, routing_keys=[]):
         if exchange not in self._exchanges:
             raise Exception(f'Exchange {exchange} not declared before')
         
-        queue = self._channel.queue_declare(queue='')
-        self._channel.queue_bind(exchange=exchange, queue=queue.method.queue, routing_key=routing_key)
-        self._consume(queue.method.queue, callback)
+        self._channel.queue_declare(queue)
+        if len(routing_keys) == 0:
+            self._channel.queue_bind(exchange=exchange, queue=queue, routing_key='')
+        else:
+            for routing_key in routing_keys:
+                self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=routing_key)
+            
+        self._consume(queue, callback)
 
     def _consume(self, queue, callback):
         print("[_consume] Start")

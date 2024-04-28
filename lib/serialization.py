@@ -10,7 +10,7 @@ Then each row has to be splitted by the FIELD_SEPARATOR = "@|@"
 
 FIELD_SEPARATOR = "@|@"
 ROW_SEPARATOR = "-|-"
-KEY_VAL_SEPARATOR = ":"
+KEY_VAL_SEPARATOR = "#|#"
 VALUES_SEPARATOR = ","
 
 def serialize_item(item):
@@ -57,7 +57,7 @@ def serialize_dict(dict):
     return msg[:-len(FIELD_SEPARATOR)]
 
 def serialize_list(list_to_serialize):
-    return VALUES_SEPARATOR.join(list_to_serialize)
+    return VALUES_SEPARATOR.join(map(str,list_to_serialize))
 
 def serialize_set(set_to_serialize):
     serialized_set = ''

@@ -32,12 +32,26 @@ class Server:
         # First read the titles dataset
         self._receive_and_forward_data(client_socket, 'titles', 'fanout')
         print("Ya mande todo el archvio titles")
-        ## Then read the reviews dataset
+        # Then read the reviews dataset
         self._receive_and_forward_data(client_socket, 'reviews', 'fanout')        
         
     def _receive_and_forward_data(self, client_socket, exchange, type):
         msg = None
         self.middleware.declare_exchange(exchange, type)
+        # Also declare the queues that will be binded with the exchange
+        #self.middleware._channel.queue_declare(queue='q1')
+        #self.middleware._channel.queue_declare(queue='q2')
+        self.middleware._channel.queue_declare(queue='q3' + exchange)
+        #self.middleware._channel.queue_declare(queue='q4')
+        #self.middleware._channel.queue_declare(queue='q5')
+
+        #self.middleware._channel.queue_bind(exchange=exchange, queue='q1', routing_key='')
+        #self.middleware._channel.queue_bind(exchange=exchange, queue='q2', routing_key='')
+        self.middleware._channel.queue_bind(exchange=exchange, queue='q3' + exchange, routing_key='')
+        #self.middleware._channel.queue_bind(exchange=exchange, queue='q4', routing_key='')
+        #self.middleware._channel.queue_bind(exchange=exchange, queue='q5', routing_key='')
+
+        temp = 0
         while msg != "EOF":
             msg, e = read_socket(client_socket)
             #print('Lei un batch del cliente')
@@ -46,14 +60,31 @@ class Server:
                 print(f"Hubo un error en la lectura del socker del cliente. El error fue: {e}")
                 return
             
-            if msg.startswith('b"'):
-                print(msg)
+            if msg != 'EOF':
+                des = [deserialize_into_titles_dict(row) for row in msg.split("-|-")]
+                for d in des:
+                    if d['Title'] == 'Pride and Prejudice':
+                        temp += 1
 
             self.middleware.publish_message(exchange, '', msg)
 
+        print("Pasaron por el server: ", temp)
+
+def deserialize_into_titles_dict(row):
+    splitted_row = row.split(FIELD_SEPARATOR)
+    title_dict = {}
+    for field in splitted_row:
+        try:
+            key, value = field.split("#|#", 1)
+            title_dict[key] = value
+        except Exception as e:
+            print(f'El error es: {e} con la row: {row}')
+            raise e
+
+    return title_dict
 
 def main():
-    time.sleep(30)
+    time.sleep(15)
     
     HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG') 
     server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))

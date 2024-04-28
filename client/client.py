@@ -24,7 +24,7 @@ def scrape_and_send_file(file_reader, socket):
 
 def main():
     #print("Empezando")
-    time.sleep(30)
+    time.sleep(25)
     #print("Termine de dormir")
     host = os.getenv('HOST')
     port = os.getenv('PORT')

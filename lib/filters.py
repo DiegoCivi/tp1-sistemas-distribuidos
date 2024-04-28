@@ -35,15 +35,17 @@ def category_condition(row_dictionary, value):
 
     return value == title_category 
 
-def review_quantity_value(row_dictionary, value):
+def review_quantity_value(batch, value):
     """
     Check if the the review quantity is greater than the value
     If it is, then we add it to the result list of titles information
     """
     filtered_dict = {}
-    for title, values in row_dictionary.items():
-        if values.split(',')[0] > value:
-            filtered_dict[title] = values
+    for row_dictionary in batch:
+        #print(row_dictionary)
+        for title, values in row_dictionary.items():
+            if int(values.split(',')[0]) >= value:
+                filtered_dict[title] = values
             
     return [filtered_dict]
 
@@ -51,9 +53,12 @@ def year_range_condition(row_dictionary, values):
     """
     Check if the published date of the item is in the values list
     """
-    year_info = row_dictionary['publishedDate'].split('-')[0]
+    if not row_dictionary['Title'] or not row_dictionary['authors'] or not row_dictionary['categories'] or not row_dictionary['publishedDate']:
+        return False
+    year_regex = re.compile('(?<!\*)[^\d]*(\d{4})[^\d]*(?<!\*)')
+    result = year_regex.search(row_dictionary['publishedDate'])
     try:
-        year = int(year_info)
+        year = int(result.group(1))
     except:
         return False
  
@@ -129,12 +134,17 @@ def calculate_percentile(sentiment_scores, percentile):
         if score > percentile:
             titles.append(title) # TODO: This is much more complex than this
     return titles
-    
 
-def hash_title(batch, title_index):
+def hash_djb2(s):                                                                                                                                
+    hash = 5381
+    for x in s:
+        hash = (( hash << 5) + hash) + ord(x)
+    return hash & 0xFFFFFFFF    
+
+def hash_title(batch):
     for row_dictionary in batch:
         title = row_dictionary['Title']
-        hashed_title = hash(title) # TODO: This returns an int. Maybe we need a string
+        hashed_title = hash_djb2(title) # TODO: This returns an int. Maybe we need a string
         row_dictionary['hashed_title'] = hashed_title  
 
     return batch

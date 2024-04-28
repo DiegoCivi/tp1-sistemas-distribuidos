@@ -13,7 +13,7 @@ def handle_data(body, data_output_name, middleware, counter_dict):
     accumulate_authors_decades(data, counter_dict)
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
     
     middleware = Middleware()
 

@@ -15,7 +15,7 @@ def handle_titles_data(body, counter_dict, middleware):
     # For title batches
     for row_dictionary in data:
         title = row_dictionary['Title']
-        counter_dict[title] = (0, 0, row_dictionary['authors']) # (reviews_quantity, ratings_summation, authors)
+        counter_dict[title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
 
 def handle_reviews_data(body, counter_dict, middleware):
     if body == b'EOF':
@@ -57,7 +57,7 @@ def handle_reviews_data(body, counter_dict, middleware):
       
             
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 
@@ -68,21 +68,43 @@ def main():
 
     # Define a callback wrappers
     callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(body, counter_dict, middleware)
-    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, data_output_name, middleware)
+    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, middleware)
     
     # Declare the output queue
     middleware.declare_queue(data_output_name)
 
     # Declare and subscribe to the titles exchange
+    print("Voy a leer titles")
     middleware.declare_exchange(data_source1_name, 'direct')
-    middleware.subscribe(data_source1_name, callback_with_params_titles, worker_id)
+    middleware.subscribe(data_source1_name, callback_with_params_titles, [worker_id, "EOF"])
 
     # Declare and subscribe to the reviews exchange
+    print("Voy a leer reviews")
     middleware.declare_exchange(data_source2_name, 'direct')
-    middleware.subscribe(data_source2_name, callback_with_params_reviews, worker_id)
+    middleware.subscribe(data_source2_name, callback_with_params_reviews, [worker_id, "EOF"])
 
-    # Once all the reviews where received, the counter_dict needs to be sent to the next stage
-    serialized_message = serialize_message([serialize_dict(counter_dict)])
-    middleware.send_message(data_output_name, serialized_message)
+    # print(len(counter_dict))
+
+    # Once all the reviews were received, the counter_dict needs to be sent to the next stage
+    batch_size = 0
+    batch = {}
+    for title, counter in counter_dict.items():
+        if counter[0] >= 500 or title == 'Pride and Prejudice': # TODO: Erase
+            print(title, counter)
+
+        batch[title] = counter
+        batch_size += 1
+        if batch_size == 100: # TODO: Maybe the 100 could be an env var
+            serialized_message = serialize_message([serialize_dict(batch)])
+            middleware.send_message(data_output_name, serialized_message)
+            batch = {}
+            batch_size = 0
+
+    if len(batch) != 0:
+        serialized_message = serialize_message([serialize_dict(batch)])
+        middleware.send_message(data_output_name, serialized_message)
+    
+
+    middleware.send_message(data_output_name, "EOF")
     
 main()
