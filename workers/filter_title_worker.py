@@ -37,6 +37,7 @@ def main():
     # Declare the output queue
     #middleware.declare_queue(data_output_name)
     middleware.receive_messages(data_source_name, callback_with_params)
+    middleware.consume()
     print(f"La cantidad de libros con 'distributed' en el título es: [{counter[0]}]")
 
 main()

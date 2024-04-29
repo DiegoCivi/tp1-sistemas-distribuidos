@@ -30,6 +30,7 @@ def main():
     # Declare the output queue
     # middleware.declare_queue(data_output_name)
     middleware.receive_messages(data_source_name, callback_with_params)
+    middleware.consume()
 
     # Collect the results
     #print(counter_dict['Jules Verne'], len(counter_dict['Jules Verne']))

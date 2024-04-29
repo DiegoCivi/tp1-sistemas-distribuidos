@@ -44,6 +44,7 @@ def main():
         serialized_data = serialize_message([serialize_dict(dict_to_send)])
         middleware.send_message('Q4|top_10_last', serialized_data)
         middleware.send_message('Q4|top_10_last', 'EOF')
+    middleware.consume()
 
 
     if last:

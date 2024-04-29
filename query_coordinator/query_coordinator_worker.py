@@ -38,9 +38,14 @@ def main():
     # Read the data from the server, parse it and fordward it
     middleware.receive_messages('query_coordinator', callback_with_params)
 
+    middleware.consume()
+
     query_coordinator.change_parse_mode('reviews')
 
     middleware.receive_messages('query_coordinator', callback_with_params)
+    
+    middleware.consume()
+
     print(query_coordinator.temp)
 
     # Read the queries results

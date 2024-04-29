@@ -45,6 +45,7 @@ def main():
     # Declare and subscribe to the titles exchange
     #middleware.declare_queue(data_source_name)
     middleware.receive_messages(data_source_name, callback_with_params)
+    middleware.consume()
 
     print(f"La cant de titulos con {minimum_quantity} reviews es: {len(filtered_titles)} con el dict: {filtered_titles}")
 

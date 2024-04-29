@@ -9,6 +9,8 @@
 # 0    , 1          , 2      , 3    , 4           , 5        , 6             , 7        , 8         , 9
 
 import re
+from textblob import TextBlob
+
 
 # Generic filter that returns the desired rows from a dataset according to a given condition and value
 def filter_by(batch, condition, values):
@@ -116,12 +118,15 @@ def calculate_review_sentiment(batch):
     Calculate the sentiment of the reviews
     """
     sentiment = {}
-    for row in batch:
-        text = row[9]
-        title = row[1]
-        tokens = nltk.word_tokenize(text)
-        #sentiment[title] = nltk.sentiment.util.demo_liu_hu_lexicon(tokens)
-    return sentiment
+    for row_dictionary in batch:
+        text = row_dictionary['review/text']
+        if text == '':
+            continue
+        title = row_dictionary['Title']
+        blob = TextBlob(text)
+        text_sentiment = blob.sentiment.polarity
+        sentiment[title] = str(text_sentiment)
+    return [sentiment]
 
 def calculate_percentile(sentiment_scores, percentile):
     """
@@ -175,6 +180,18 @@ def get_top_n(batch, top, top_n, last):
 
 def sorting_key(tup):
     return tup[1]
+
+def titles_in_the_n_percentile(review_sentiment_dict, n):
+    vals = list(review_sentiment_dict.values())
+    vals = sorted(vals)
+    percentile_index = int(len(vals) * 0.9)
+    percentile_val = vals(percentile_index)
+
+    titles_in_percentile_n = [title for title, valor in review_sentiment_dict.items() if valor >= percentile_val]
+
+    print("######### SI ROMPE LA SERIALIZACION/DESERIALIZACION MIRAR QUE ACA DEVOLVEMOS UNA LISTA #########")
+    return titles_in_percentile_n
+
 
 
 

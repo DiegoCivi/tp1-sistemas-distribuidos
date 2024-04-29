@@ -6,6 +6,7 @@ from serialization import serialize_message
 import os
 import time
 
+CONNECT_TRIES = 5
 
 def scrape_and_send_file(file_reader, socket):
     """
@@ -32,7 +33,16 @@ def main():
     reviews_filepath = os.getenv('REVIEWS_FILEPATH')
 
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.connect((host, int(port)))
+    for i in range(CONNECT_TRIES):
+        try:
+            print("Connecting to server. Attempt: ", i)
+            conn.connect((host, int(port)))
+            break
+        except:
+            if i == CONNECT_TRIES - 1:
+                print("Could not connect to server")
+                return
+
     titles_file_reader = create_file_reader(titles_filepath) 
     reviews_file_reader = create_file_reader(reviews_filepath) 
     

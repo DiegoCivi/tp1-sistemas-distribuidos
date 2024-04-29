@@ -44,9 +44,9 @@ def deserialize_titles_message(bytes):
     
     return [deserialize_into_titles_dict(row) for row in message.split(ROW_SEPARATOR)] 
 
-def serialize_dict(dict):
+def serialize_dict(dict_to_serialize):
     msg = ''
-    for key, value in dict.items():
+    for key, value in dict_to_serialize.items():
         if isinstance(value, set):
             value = serialize_set(value)
         elif isinstance(value, list):

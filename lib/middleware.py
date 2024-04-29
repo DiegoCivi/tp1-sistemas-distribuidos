@@ -39,16 +39,18 @@ class Middleware:
     def receive_messages(self, queue, callback):
         if queue not in self._queues:
             self._declare_queue(queue)
-        
-        self._consume(queue, callback)
+
+        self._channel.basic_consume(queue, callback, auto_ack=True)
+        # self._consume(queue, callback)
 
     def subscribe(self, exchange, queue, callback):
         if exchange not in self._exchanges:
-            raise Exception(f'Exchange {exchange} not declared before')
+            raise Exception(f'Exchange {exchange} not defined before')
         elif queue not in self._queues:
             raise Exception(f'Queue {queue} not declared/binded before')
-            
-        self._consume(queue, callback)
+        
+        self._channel.basic_consume(queue, callback, auto_ack=True)
+        # self._consume(queue, callback)
 
     def define_exchange(self, exchange, queues_dict):
         self._declare_exchange(exchange, 'direct') # TODO: agregar esto a los parametros
@@ -57,9 +59,13 @@ class Middleware:
             for rk in routing_keys:
                 self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=rk)
 
-    def _consume(self, queue, callback):
-        self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
-        self._channel.basic_consume(queue, callback, auto_ack=True)
+    # def _consume(self, queue, callback):
+    #     self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
+    #     self._channel.basic_consume(queue, callback, auto_ack=True)
+    #     self._channel.start_consuming()
+
+    def consume(self, prefetch=PREFETCH_COUNT):
+        self._channel.basic_qos(prefetch_count=prefetch)
         self._channel.start_consuming()
 
     def close_connection(self):

@@ -47,11 +47,13 @@ class QueryCoordinator:
         if len(batch) == 0:
             return
         
+        # There isn't a parse_and_send_q4 because query 4 pipeline 
+        # receives the data from the query 3 pipeline results
+         
         #self.parse_and_send_q1(batch)
         #self.parse_and_send_q2(batch)
-        self.parse_and_send_q3(batch)
-        #self.parse_and_send_q4(batch)
-        #self.parse_and_send_q5(batch)
+        #self.parse_and_send_q3(batch)
+        self.parse_and_send_q5(batch)
 
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []
@@ -85,15 +87,11 @@ class QueryCoordinator:
             desired_keys = ['Title', 'review/score']
             self.parse_and_send(batch, desired_keys, 'q3_reviews')
     
-    # def parse_and_send_q4(self, batch):
-    #     if self.parse_mode == 'titles':
-    #         return batch['titles']
-    #     else:
-    #         return batch['reviews']
-    
-    # def parse_and_send_q5(self, batch):
-    #     if self.parse_mode == 'titles':
-    #         return batch['titles']
-    #     else:
-    #         return batch['reviews']
+    def parse_and_send_q5(self, batch):
+        if self.parse_mode == 'titles':
+            desired_keys = ['Title', 'categories']
+            self.parse_and_send(batch, desired_keys, 'q5_titles')
+        else:
+            desired_keys = ['Title', 'review/text']
+            self.parse_and_send(batch, desired_keys, 'q5_reviews')
     

@@ -46,6 +46,7 @@ def main():
         middleware.receive_messages(data_source_name, callback_with_params)
     else:
         middleware.subscribe('data', 'q3_titles', callback_with_params)
+    middleware.consume()
 
     print(f"La cantidad de libros con años entre {years[0]} y {years[1]} es: [{counter[0]}]")
 

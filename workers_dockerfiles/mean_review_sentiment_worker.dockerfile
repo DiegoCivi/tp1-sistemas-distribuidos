@@ -12,6 +12,6 @@ COPY ./lib/serialization.py serialization.py
 COPY ./lib/middleware.py middleware.py
 COPY ./lib/filters.py filters.py
 
-COPY ./workers/filter_title_worker.py filter_title_worker.py
+COPY ./workers/mean_review_sentiment_worker.py mean_review_sentiment_worker.py
 
-CMD ["python3", "filter_title_worker.py"]
+CMD ["python3", "mean_review_sentiment_worker.py"]
