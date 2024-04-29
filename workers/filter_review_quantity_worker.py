@@ -47,8 +47,10 @@ def main():
     middleware.receive_messages(data_source_name, callback_with_params)
 
     print(f"La cant de titulos con {minimum_quantity} reviews es: {len(filtered_titles)} con el dict: {filtered_titles}")
-    #serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
-    #middleware.send_message(data_output_name, serialized_data)
+
+    serialized_data = serialize_message([serialize_dict(filtered_titles)])
+    middleware.send_message('top_10', serialized_data)
+    middleware.send_message('top_10', 'EOF')
 
 
 

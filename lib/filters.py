@@ -147,3 +147,35 @@ def hash_title(batch):
 
     return batch
 
+def get_top_n(batch, top, top_n, last):
+    """
+    In this case the batch only has 1 dictionary that will have different titles 
+    with their counter. The counter is a string with this format -> 'reviews_quantity,ratings_summation,authors'.
+
+    If last is set to True, it means this funcion is being called by the top 10 worker calculator in the last layer. This means
+    that the job to do is the same as the other workers in the other layers, but the format of the message is not the same. Being in the
+    last layer means the worker wont have to calculate the mean_rating since it is already in the message.
+    """
+    titles_counters_dict = batch[0]
+    batch_top = []
+    for title, value in titles_counters_dict.items():
+        if last:
+            mean_rating = float(value)
+        else:
+            splitted_counter = value.split(',', 2) # Only split until the second ','. This is to not split the authors field which may have also a ','.
+            mean_rating = float(splitted_counter[1]) / float(splitted_counter[0])
+        
+        batch_top.append((title, mean_rating))
+
+    batch_top.sort(key=sorting_key, reverse=True)
+    top = top + batch_top[:top_n]
+    top.sort(key=sorting_key, reverse=True)
+    return top[:top_n]
+
+
+def sorting_key(tup):
+    return tup[1]
+
+
+
+

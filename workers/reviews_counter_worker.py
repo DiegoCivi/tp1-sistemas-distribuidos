@@ -12,7 +12,6 @@ def handle_titles_data(body, counter_dict, middleware):
         return
     data = deserialize_titles_message(body)
     
-    # For title batches
     for row_dictionary in data:
         title = row_dictionary['Title']
         if title in counter_dict:
