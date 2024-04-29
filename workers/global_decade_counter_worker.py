@@ -7,7 +7,6 @@ import time
 def handle_data(body, middleware, counter_dict):
     if body == b'EOF':
         middleware.stop_consuming()
-        print("ME LLEGA EL EOF SOY EL GLOBAL DECADER")
         return
     data = deserialize_titles_message(body)
 

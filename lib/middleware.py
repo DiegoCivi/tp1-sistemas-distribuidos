@@ -1,6 +1,7 @@
 import pika
 
 ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
+PREFETCH_COUNT = 1
 
 class Middleware:
 
@@ -57,6 +58,7 @@ class Middleware:
                 self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=rk)
 
     def _consume(self, queue, callback):
+        self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
         self._channel.basic_consume(queue, callback, auto_ack=True)
         self._channel.start_consuming()
 

@@ -76,19 +76,24 @@ def main():
     callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, middleware)
     
     # Declare the output queue
-    middleware.declare_queue(data_output_name)
+    #middleware.declare_queue(data_output_name)
 
-    # Declare and subscribe to the titles exchange
+    # The name of the queues the worker will read data
+    titles_queue = worker_id + '_titles'
+    reviews_queue = worker_id + '_reviews'
+
+    # Declare and subscribe to the titles queue in the exchange
+    middleware.define_exchange('Q3|data', {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
+
+    # Read from the titles queue
     print("Voy a leer titles")
-    middleware.declare_exchange(data_source1_name, 'direct')
-    middleware.subscribe(data_source1_name, data_source1_name + "_worker" + worker_id, callback_with_params_titles, [worker_id, "EOF"])
+    middleware.subscribe('Q3|data', titles_queue, callback_with_params_titles)
 
-    # Declare and subscribe to the reviews exchange
+    # Read from the reviews queue
     print("Voy a leer reviews")
-    middleware.declare_exchange(data_source2_name, 'direct')
-    middleware.subscribe(data_source2_name, data_source2_name + "_worker" + worker_id,  callback_with_params_reviews, [worker_id, "EOF"])
+    middleware.subscribe('Q3|data', reviews_queue,  callback_with_params_reviews)
 
-    print(counter_dict)
+    #print(counter_dict)
 
     # Once all the reviews were received, the counter_dict needs to be sent to the next stage
     batch_size = 0

@@ -36,30 +36,20 @@ class Server:
         self._receive_and_forward_data(client_socket, 'titles', 'fanout')
         print("Ya mande todo el archvio titles")
         # Then read the reviews dataset
-        self._receive_and_forward_data(client_socket, 'reviews', 'fanout')        
+        self._receive_and_forward_data(client_socket, 'reviews', 'fanout') 
+        print("Ya mande todo el archivo reviews")       
         
     def _receive_and_forward_data(self, client_socket, exchange, type):
         msg = None
-        
-
-        temp = 0
         while msg != "EOF":
             msg, e = read_socket(client_socket)
-            #print('Lei un batch del cliente')
             if e != None:
                 # TODO: Maybe raise the exception or just print it and return
                 print(f"Hubo un error en la lectura del socker del cliente. El error fue: {e}")
                 return
-            
-            if msg != 'EOF':
-                des = [deserialize_into_titles_dict(row) for row in msg.split("-|-")]
-                for d in des:
-                    if d['Title'] == 'Pride and Prejudice':
-                        temp += 1
 
             self.middleware.send_message('query_coordinator', msg)
 
-        print("Pasaron por el server: ", temp)
 
 def deserialize_into_titles_dict(row):
     splitted_row = row.split(FIELD_SEPARATOR)

@@ -37,13 +37,13 @@ def main():
     callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output2_name, middleware, int(minimum_quantity), filtered_titles, eof_counter, int(workers_quantity))
     
     # Declare the output queue to the server
-    middleware.declare_queue(data_output1_name)
+    #middleware.declare_queue(data_output1_name)
 
     # Declare the output queue to the query 4
-    middleware.declare_queue(data_output2_name)
+    #middleware.declare_queue(data_output2_name)
 
     # Declare and subscribe to the titles exchange
-    middleware.declare_queue(data_source_name)
+    #middleware.declare_queue(data_source_name)
     middleware.receive_messages(data_source_name, callback_with_params)
 
     print(f"La cant de titulos con {minimum_quantity} reviews es: {len(filtered_titles)} con el dict: {filtered_titles}")
