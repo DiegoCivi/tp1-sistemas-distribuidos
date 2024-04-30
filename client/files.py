@@ -1,27 +1,33 @@
-# File handling functions
+from csv import DictReader
+from serialization import serialize_dict
 
 def create_file_reader(file_path):
     """
     Create a file reader object
     """
     try:
-        file_reader = open(file_path, 'r')
+        file = open(file_path, 'r')
     except:
         return None
-    return file_reader
+    
+    reader = DictReader(file)
+    return reader
 
-def read_csv_batch(file_reader, threshold=100):
+def read_csv_batch(file_reader, threshold=200):
     """
     Read a batch of rows from a CSV file
     """
-    batch = ''
+    batch = []
     # EOF reached
     if file_reader is None:
         return batch
-    for i, row in enumerate(file_reader):
+    
+    for i, dictionary in enumerate(file_reader):
+        serialized_dict = serialize_dict(dictionary)
+        batch.append(serialized_dict)
+
         if i >= threshold:
             break
         
-        batch += row.rstrip('\n') + '|'
-    return batch[:len(batch)-1]
+    return batch
 

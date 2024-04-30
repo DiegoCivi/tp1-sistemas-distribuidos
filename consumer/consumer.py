@@ -1,25 +1,51 @@
 from middleware import Middleware
 import time
+import signal
+import os
 
 import pika
 
-def foo(ch, method, properties, body):
-    print(body)
+class Main:
+
+    def __init__(self):
+        self.counter = 0
+        #if os.getenv('HOST') == '2':
+        #    time.sleep(25)
+        #else:
+        #    time.sleep(15)
+        time.sleep(15)
+        self.mid = Middleware()
+        self.id = os.getenv('HOST')
+        self.counter = 0
+
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def handle_data(self, body, method):
+        if self.counter == 10:
+            self.mid.stop_consuming()
+        self.mid._channel.basic_ack(delivery_tag=method.delivery_tag)
+        print(body)
+        self.counter += 1
 
 
-def main():
-    print('Empeze soy consumer')
-    time.sleep(20)
-    print('Me conecto a rabbitmq')
-    mid = Middleware()
-    mid.declare_queue("chan")
-    mid.receive_messages("chan", foo)
-    
-    #connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
-    #channel = connection.channel()
-    #channel.queue_declare(queue='chan')
-    #
-    #channel.basic_consume('chan', foo, auto_ack=True)
-    #channel.start_consuming()
+    def exit_gracefully(self, *args):
+        self.mid.stop_consuming()
 
-main()
+    def main(self):
+        print('Empeze soy consumer')
+        
+        print('Me conecto a rabbitmq')
+
+        callback_with_params = lambda ch, method, properties, body: self.handle_data(body, method)
+
+        self.mid.receive_messages("chan", callback_with_params)
+        print(self.counter)
+        #connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+        #channel = connection.channel()
+        #channel.queue_declare(queue='chan')
+        #
+        #channel.basic_consume('chan', foo, auto_ack=True)
+        #channel.start_consuming()
+
+m = Main()
+m.main()

@@ -1,6 +1,6 @@
 """ Lenght of the communication headers protcol"""
-HEADER_LENGHT = 5
-MSG_SIZE_LENGTH = 4
+HEADER_LENGHT = 10
+MSG_SIZE_LENGTH = 9
 
 
 def read_socket(socket):
@@ -28,12 +28,15 @@ def _handle_short_read(socket, bytes_to_read):
     Handler of the short-read. Called by read_socket().
     """
     bytes_read = 0
-    msg = ""
+    bytes_array = bytearray()
     while bytes_read < bytes_to_read:
-        msg_bytes = socket.recv(bytes_to_read - bytes_read) #.rstrip()
+        msg_bytes = socket.recv(bytes_to_read - bytes_read)
         bytes_read += len(msg_bytes)
-        msg += msg_bytes.decode('utf-8')
+        bytes_array.extend(msg_bytes)
     
+    msg = bytes_array.decode('utf-8')
+    
+    #print(f"[_handle_short_read] El mensaje leido tiene un largo de {len(msg)} y es: {msg}")
     return msg
 
 def write_socket(socket, msg):
@@ -51,6 +54,7 @@ def write_socket(socket, msg):
     
     except Exception as e:
         return e
+    
 
 def _handle_short_write(socket, msg):
     """
@@ -67,7 +71,7 @@ def get_header(msg, end_flag):
     """
     Returns the protocols header for a message
     """
-    header = str(len(msg))
+    header = str(len(bytes(msg, 'utf-8')))
     msg_len_bytes = len(header)
 
     for _ in range(0, MSG_SIZE_LENGTH - msg_len_bytes):
@@ -87,3 +91,4 @@ def sendEOF(socket):
         return None
     except Exception as e:
         return e
+    
