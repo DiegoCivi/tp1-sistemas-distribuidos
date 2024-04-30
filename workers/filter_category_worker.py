@@ -31,12 +31,8 @@ def main():
 
     # Define a callback wrapper
     callback_with_params = lambda ch, method, properties, body: handle_data(body, category_to_filter, data_output_name, middleware, counter)
-    
-    # Declare the output queue
-    #middleware.declare_queue(data_output_name)
 
     # Declare and subscribe to the titles exchange
-    #middleware.declare_exchange(data_source_name, 'fanout')
     middleware.define_exchange(data_source_name, {source_queue: [source_queue]})
     middleware.subscribe(data_source_name, source_queue, callback_with_params)
     middleware.consume()

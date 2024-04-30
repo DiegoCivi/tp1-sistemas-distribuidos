@@ -4,8 +4,6 @@ from query_coordinator import QueryCoordinator
 import time
 
 
-    
-
 def handle_data(body, query_coordinator):
     if body == b'EOF':
         print('Ya mande todo el archivo ', query_coordinator.parse_mode)
