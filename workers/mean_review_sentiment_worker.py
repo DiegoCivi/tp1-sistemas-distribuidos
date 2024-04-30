@@ -14,6 +14,8 @@ def handle_titles_data(body, counter_dict, middleware):
     
     for row_dictionary in data:
         title = row_dictionary['Title']
+        if title == '101 favorite stories from the Bible':
+            print("EN titles me llego000")
         counter_dict[title] = [0,0] # [reviews_quantity, review_sentiment_summation]
 
 def handle_reviews_data(body, counter_dict, middleware):
@@ -23,20 +25,39 @@ def handle_reviews_data(body, counter_dict, middleware):
     data = deserialize_titles_message(body)
 
     for row_dictionary in data:
-        for title, review_sentiment in row_dictionary.items():
-            if title not in counter_dict:
-                continue
+        title = row_dictionary['Title']
+        if title not in counter_dict:
+            continue
+        
+        if title == '101 favorite stories from the Bible':
+            print("En REVIEWS me llega")
 
-            try:
-                review_sentiment = float(review_sentiment)
-            except Exception as e:
-                print(f"Error: [{e}] when parsing 'review/score' to float.")
-                continue
-
+        text_sentiment = row_dictionary['text_sentiment']
+        try:
+            text_sentiment = float(text_sentiment)
+        except Exception as e:
+            print(f"Error: [{e}] when parsing 'text_sentiment' to float.")
+            continue
+        
         counter = counter_dict[title]
         counter[0] += 1
-        counter[1] += review_sentiment 
+        counter[1] += text_sentiment 
         counter_dict[title] = counter
+
+        #for title, review_sentiment in row_dictionary.items():
+        #    if title not in counter_dict:
+        #        continue
+#
+        #    try:
+        #        review_sentiment = float(review_sentiment)
+        #    except Exception as e:
+        #        print(f"Error: [{e}] when parsing 'review/score' to float.")
+        #        continue
+#
+        #    counter = counter_dict[title]
+        #    counter[0] += 1
+        #    counter[1] += review_sentiment 
+        #    counter_dict[title] = counter
       
             
 def main():
@@ -75,6 +96,10 @@ def main():
     batch_size = 0
     batch = {}
     for title, counter in counter_dict.items():
+        # Ignore titles with no reviews
+        if counter[0] == 0:
+            continue
+        
         batch[title] = str(counter[1] / counter[0])
         batch_size += 1
         if batch_size == 100: # TODO: Maybe the 100 could be an env var

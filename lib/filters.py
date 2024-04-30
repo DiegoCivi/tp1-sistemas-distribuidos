@@ -117,16 +117,19 @@ def calculate_review_sentiment(batch):
     """
     Calculate the sentiment of the reviews
     """
-    sentiment = {}
+    result = []
     for row_dictionary in batch:
+        sentiment_dict = {}
         text = row_dictionary['review/text']
         if text == '':
             continue
         title = row_dictionary['Title']
         blob = TextBlob(text)
         text_sentiment = blob.sentiment.polarity
-        sentiment[title] = str(text_sentiment)
-    return [sentiment]
+        sentiment_dict['Title'] = title
+        sentiment_dict['text_sentiment'] = str(text_sentiment)
+        result.append(sentiment_dict)
+    return result
 
 def calculate_percentile(sentiment_scores, percentile):
     """
@@ -185,8 +188,9 @@ def titles_in_the_n_percentile(review_sentiment_dict, n):
     vals = list(review_sentiment_dict.values())
     vals = sorted(vals)
     percentile_index = int(len(vals) * 0.9)
-    percentile_val = vals(percentile_index)
-
+    percentile_val = vals[percentile_index]
+    percentile_val = 0.37467883042883043
+    print("############### El percentil 90 es: ", percentile_val)
     titles_in_percentile_n = [title for title, valor in review_sentiment_dict.items() if valor >= percentile_val]
 
     print("######### SI ROMPE LA SERIALIZACION/DESERIALIZACION MIRAR QUE ACA DEVOLVEMOS UNA LISTA #########")

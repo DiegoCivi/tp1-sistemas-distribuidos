@@ -5,7 +5,7 @@ import os
 import time
 
 # titulo:cant_reviews,sumatoria_ratings,autores
-def handle_data(body, data_output2_name, middleware, minimum_quantity, titles_with_sentiment, eof_counter, workers_quantity):
+def handle_data(body, data_output2_name, middleware, titles_with_sentiment, eof_counter, workers_quantity):
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == workers_quantity:
@@ -16,6 +16,8 @@ def handle_data(body, data_output2_name, middleware, minimum_quantity, titles_wi
     data = deserialize_titles_message(body)
     
     for key, value in data[0].items():
+        if key == '101 favorite stories from the Bible':
+            print("AAAAAAAAAAAAAAAAAAAAAAAA (Está acá), ", value)
         titles_with_sentiment[key] = float(value)
 
     
@@ -24,16 +26,15 @@ def main():
 
     middleware = Middleware()
 
-    minimum_quantity = os.getenv('MIN_QUANTITY')
     data_source_name = os.getenv('DATA_SOURCE_NAME')
-    data_output_name = os.getenv('DATA_OUTPUT_NAME').split(',')
-    workers_quantity = os.getenv('WORKERS_QUANTITY')
+    data_output_name = os.getenv('DATA_OUTPUT_NAME')
     percentile = os.getenv('PERCENTILE')
+    workers_quantity = os.getenv('WORKERS_QUANTITY')
     titles_with_sentiment = {}
     eof_counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output_name, middleware, int(minimum_quantity), titles_with_sentiment, eof_counter, int(workers_quantity))
+    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output_name, middleware, titles_with_sentiment, eof_counter, int(workers_quantity))
     
     # Read the titles with their sentiment
     middleware.receive_messages(data_source_name, callback_with_params)

@@ -4,15 +4,14 @@ from filters import hash_title
 import os
 import time
 
-####
-#### TODO: This worker reads reviews from an exchange and titles from a queue. To do that, do we need another process?  
-####
-
-def handle_data(body, dataset_and_query, data_output_name, middleware, hash_modulus, temp):
+def handle_data(body, dataset_and_query, data_output_name, middleware, hash_modulus, eof_counter):
     if body == b'EOF':
-        middleware.stop_consuming()
+        eof_counter[0] += 1
         routing_key = 'EOF' + '_' + dataset_and_query
+        print('Me llego un EOF para la routing_key ', routing_key)
         middleware.publish_message(data_output_name, 'direct', routing_key, "EOF")
+        if eof_counter[0] == 2:
+            middleware.stop_consuming()
         return
     data = deserialize_titles_message(body)
 
@@ -29,7 +28,7 @@ def handle_data(body, dataset_and_query, data_output_name, middleware, hash_modu
         #    raise Exception(f'La routing key para el titulo [{ title }] es [{routing_key}] pero antes daba [{ temp[title] }]')
         #temp[title] = routing_keyG
 
-        row_dictionary['hashed_title'] = str(row_dictionary['hashed_title'])
+        row_dictionary.pop('hashed_title')
         serialized_message = serialize_message([serialize_dict(row_dictionary)])
         routing_key = worker_id + '_' + dataset_and_query
         middleware.publish_message(data_output_name, 'direct', routing_key, serialized_message) 
@@ -44,12 +43,12 @@ def main():
     hash_modulus = int(os.getenv('HASH_MODULUS'))
 
     # Define a callback wrapper
-    temp = {}
-    callback_with_params_titles_q3 = lambda ch, method, properties, body: handle_data(body, 'titles_Q3', data_output_name, middleware, hash_modulus, temp)
-    callback_with_params_reviews_q3 = lambda ch, method, properties, body: handle_data(body, 'reviews_Q3', data_output_name, middleware, hash_modulus, temp)
+    eof_counter = [0]
+    callback_with_params_titles_q3 = lambda ch, method, properties, body: handle_data(body, 'titles_Q3', data_output_name, middleware, hash_modulus, eof_counter)
+    callback_with_params_reviews_q3 = lambda ch, method, properties, body: handle_data(body, 'reviews_Q3', data_output_name, middleware, hash_modulus, eof_counter)
 
-    callback_with_params_titles_q5 = lambda ch, method, properties, body: handle_data(body, 'titles_Q5', data_output_name, middleware, hash_modulus, temp)
-    callback_with_params_reviews_q5 = lambda ch, method, properties, body: handle_data(body, 'reviews_Q5', data_output_name, middleware, hash_modulus, temp)
+    callback_with_params_titles_q5 = lambda ch, method, properties, body: handle_data(body, 'titles_Q5', data_output_name, middleware, hash_modulus, eof_counter)
+    callback_with_params_reviews_q5 = lambda ch, method, properties, body: handle_data(body, 'reviews_Q5', data_output_name, middleware, hash_modulus, eof_counter)
 
     
     # Declare the output exchange for query 3 and query 5

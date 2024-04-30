@@ -279,9 +279,7 @@ services:
   #     - rabbitmq
   #   links: 
   #     - rabbitmq
-  #   environment:
-  #     - WORKERS_QUANTITY=4
-  #     - MIN_QUANTITY=500
+  #   environment:data_source4_name0
   #     - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
   #     - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
 
@@ -424,4 +422,5 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=Q5|percentile_worker
       - DATA_OUTPUT_NAME=Q5|response
-
+      - PERCENTILE=90
+      - WORKERS_QUANTITY=4

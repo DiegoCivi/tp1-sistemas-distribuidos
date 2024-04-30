@@ -58,8 +58,8 @@ class QueryCoordinator:
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []
         for row in batch:
-            if row['Title'] == 'Pride and Prejudice':
-                self.temp += 1
+            #if row['categories'] == 'Fiction':
+            #    self.temp += 1
             row = {k: v for k, v in row.items() if k in desired_keys}
             new_batch.append(row)
             
