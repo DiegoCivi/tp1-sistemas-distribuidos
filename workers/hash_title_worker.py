@@ -34,7 +34,7 @@ def handle_data(body, dataset_and_query, data_output_name, middleware, hash_modu
         middleware.publish_message(data_output_name, 'direct', routing_key, serialized_message) 
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 

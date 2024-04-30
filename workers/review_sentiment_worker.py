@@ -17,7 +17,7 @@ def handle_data(body, data_output_name, middleware):
     
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 

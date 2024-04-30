@@ -12,8 +12,6 @@ class QueryCoordinator:
         """
         self.parse_mode = TITLES_MODE
         self.middleware = middleware
-
-        self.temp = 0
     
     def change_parse_mode(self, mode):
         """
@@ -29,6 +27,8 @@ class QueryCoordinator:
         """
         routing_key = 'EOF_' + self.parse_mode
         self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
+        if self.parse_mode == REVIEWS_MODE:
+            self.middleware.stop_consuming()
 
     def drop_rows_with_missing_values(self, batch, columns):
         """
@@ -58,8 +58,6 @@ class QueryCoordinator:
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []
         for row in batch:
-            #if row['categories'] == 'Fiction':
-            #    self.temp += 1
             row = {k: v for k, v in row.items() if k in desired_keys}
             new_batch.append(row)
             

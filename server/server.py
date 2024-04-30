@@ -29,17 +29,14 @@ class Server:
         """
         Reads the client data and fordwards it to the corresponding parts of the system
         """
-        # Declare the queue to send the data to the query_coordinator
-
-
         # First read the titles dataset
-        self._receive_and_forward_data(client_socket, 'titles', 'fanout')
+        self._receive_and_forward_data(client_socket)
         print("Ya mande todo el archvio titles")
         # Then read the reviews dataset
-        self._receive_and_forward_data(client_socket, 'reviews', 'fanout') 
+        self._receive_and_forward_data(client_socket) 
         print("Ya mande todo el archivo reviews")       
         
-    def _receive_and_forward_data(self, client_socket, exchange, type):
+    def _receive_and_forward_data(self, client_socket):
         msg = None
         while msg != "EOF":
             msg, e = read_socket(client_socket)
@@ -51,21 +48,8 @@ class Server:
             self.middleware.send_message('query_coordinator', msg)
 
 
-def deserialize_into_titles_dict(row):
-    splitted_row = row.split(FIELD_SEPARATOR)
-    title_dict = {}
-    for field in splitted_row:
-        try:
-            key, value = field.split("#|#", 1)
-            title_dict[key] = value
-        except Exception as e:
-            print(f'El error es: {e} con la row: {row}')
-            raise e
-
-    return title_dict
-
 def main():
-    time.sleep(30)
+    time.sleep(15)
     
     HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG') 
     server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))

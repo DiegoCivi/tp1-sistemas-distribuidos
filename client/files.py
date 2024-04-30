@@ -13,7 +13,7 @@ def create_file_reader(file_path):
     reader = DictReader(file)
     return reader
 
-def read_csv_batch(file_reader, threshold=100):
+def read_csv_batch(file_reader, threshold=200):
     """
     Read a batch of rows from a CSV file
     """

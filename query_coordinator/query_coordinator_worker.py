@@ -1,30 +1,25 @@
 from middleware import Middleware
-from serialization import deserialize_titles_message
+from serialization import deserialize_titles_message, deserialize_into_titles_dict
 from query_coordinator import QueryCoordinator
 import time
 
 
     
 
-def handle_data(body, middleware, query_coordinator, queues_dict):
+def handle_data(body, query_coordinator):
     if body == b'EOF':
         print('Ya mande todo el archivo ', query_coordinator.parse_mode)
-        middleware.stop_consuming()
         query_coordinator.send_EOF()
+        query_coordinator.change_parse_mode('reviews')
         return
     
     batch = deserialize_titles_message(body)
-
-    #if query_coordinator.parse_mode == 'reviews':
-    #    for d in batch:
-    #        if d['Title'] == 'Pride and Prejudice':
-    #            print(1)
 
     query_coordinator.send_to_pipelines(batch)
 
 
 def main():
-    time.sleep(30)
+    time.sleep(15)
     middleware = Middleware()
     query_coordinator = QueryCoordinator(middleware)
     
@@ -35,22 +30,14 @@ def main():
                    }
     middleware.define_exchange('data', queues_dict)
 
+    callback_with_params = lambda ch, method, properties, body: handle_data(body, query_coordinator)
 
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, middleware, query_coordinator, queues_dict)
     # Read the data from the server, parse it and fordward it
     middleware.receive_messages('query_coordinator', callback_with_params)
-
     middleware.consume()
-
-    query_coordinator.change_parse_mode('reviews')
-
-    middleware.receive_messages('query_coordinator', callback_with_params)
     
-    middleware.consume()
-
-    print(query_coordinator.temp)
 
     # Read the queries results
-    #middleware.receive_messages('query_coordinator', callback)
+    #middleware.receive_messages('', callback)
 
 main()

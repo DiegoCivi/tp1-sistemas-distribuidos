@@ -61,7 +61,7 @@ def handle_reviews_data(body, counter_dict, middleware):
       
             
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 
@@ -99,6 +99,19 @@ def main():
         # Ignore titles with no reviews
         if counter[0] == 0:
             continue
+
+        if title == 'Flirting with Disaster':
+            m = counter[1] / counter[0]
+            print("################## El mean para 'Flirting with Disaster' es: ", m, " con el counter ", counter)
+        elif title == 'Honest Illusions':
+            m = counter[1] / counter[0]
+            print("################## El mean para 'Honest Illusions' es: ", m, " con el counter ", counter)
+        elif title == 'Brainfade':
+            m = counter[1] / counter[0]
+            print("################## El mean para 'Brainfade' es: ", m, " con el counter ", counter)
+        elif title == 'The ice people':
+            m = counter[1] / counter[0]
+            print("################## El mean para 'The ice people' es: ", m, " con el counter ", counter)
         
         batch[title] = str(counter[1] / counter[0])
         batch_size += 1
