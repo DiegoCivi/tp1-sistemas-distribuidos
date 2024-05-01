@@ -4,15 +4,18 @@ from filters import accumulate_authors_decades
 import os
 import time
 
-def handle_data(body, middleware, counter_dict, eof_quantity, eof_counter):
+def handle_data(method, body, middleware, counter_dict, eof_quantity, eof_counter):
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == eof_quantity:
             middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
     accumulate_authors_decades(data, counter_dict)
+
+    middleware.ack_message(method)
     
 def main():
     time.sleep(15)
@@ -26,7 +29,7 @@ def main():
     counter_dict = {}
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, middleware, counter_dict, eof_quantity, eof_counter)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, middleware, counter_dict, eof_quantity, eof_counter)
     
     # Declare the output queue
     middleware.receive_messages(data_source_name, callback_with_params)

@@ -4,31 +4,36 @@ from filters import filter_by, title_condition
 import os
 import time
 
-def handle_data(body, title, data_output_name, middleware, counter):
+def handle_data(method, body, title, data_output_name, middleware, counter):
     if body == b'EOF':
         middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
     desired_data = filter_by(data, title_condition, title)
     if not desired_data:
+        middleware.ack_message(method)
         return
     counter[0] = counter[0] + len(desired_data)
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
+
+    middleware.ack_message(method)
     
-def handle_eof(body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
+def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
     if body != b'EOF':
         print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
     
-    # middleware.ack_message(method)
     eof_counter[0] += 1
     print('Me llego un eof, llevo ', eof_counter[0])
     if eof_counter[0] == worker_quantity:
         for _ in range(next_worker_quantity):
             print("MANDO UN EOF")
             middleware.send_message(data_output_name, 'EOF')
-        middleware.stop_consuming() 
+        middleware.stop_consuming()
+
+    middleware.ack_message(method)
 
 def main():
     time.sleep(15)
@@ -45,13 +50,9 @@ def main():
     counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, title_to_filter, data_output_name, middleware, counter)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, title_to_filter, data_output_name, middleware, counter)
     
-    # Declare the source queue
-    #middleware.declare_queue(data_source_name)
-    
-    # Declare the output queue
-    #middleware.declare_queue(data_output_name)
+
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
 
@@ -59,7 +60,7 @@ def main():
     # after receiving WORKER_QUANTITY EOF messages.
     if worker_id == '0':
         eof_counter = [0]
-        eof_callback = lambda ch, method, properties, body: handle_eof(body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
+        eof_callback = lambda ch, method, properties, body: handle_eof(method, body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
         middleware.receive_messages(eof_queue, eof_callback)
         middleware.consume()
     else:

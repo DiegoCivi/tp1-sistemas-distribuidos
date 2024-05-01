@@ -2,7 +2,7 @@ import pika
 
 ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
 PREFETCH_COUNT = 1
-AUTO_ACK_MODE = True
+AUTO_ACK_MODE = False
 
 class Middleware:
 
@@ -43,7 +43,6 @@ class Middleware:
 
         self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
         self._channel.basic_consume(queue, callback, auto_ack=AUTO_ACK_MODE)
-        # self._consume(queue, callback)
 
     def subscribe(self, exchange, queue, callback):
         if exchange not in self._exchanges:
@@ -53,7 +52,6 @@ class Middleware:
         
         self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
         self._channel.basic_consume(queue, callback, auto_ack=AUTO_ACK_MODE)
-        # self._consume(queue, callback)
 
     def define_exchange(self, exchange, queues_dict):
         self._declare_exchange(exchange, 'direct') # TODO: agregar esto a los parametros
@@ -61,6 +59,9 @@ class Middleware:
             self._declare_queue(queue)
             for rk in routing_keys:
                 self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=rk)
+    
+    def ack_message(self, method):
+        self._channel.basic_ack(delivery_tag=method.delivery_tag)
 
     def consume(self):
         self._channel.start_consuming()
