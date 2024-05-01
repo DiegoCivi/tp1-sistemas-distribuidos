@@ -31,7 +31,7 @@ def handle_eof(body, eof_counter, worker_quantity, data_output_name, next_worker
         middleware.stop_consuming() 
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 

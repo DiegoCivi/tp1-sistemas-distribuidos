@@ -101,203 +101,237 @@ services:
       - rabbitmq
     links: 
       - rabbitmq
+    environment:
+      - EOF_TITLES_MAX_SUBS=3
+      - EOF_REVIEWS_MAX_SUBS=3
 
 # QUERY 1
 
-  filter_category_computers_worker0:
-    container_name: filter_category_computers_worker0
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
+  # filter_category_computers_worker0:
+  #   container_name: filter_category_computers_worker0
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=0
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - CATEGORY=Computers
+  #     - SOURCE_QUEUE=q1_titles
+  #     - DATA_SOURCE_NAME=data
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_category
 
-  filter_category_computers_worker1:
-    container_name: filter_category_computers_worker1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=1
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
+  # filter_category_computers_worker1:
+  #   container_name: filter_category_computers_worker1
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=1
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - CATEGORY=Computers
+  #     - SOURCE_QUEUE=q1_titles
+  #     - DATA_SOURCE_NAME=data
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_category
 
-  filter_category_computers_worker2:
-    container_name: filter_category_computers_worker2
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=2
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
+  # filter_category_computers_worker2:
+  #   container_name: filter_category_computers_worker2
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=2
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - CATEGORY=Computers
+  #     - SOURCE_QUEUE=q1_titles
+  #     - DATA_SOURCE_NAME=data
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_category
 
-  filter_title_worker0:
-    container_name: filter_title_worker0
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
+  # filter_title_worker0:
+  #   container_name: filter_title_worker0
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=0
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - TITLE_TO_FILTER=distributed
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_title
 
-  filter_title_worker1:
-    container_name: filter_title_worker1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=1
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
+  # filter_title_worker1:
+  #   container_name: filter_title_worker1
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=1
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - TITLE_TO_FILTER=distributed
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_title
 
-  filter_title_worker2:
-    container_name: filter_title_worker2
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=2
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
+  # filter_title_worker2:
+  #   container_name: filter_title_worker2
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=2
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - TITLE_TO_FILTER=distributed
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_title
   
-  filter_year_worker0:
-    container_name: filter_year_worker0
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=1
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=????????????
-      - EOF_QUEUE=QUEUE_Q1|eof_year
+  # filter_year_worker0:
+  #   container_name: filter_year_worker0
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=0
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=1
+  #     - YEAR_RANGE_TO_FILTER=2000,2023
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+  #     - DATA_OUTPUT_NAME=????????????
+  #     - EOF_QUEUE=QUEUE_Q1|eof_year
 
-  filter_year_worker1:
-    container_name: filter_year_worker1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=1
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=1
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=????????????
-      - EOF_QUEUE=QUEUE_Q1|eof_year
+  # filter_year_worker1:
+  #   container_name: filter_year_worker1
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=1
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=1
+  #     - YEAR_RANGE_TO_FILTER=2000,2023
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+  #     - DATA_OUTPUT_NAME=????????????
+  #     - EOF_QUEUE=QUEUE_Q1|eof_year
 
-  filter_year_worker2:
-    container_name: filter_year_worker2
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    depends_on:
-      - rabbitmq
-    links: 
-      - rabbitmq
-    environment:
-      - WORKER_ID=2
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=1
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=????????????
-      - EOF_QUEUE=QUEUE_Q1|eof_year
+  # filter_year_worker2:
+  #   container_name: filter_year_worker2
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+  #   depends_on:
+  #     - rabbitmq
+  #   links: 
+  #     - rabbitmq
+  #   environment:
+  #     - WORKER_ID=2
+  #     - WORKER_QUANTITY=3
+  #     - NEXT_WORKER_QUANTITY=1
+  #     - YEAR_RANGE_TO_FILTER=2000,2023
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+  #     - DATA_OUTPUT_NAME=????????????
+  #     - EOF_QUEUE=QUEUE_Q1|eof_year
 
   # QUERY 2    
 
-  # decade_counter_worker:
-  #  container_name: decade_counter_worker
-  #  build:
-  #    context: .
-  #    dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
-  #  depends_on:
-  #    - rabbitmq
-  #  links: 
-  #    - rabbitmq
-  #  environment:
-  #    - PYTHONUNBUFFERED=1
-  #    - DATA_SOURCE_NAME=data
-  #    - DATA_OUTPUT_NAME=Q2|global_decade_counter_worker
+  decade_counter_worker0:
+   container_name: decade_counter_worker0
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - WORKER_ID=0
+     - DATA_SOURCE_NAME=data
+     - SOURCE_QUEUE=q2_titles
+     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
 
-  # global_decade_counter_worker:
-  #  container_name: global_decade_counter_worker
-  #  build:
-  #    context: .
-  #    dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
-  #  depends_on:
-  #    - rabbitmq
-  #  links: 
-  #    - rabbitmq
-  #  environment:
-  #    - PYTHONUNBUFFERED=1
-  #    - DATA_SOURCE_NAME=Q2|global_decade_counter_worker
-  #    - DATA_OUTPUT_NAME=nose
+  decade_counter_worker1:
+   container_name: decade_counter_worker1
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - WORKER_ID=1
+     - DATA_SOURCE_NAME=data
+     - SOURCE_QUEUE=q2_titles
+     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+
+  decade_counter_worker2:
+   container_name: decade_counter_worker2
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - WORKER_ID=2
+     - DATA_SOURCE_NAME=data
+     - SOURCE_QUEUE=q2_titles
+     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+
+  global_decade_counter_worker:
+   container_name: global_decade_counter_worker
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - EOF_QUANTITY=3
+     - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
+     - DATA_OUTPUT_NAME=nose
 
 # QUERY 3
 

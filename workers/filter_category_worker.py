@@ -34,7 +34,7 @@ def handle_eof(body, eof_counter, worker_quantity, data_output_name, next_worker
 
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 

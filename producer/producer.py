@@ -4,7 +4,7 @@ import pika
 
 def main():
     print('Empeze soy producer')
-    time.sleep(30)
+    time.sleep(15)
     print('Me conecto a rabbitmq')
 
     #connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))

@@ -2,6 +2,7 @@ from middleware import Middleware
 from serialization import deserialize_titles_message, deserialize_into_titles_dict
 from query_coordinator import QueryCoordinator
 import time
+import os
 
 
 def handle_data(method, body, query_coordinator):
@@ -19,9 +20,13 @@ def handle_data(method, body, query_coordinator):
     # query_coordinator.middleware.ack_message(method)
 
 def main():
-    time.sleep(30)
+    time.sleep(15)
     middleware = Middleware()
-    query_coordinator = QueryCoordinator(middleware)
+
+    eof_titles_max_subscribers = int(os.getenv('EOF_TITLES_MAX_SUBS'))
+    eof_reviews_max_subscribers = int(os.getenv('EOF_REVIEWS_MAX_SUBS'))
+
+    query_coordinator = QueryCoordinator(middleware, eof_titles_max_subscribers, eof_reviews_max_subscribers)
     
     
     queues_dict = {'q1_titles': ['q1_titles', 'EOF_titles'], 'q2_titles': ['q2_titles', 'EOF_titles'], 

@@ -6,12 +6,14 @@ REVIEWS_MODE = 'reviews'
 
 class QueryCoordinator:
 
-    def __init__(self, middleware):
+    def __init__(self, middleware, eof_titles_max_subscribers, eof_reviews_max_subscribers):
         """
         Initializes the query coordinator with the title parse mode
         """
         self.parse_mode = TITLES_MODE
         self.middleware = middleware
+        self.eof_titles_max_subscribers = eof_titles_max_subscribers
+        self.eof_reviews_max_subscribers = eof_reviews_max_subscribers
     
     def change_parse_mode(self, mode):
         """
@@ -26,9 +28,15 @@ class QueryCoordinator:
         Sends the EOF message to the middleware
         """
         routing_key = 'EOF_' + self.parse_mode
-        self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
-        self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
-        self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
+
+        if self.parse_mode == TITLES_MODE:
+            eof_quantity = self.eof_titles_max_subscribers
+        else:
+            eof_quantity = self.eof_reviews_max_subscribers
+
+        for _ in range(eof_quantity):
+            self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
+
         if self.parse_mode == REVIEWS_MODE:
             self.middleware.stop_consuming()
 
@@ -52,8 +60,8 @@ class QueryCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
          
-        self.parse_and_send_q1(batch)
-        #self.parse_and_send_q2(batch)
+        #self.parse_and_send_q1(batch)
+        self.parse_and_send_q2(batch)
         #self.parse_and_send_q3(batch)
         #self.parse_and_send_q5(batch)
 
@@ -77,6 +85,8 @@ class QueryCoordinator:
         self.parse_and_send(batch, desired_keys, 'q1_titles')
     
     def parse_and_send_q2(self, batch):
+        if self.parse_mode == REVIEWS_MODE:
+            return
         desired_keys = ['authors', 'publishedDate']
         batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'])
         self.parse_and_send(batch, desired_keys, 'q2_titles')
