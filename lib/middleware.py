@@ -71,8 +71,11 @@ class Middleware:
     def close_connection(self):
         self._connection.close()
 
-    def stop_consuming(self):
-        self._channel.stop_consuming()
+    def stop_consuming(self, method=None):
+        if method != None:
+            self._channel.stop_consuming(consumer_tag=method.consumer_tag)
+        else:    
+            self._channel.stop_consuming()
 
             
         

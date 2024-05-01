@@ -4,14 +4,15 @@ from filters import hash_title
 import os
 import time
 
-def handle_data(body, dataset_and_query, data_output_name, middleware, hash_modulus, eof_counter):
+def handle_data(method, body, dataset_and_query, data_output_name, middleware, hash_modulus, eof_counter):
     if body == b'EOF':
         eof_counter[0] += 1
         routing_key = 'EOF' + '_' + dataset_and_query
         print('Me llego un EOF para la routing_key ', routing_key)
         middleware.publish_message(data_output_name, 'direct', routing_key, "EOF")
-        if eof_counter[0] == 2:
-            middleware.stop_consuming()
+        middleware.stop_consuming(method)
+        #if eof_counter[0] == 2:
+        #    middleware.stop_consuming()
         return
     data = deserialize_titles_message(body)
 
@@ -44,11 +45,11 @@ def main():
 
     # Define a callback wrapper
     eof_counter = [0]
-    callback_with_params_titles_q3 = lambda ch, method, properties, body: handle_data(body, 'titles_Q3', data_output_name, middleware, hash_modulus, eof_counter)
-    callback_with_params_reviews_q3 = lambda ch, method, properties, body: handle_data(body, 'reviews_Q3', data_output_name, middleware, hash_modulus, eof_counter)
+    callback_with_params_titles_q3 = lambda ch, method, properties, body: handle_data(method, body, 'titles_Q3', data_output_name, middleware, hash_modulus, eof_counter)
+    callback_with_params_reviews_q3 = lambda ch, method, properties, body: handle_data(method, body, 'reviews_Q3', data_output_name, middleware, hash_modulus, eof_counter)
 
-    callback_with_params_titles_q5 = lambda ch, method, properties, body: handle_data(body, 'titles_Q5', data_output_name, middleware, hash_modulus, eof_counter)
-    callback_with_params_reviews_q5 = lambda ch, method, properties, body: handle_data(body, 'reviews_Q5', data_output_name, middleware, hash_modulus, eof_counter)
+    callback_with_params_titles_q5 = lambda ch, method, properties, body: handle_data(method, body, 'titles_Q5', data_output_name, middleware, hash_modulus, eof_counter)
+    callback_with_params_reviews_q5 = lambda ch, method, properties, body: handle_data(method, body, 'reviews_Q5', data_output_name, middleware, hash_modulus, eof_counter)
 
     
     # Declare the output exchange for query 3 and query 5
