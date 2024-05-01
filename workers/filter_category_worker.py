@@ -6,14 +6,11 @@ import time
 
 def handle_data(method, body, category, data_output_name, middleware, counter):
     if body == b'EOF':
-        # middleware.ack_message(method)
         middleware.stop_consuming()
         middleware.ack_message(method)
-
         return
     data = deserialize_titles_message(body)
     
-    # middleware.ack_message(method)
     desired_data = filter_by(data, category_condition, category)
     if not desired_data:
         middleware.ack_message(method)
@@ -28,7 +25,6 @@ def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, nex
     if body != b'EOF':
         print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
     
-    # middleware.ack_message(method)
     eof_counter[0] += 1
     print('Me llego un eof, llevo ', eof_counter[0])
     if eof_counter[0] == worker_quantity:

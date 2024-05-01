@@ -451,7 +451,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=0
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       
   reviews_counter_worker2:
@@ -465,7 +465,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=1
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       
   reviews_counter_worker3:
@@ -479,7 +479,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=2
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
   
   reviews_counter_worker4:
@@ -493,7 +493,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=3
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
 
   filter_review_quantity_worker:

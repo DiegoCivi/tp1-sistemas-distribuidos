@@ -11,6 +11,7 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
         print('Me llego un EOF para la routing_key ', routing_key)
         middleware.publish_message(data_output_name, 'direct', routing_key, "EOF")
         middleware.stop_consuming(method)
+        middleware.ack_message(method)
         #if eof_counter[0] == 2:
         #    middleware.stop_consuming()
         return
@@ -32,7 +33,9 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
         row_dictionary.pop('hashed_title')
         serialized_message = serialize_message([serialize_dict(row_dictionary)])
         routing_key = worker_id + '_' + dataset_and_query
-        middleware.publish_message(data_output_name, 'direct', routing_key, serialized_message) 
+        middleware.publish_message(data_output_name, 'direct', routing_key, serialized_message)
+    
+    middleware.ack_message(method)
     
 def main():
     time.sleep(15)
@@ -83,7 +86,5 @@ def main():
     # For Q5
     middleware.receive_messages(data_source4_name, callback_with_params_reviews_q5)
     middleware.consume()
-
-    print(temp)
 
 main()   
