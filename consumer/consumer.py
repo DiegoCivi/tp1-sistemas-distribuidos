@@ -22,8 +22,9 @@ class Main:
 
     def handle_data(self, body, method):
         print(body)
-        if self.counter == 10:
+        if body == b'EOF':
             self.mid.stop_consuming()
+            
         self.mid.ack_message(method)
         self.counter += 1
 

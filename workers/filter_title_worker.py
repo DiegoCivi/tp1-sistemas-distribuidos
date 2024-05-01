@@ -7,7 +7,6 @@ import time
 def handle_data(body, title, data_output_name, middleware, counter):
     if body == b'EOF':
         middleware.stop_consuming()
-        middleware.send_message(data_output_name, "EOF")
         return
     data = deserialize_titles_message(body)
 
@@ -18,6 +17,19 @@ def handle_data(body, title, data_output_name, middleware, counter):
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
     
+def handle_eof(body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
+    if body != b'EOF':
+        print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
+    
+    # middleware.ack_message(method)
+    eof_counter[0] += 1
+    print('Me llego un eof, llevo ', eof_counter[0])
+    if eof_counter[0] == worker_quantity:
+        for _ in range(next_worker_quantity):
+            print("MANDO UN EOF")
+            middleware.send_message(data_output_name, 'EOF')
+        middleware.stop_consuming() 
+
 def main():
     time.sleep(30)
 
@@ -26,6 +38,10 @@ def main():
     title_to_filter = os.getenv('TITLE_TO_FILTER')
     data_source_name = os.getenv('DATA_SOURCE_NAME')
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
+    worker_id = os.getenv('WORKER_ID')
+    eof_queue = os.getenv('EOF_QUEUE')
+    worker_quantity = int(os.getenv('WORKER_QUANTITY'))
+    next_worker_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
     counter = [0]
 
     # Define a callback wrapper
@@ -38,6 +54,17 @@ def main():
     #middleware.declare_queue(data_output_name)
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
+
+    # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
+    # after receiving WORKER_QUANTITY EOF messages.
+    if worker_id == '0':
+        eof_counter = [0]
+        eof_callback = lambda ch, method, properties, body: handle_eof(body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
+        middleware.receive_messages(eof_queue, eof_callback)
+        middleware.consume()
+    else:
+        middleware.send_message(eof_queue, 'EOF')
+
     print(f"La cantidad de libros con 'distributed' en el título es: [{counter[0]}]")
 
 main()

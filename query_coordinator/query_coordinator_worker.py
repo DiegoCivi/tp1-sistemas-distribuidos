@@ -7,7 +7,7 @@ import time
 def handle_data(method, body, query_coordinator):
     if body == b'EOF':
         print('Ya mande todo el archivo ', query_coordinator.parse_mode)
-        query_coordinator.middleware.ack_message(method)
+        # query_coordinator.middleware.ack_message(method)
         query_coordinator.send_EOF()
         query_coordinator.change_parse_mode('reviews')
         return
@@ -16,7 +16,7 @@ def handle_data(method, body, query_coordinator):
 
     query_coordinator.send_to_pipelines(batch)
 
-    query_coordinator.middleware.ack_message(method)
+    # query_coordinator.middleware.ack_message(method)
 
 def main():
     time.sleep(30)

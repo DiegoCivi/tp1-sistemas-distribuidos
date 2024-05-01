@@ -62,7 +62,7 @@ class Middleware:
             for rk in routing_keys:
                 self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=rk)
 
-    def consume(self, prefetch=PREFETCH_COUNT):
+    def consume(self):
         self._channel.start_consuming()
 
     def ack_message(self, method):

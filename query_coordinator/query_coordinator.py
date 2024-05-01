@@ -27,6 +27,8 @@ class QueryCoordinator:
         """
         routing_key = 'EOF_' + self.parse_mode
         self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
+        self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
+        self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
         if self.parse_mode == REVIEWS_MODE:
             self.middleware.stop_consuming()
 
