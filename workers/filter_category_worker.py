@@ -4,22 +4,27 @@ from filters import filter_by, category_condition
 import os
 import time
 
-def handle_data(body, category, data_output_name, middleware, counter):
+def handle_data(method, body, category, data_output_name, middleware, counter):
     if body == b'EOF':
         # middleware.ack_message(method)
         middleware.stop_consuming()
+        middleware.ack_message(method)
+
         return
     data = deserialize_titles_message(body)
     
     # middleware.ack_message(method)
     desired_data = filter_by(data, category_condition, category)
     if not desired_data:
+        middleware.ack_message(method)
         return
     counter[0] = counter[0] + len(desired_data)
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
 
-def handle_eof(body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
+    middleware.ack_message(method)
+
+def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
     if body != b'EOF':
         print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
     
@@ -30,11 +35,13 @@ def handle_eof(body, eof_counter, worker_quantity, data_output_name, next_worker
         for _ in range(next_worker_quantity):
             print("MANDO UN EOF")
             middleware.send_message(data_output_name, 'EOF')
-        middleware.stop_consuming() 
+        middleware.stop_consuming()
+
+    middleware.ack_message(method)
 
     
 def main():
-    time.sleep(30)
+    time.sleep(15)
 
     middleware = Middleware()
 
@@ -49,7 +56,7 @@ def main():
     counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, category_to_filter, data_output_name, middleware, counter)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, category_to_filter, data_output_name, middleware, counter)
 
     # Declare and subscribe to the titles exchange
     middleware.define_exchange(data_source_name, {source_queue: [source_queue]})
@@ -63,7 +70,7 @@ def main():
     if worker_id == '0':
         eof_counter = [0]
         print('Voy a leer los eof de mis workers por la cola ', eof_queue)
-        eof_callback = lambda ch, method, properties, body: handle_eof(body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
+        eof_callback = lambda ch, method, properties, body: handle_eof(method, body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
         middleware.receive_messages(eof_queue, eof_callback)
         middleware.consume()
     else:

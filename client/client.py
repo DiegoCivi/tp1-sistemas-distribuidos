@@ -25,7 +25,7 @@ def scrape_and_send_file(file_reader, socket):
 
 def main():
     #print("Empezando")
-    time.sleep(30)
+    time.sleep(15)
     #print("Termine de dormir")
     host = os.getenv('HOST')
     port = os.getenv('PORT')
@@ -37,6 +37,7 @@ def main():
         try:
             print("Connecting to server. Attempt: ", i)
             conn.connect((host, int(port)))
+            time.sleep(1)
             break
         except:
             if i == CONNECT_TRIES - 1:
