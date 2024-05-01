@@ -7,6 +7,7 @@ import os
 import time
 
 CONNECT_TRIES = 5
+CONN_LOOP_LAPSE = 1
 
 def scrape_and_send_file(file_reader, socket):
     """
@@ -37,6 +38,7 @@ def main():
         try:
             print("Connecting to server. Attempt: ", i)
             conn.connect((host, int(port)))
+            time.sleep(CONN_LOOP_LAPSE)
             break
         except:
             if i == CONNECT_TRIES - 1:

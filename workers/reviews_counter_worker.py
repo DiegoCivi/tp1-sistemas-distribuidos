@@ -65,7 +65,7 @@ def main():
 
     middleware = Middleware()
 
-    data_source1_name, data_source2_name = os.getenv('DATA_SOURCE_NAME').split(',')
+    data_source_name= os.getenv('DATA_SOURCE_NAME')
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
     worker_id = os.getenv('WORKER_ID')
     counter_dict = {} 
@@ -82,16 +82,16 @@ def main():
     reviews_queue = worker_id + '_reviews_Q3'
 
     # Declare and subscribe to the titles queue in the exchange
-    middleware.define_exchange('Q3|data', {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
+    middleware.define_exchange(data_source_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
 
     # Read from the titles queue
     print("Voy a leer titles")
-    middleware.subscribe('Q3|data', titles_queue, callback_with_params_titles)
+    middleware.subscribe(data_source_name, titles_queue, callback_with_params_titles)
     middleware.consume()
 
     # Read from the reviews queue
     print("Voy a leer reviews")
-    middleware.subscribe('Q3|data', reviews_queue,  callback_with_params_reviews)
+    middleware.subscribe(data_source_name, reviews_queue,  callback_with_params_reviews)
     middleware.consume()
 
     #print(counter_dict)

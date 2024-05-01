@@ -451,7 +451,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=0
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       
   reviews_counter_worker2:
@@ -465,7 +465,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=1
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       
   reviews_counter_worker3:
@@ -479,7 +479,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=2
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
   
   reviews_counter_worker4:
@@ -493,7 +493,7 @@ services:
       - rabbitmq
     environment:
       - WORKER_ID=3
-      - DATA_SOURCE_NAME=Q3|titles,Q3|reviews
+      - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
 
   filter_review_quantity_worker:
@@ -507,43 +507,78 @@ services:
       - rabbitmq
     environment:
       - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
-      - DATA_OUTPUT_NAME=Q3|query_management_node,Q4|fist_filter_of_q4
+      - DATA_OUTPUT_NAME=Q3|query_management_node,QUEUE_Q4|top10_worker
       - MIN_QUANTITY=500
       - WORKERS_QUANTITY=4
+      - NEXT_WORKERS_QUANTITY=3
       
 
 
 # QUERY 4
 
-  # top_10_worker1:
-  #   container_name: top_10_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=
-  #     - DATA_OUTPUT_NAME=
-  #     - LAST=0
+  top_10_worker0:
+    container_name: top_10_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=1
+      - LAST=0
 
-  # top_10_worker2:
-  #   container_name: top_10_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=
-  #     - DATA_OUTPUT_NAME=
-  #     - LAST=1
+  top_10_worker1:
+    container_name: top_10_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=3
+      - LAST=0
+
+  top_10_worker2:
+    container_name: top_10_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=3
+      - LAST=0
+
+  top_10_worker3:
+    container_name: top_10_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_last_worker
+      - DATA_OUTPUT_NAME=?????????????
+      - WORKERS_QUANTITY=3
+      - LAST=1
 
 # QUERY 5
 
