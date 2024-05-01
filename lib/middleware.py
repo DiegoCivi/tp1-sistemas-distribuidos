@@ -2,6 +2,7 @@ import pika
 
 ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
 PREFETCH_COUNT = 1
+AUTO_ACK_MODE = True
 
 class Middleware:
 
@@ -40,7 +41,8 @@ class Middleware:
         if queue not in self._queues:
             self._declare_queue(queue)
 
-        self._channel.basic_consume(queue, callback, auto_ack=True)
+        self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
+        self._channel.basic_consume(queue, callback, auto_ack=AUTO_ACK_MODE)
         # self._consume(queue, callback)
 
     def subscribe(self, exchange, queue, callback):
@@ -49,7 +51,8 @@ class Middleware:
         elif queue not in self._queues:
             raise Exception(f'Queue {queue} not declared/binded before')
         
-        self._channel.basic_consume(queue, callback, auto_ack=True)
+        self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
+        self._channel.basic_consume(queue, callback, auto_ack=AUTO_ACK_MODE)
         # self._consume(queue, callback)
 
     def define_exchange(self, exchange, queues_dict):
@@ -59,20 +62,20 @@ class Middleware:
             for rk in routing_keys:
                 self._channel.queue_bind(exchange=exchange, queue=queue, routing_key=rk)
 
-    # def _consume(self, queue, callback):
-    #     self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
-    #     self._channel.basic_consume(queue, callback, auto_ack=True)
-    #     self._channel.start_consuming()
-
-    def consume(self, prefetch=PREFETCH_COUNT):
-        self._channel.basic_qos(prefetch_count=prefetch)
+    def consume(self):
         self._channel.start_consuming()
+
+    def ack_message(self, method):
+        self._channel.basic_ack(delivery_tag=method.delivery_tag)
 
     def close_connection(self):
         self._connection.close()
 
-    def stop_consuming(self):
-        self._channel.stop_consuming()
+    def stop_consuming(self, method=None):
+        if method != None:
+            self._channel.stop_consuming(consumer_tag=method.consumer_tag)
+        else:    
+            self._channel.stop_consuming()
 
             
         

@@ -24,11 +24,9 @@ def main():
     #    print(f"No hay uniones vinculadas al intercambiador '{nombre_exchange}'.")
 
     mid = Middleware()
-    #mid.declare_queue("chan")
-
     for i in range(23):
         mid.send_message("chan", str(i))
-
+    mid.send_message('chan', 'EOF')
     print("Termine")
 #
     #dictionary = {'d': 10, 'b': 10, 'p': 2}

@@ -10,7 +10,7 @@ def handle_data(body, data_output2_name, middleware, minimum_quantity, filtered_
         eof_counter[0] += 1
         if eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
-            middleware.send_message(data_output2_name, "EOF")
+            # middleware.send_message(data_output2_name, "EOF")
         return
     
     data = deserialize_titles_message(body)
@@ -26,15 +26,16 @@ def main():
 
     middleware = Middleware()
 
-    minimum_quantity = os.getenv('MIN_QUANTITY')
+    minimum_quantity = int(os.getenv('MIN_QUANTITY'))
     data_source_name = os.getenv('DATA_SOURCE_NAME')
     data_output1_name, data_output2_name = os.getenv('DATA_OUTPUT_NAME').split(',')
-    workers_quantity = os.getenv('WORKERS_QUANTITY')
+    workers_quantity = int(os.getenv('WORKERS_QUANTITY'))
+    next_workers_quantity = int(os.getenv('NEXT_WORKERS_QUANTITY'))
     filtered_titles = {}
     eof_counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output2_name, middleware, int(minimum_quantity), filtered_titles, eof_counter, int(workers_quantity))
+    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output2_name, middleware, minimum_quantity, filtered_titles, eof_counter, workers_quantity)
     
     # Declare the output queue to the server
     #middleware.declare_queue(data_output1_name)
@@ -50,8 +51,10 @@ def main():
     print(f"La cant de titulos con {minimum_quantity} reviews es: {len(filtered_titles)} con el dict: {filtered_titles}")
 
     serialized_data = serialize_message([serialize_dict(filtered_titles)])
-    middleware.send_message('top_10', serialized_data)
-    middleware.send_message('top_10', 'EOF')
+    print("El meensaje serializadoa  amndar es, ", serialized_data)
+    middleware.send_message(data_output2_name, serialized_data)
+    for _ in range(next_workers_quantity):
+        middleware.send_message(data_output2_name, 'EOF')
 
 
 

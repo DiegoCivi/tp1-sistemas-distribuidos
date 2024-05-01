@@ -21,10 +21,11 @@ class Main:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
     def handle_data(self, body, method):
-        if self.counter == 10:
-            self.mid.stop_consuming()
-        self.mid._channel.basic_ack(delivery_tag=method.delivery_tag)
         print(body)
+        if body == b'EOF':
+            self.mid.stop_consuming()
+            
+        self.mid.ack_message(method)
         self.counter += 1
 
 
