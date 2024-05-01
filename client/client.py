@@ -37,6 +37,7 @@ def main():
         try:
             print("Connecting to server. Attempt: ", i)
             conn.connect((host, int(port)))
+            time.sleep(1)
             break
         except:
             if i == CONNECT_TRIES - 1:
