@@ -4,9 +4,10 @@ from query_coordinator import QueryCoordinator
 import time
 
 
-def handle_data(body, query_coordinator):
+def handle_data(method, body, query_coordinator):
     if body == b'EOF':
         print('Ya mande todo el archivo ', query_coordinator.parse_mode)
+        query_coordinator.middleware.ack_message(method)
         query_coordinator.send_EOF()
         query_coordinator.change_parse_mode('reviews')
         return
@@ -15,9 +16,10 @@ def handle_data(body, query_coordinator):
 
     query_coordinator.send_to_pipelines(batch)
 
+    query_coordinator.middleware.ack_message(method)
 
 def main():
-    time.sleep(15)
+    time.sleep(30)
     middleware = Middleware()
     query_coordinator = QueryCoordinator(middleware)
     
@@ -28,7 +30,7 @@ def main():
                    }
     middleware.define_exchange('data', queues_dict)
 
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, query_coordinator)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, query_coordinator)
 
     # Read the data from the server, parse it and fordward it
     middleware.receive_messages('query_coordinator', callback_with_params)

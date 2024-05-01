@@ -12,8 +12,8 @@ class Main:
         #if os.getenv('HOST') == '2':
         #    time.sleep(25)
         #else:
-        #    time.sleep(15)
-        time.sleep(15)
+        #    time.sleep(30)
+        time.sleep(30)
         self.mid = Middleware()
         self.id = os.getenv('HOST')
         self.counter = 0
@@ -21,10 +21,10 @@ class Main:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
     def handle_data(self, body, method):
+        print(body)
         if self.counter == 10:
             self.mid.stop_consuming()
-        self.mid._channel.basic_ack(delivery_tag=method.delivery_tag)
-        print(body)
+        self.mid.ack_message(method)
         self.counter += 1
 
 

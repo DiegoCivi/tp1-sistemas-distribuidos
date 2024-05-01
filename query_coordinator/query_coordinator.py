@@ -50,10 +50,10 @@ class QueryCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
          
-        #self.parse_and_send_q1(batch)
+        self.parse_and_send_q1(batch)
         #self.parse_and_send_q2(batch)
         #self.parse_and_send_q3(batch)
-        self.parse_and_send_q5(batch)
+        #self.parse_and_send_q5(batch)
 
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []
@@ -69,6 +69,8 @@ class QueryCoordinator:
         Parses the rows of the batch to return only
         required columns in the query 1
         """
+        if self.parse_mode == REVIEWS_MODE:
+            return
         desired_keys = ['Title', 'publishedDate', 'categories', 'authors', 'publisher']
         self.parse_and_send(batch, desired_keys, 'q1_titles')
     

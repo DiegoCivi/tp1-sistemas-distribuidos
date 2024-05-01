@@ -1,4 +1,4 @@
-FROM rabbitmq:latest
+FROM rabbitmq:3.9.16-management-alpine
 
 RUN apk update && \
     apk add --no-cache python3 py3-pip && \

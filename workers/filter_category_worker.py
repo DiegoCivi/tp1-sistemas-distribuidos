@@ -4,8 +4,9 @@ from filters import filter_by, category_condition
 import os
 import time
 
-def handle_data(body, category, data_output_name, middleware, counter):
+def handle_data(method, body, category, data_output_name, middleware, counter):
     if body == b'EOF':
+        middleware.ack_message(method)
         middleware.stop_consuming()
         middleware.send_message(data_output_name, "EOF")
         return
@@ -17,9 +18,11 @@ def handle_data(body, category, data_output_name, middleware, counter):
     counter[0] = counter[0] + len(desired_data)
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
+
+    middleware.ack_message(method)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -30,7 +33,7 @@ def main():
     counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, category_to_filter, data_output_name, middleware, counter)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, category_to_filter, data_output_name, middleware, counter)
 
     # Declare and subscribe to the titles exchange
     middleware.define_exchange(data_source_name, {source_queue: [source_queue]})

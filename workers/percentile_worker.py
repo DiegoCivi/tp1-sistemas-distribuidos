@@ -22,7 +22,7 @@ def handle_data(body, data_output2_name, middleware, titles_with_sentiment, eof_
 
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
