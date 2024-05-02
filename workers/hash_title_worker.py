@@ -58,12 +58,18 @@ def main():
     # Declare the output exchange for query 3 and query 5
     middleware.define_exchange(data_output_name,   {'0_titles_Q3': ['0_titles_Q3', 'EOF_titles_Q3'], '1_titles_Q3': ['1_titles_Q3', 'EOF_titles_Q3'], 
                                              '2_titles_Q3': ['2_titles_Q3', 'EOF_titles_Q3'], '3_titles_Q3': ['3_titles_Q3', 'EOF_titles_Q3'],
+                                             '4_titles_Q3': ['4_titles_Q3', 'EOF_titles_Q3'], '5_titles_Q3': ['5_titles_Q3', 'EOF_titles_Q3'],
                                              '0_reviews_Q3': ['0_reviews_Q3', 'EOF_reviews_Q3'], '1_reviews_Q3': ['1_reviews_Q3', 'EOF_reviews_Q3'], 
                                              '2_reviews_Q3': ['2_reviews_Q3', 'EOF_reviews_Q3'], '3_reviews_Q3': ['3_reviews_Q3', 'EOF_reviews_Q3'],
+                                             '4_reviews_Q3': ['4_reviews_Q3', 'EOF_reviews_Q3'], '5_reviews_Q3': ['5_reviews_Q3', 'EOF_reviews_Q3'],
+
                                              '0_titles_Q5': ['0_titles_Q5', 'EOF_titles_Q5'], '1_titles_Q5': ['1_titles_Q5', 'EOF_titles_Q5'], 
                                              '2_titles_Q5': ['2_titles_Q5', 'EOF_titles_Q5'], '3_titles_Q5': ['3_titles_Q5', 'EOF_titles_Q5'],
+                                             '4_titles_Q5': ['4_titles_Q5', 'EOF_titles_Q5'], '5_titles_Q5': ['5_titles_Q5', 'EOF_titles_Q5'],
+
                                              '0_reviews_Q5': ['0_reviews_Q5', 'EOF_reviews_Q5'], '1_reviews_Q5': ['1_reviews_Q5', 'EOF_reviews_Q5'], 
-                                             '2_reviews_Q5': ['2_reviews_Q5', 'EOF_reviews_Q5'], '3_reviews_Q5': ['3_reviews_Q5', 'EOF_reviews_Q5']
+                                             '2_reviews_Q5': ['2_reviews_Q5', 'EOF_reviews_Q5'], '3_reviews_Q5': ['3_reviews_Q5', 'EOF_reviews_Q5'],
+                                             '4_reviews_Q5': ['4_reviews_Q5', 'EOF_reviews_Q5'], '5_reviews_Q5': ['5_reviews_Q5', 'EOF_reviews_Q5']
                                             })
 
     # Declare the source queue for the titles
