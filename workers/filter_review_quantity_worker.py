@@ -4,21 +4,22 @@ from filters import review_quantity_value
 import os
 import time
 
-# titulo:cant_reviews,sumatoria_ratings,autores
-def handle_data(body, data_output2_name, middleware, minimum_quantity, filtered_titles, eof_counter, workers_quantity):
+def handle_data(method, body, data_output2_name, middleware, minimum_quantity, filtered_titles, eof_counter, workers_quantity):
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
-            # middleware.send_message(data_output2_name, "EOF")
+            middleware.send_message(data_output2_name, "EOF")
+        middleware.ack_message(method)
         return
     
     data = deserialize_titles_message(body)
     
     desired_data = review_quantity_value(data, minimum_quantity)
-    #print(desired_data[0], len(desired_data[0]))
     for key, value in desired_data[0].items():
         filtered_titles[key] = value
+    
+    middleware.ack_message(method)
 
     
 def main():
@@ -35,16 +36,9 @@ def main():
     eof_counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output2_name, middleware, minimum_quantity, filtered_titles, eof_counter, workers_quantity)
-    
-    # Declare the output queue to the server
-    #middleware.declare_queue(data_output1_name)
-
-    # Declare the output queue to the query 4
-    #middleware.declare_queue(data_output2_name)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, data_output2_name, middleware, int(minimum_quantity), filtered_titles, eof_counter, int(workers_quantity))
 
     # Declare and subscribe to the titles exchange
-    #middleware.declare_queue(data_source_name)
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
 

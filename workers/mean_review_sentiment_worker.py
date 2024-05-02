@@ -3,34 +3,46 @@ from serialization import deserialize_titles_message, serialize_message, seriali
 import os
 import time
 
-def handle_titles_data(body, counter_dict, middleware):
+def handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof_counter):
     """
     Acumulates the quantity of reviews for each book 
     """
     if body == b'EOF':
-        middleware.stop_consuming()
+        eof_counter[0] += 1
+        if eof_counter[0] == eof_quantity:
+            middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
-    
+
     for row_dictionary in data:
         title = row_dictionary['Title']
-        if title == '101 favorite stories from the Bible':
-            print("EN titles me llego000")
+        ###################################
+        if "November of the Heart" in row_dictionary['Title']:
+            print(row_dictionary['Title'], ' ', 'titles')
+        ###################################
         counter_dict[title] = [0,0] # [reviews_quantity, review_sentiment_summation]
+    
+    middleware.ack_message(method)
 
-def handle_reviews_data(body, counter_dict, middleware):
+def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eof_counter):
     if body == b'EOF':
-        middleware.stop_consuming()
+        eof_counter[0] += 1
+        print('me llego un eof, tengo una cantidad de: ', eof_counter)
+        if eof_counter[0] == eof_quantity:
+            middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
     for row_dictionary in data:
+        ###################################
+        if "November of the Heart" in row_dictionary['Title']:
+            print(row_dictionary['Title'], ' ', 'reviews')
+        ###################################
         title = row_dictionary['Title']
         if title not in counter_dict:
             continue
-        
-        if title == '101 favorite stories from the Bible':
-            print("En REVIEWS me llega")
 
         text_sentiment = row_dictionary['text_sentiment']
         try:
@@ -43,21 +55,8 @@ def handle_reviews_data(body, counter_dict, middleware):
         counter[0] += 1
         counter[1] += text_sentiment 
         counter_dict[title] = counter
-
-        #for title, review_sentiment in row_dictionary.items():
-        #    if title not in counter_dict:
-        #        continue
-#
-        #    try:
-        #        review_sentiment = float(review_sentiment)
-        #    except Exception as e:
-        #        print(f"Error: [{e}] when parsing 'review/score' to float.")
-        #        continue
-#
-        #    counter = counter_dict[title]
-        #    counter[0] += 1
-        #    counter[1] += review_sentiment 
-        #    counter_dict[title] = counter
+    
+    middleware.ack_message(method)
       
             
 def main():
@@ -68,16 +67,19 @@ def main():
     data_source_name = os.getenv('DATA_SOURCE_NAME')
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
     worker_id = os.getenv('WORKER_ID')
+    eof_quantity = int(os.getenv('EOF_QUANTITY'))
+    eof_counter = [0]
     counter_dict = {} 
 
     # Define a callback wrappers
-    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(body, counter_dict, middleware)
-    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, middleware)
+    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof_counter)
+    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eof_counter)
 
     # The name of the queues the worker will read data
     titles_queue = worker_id + '_titles_Q5'
     reviews_queue = worker_id + '_reviews_Q5'
 
+    TEMP = [0]
     # Declare and subscribe to the titles queue in the exchange
     middleware.define_exchange(data_source_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
 
@@ -85,6 +87,8 @@ def main():
     print("Voy a leer titles")
     middleware.subscribe(data_source_name, titles_queue, callback_with_params_titles)
     middleware.consume()
+
+    eof_counter[0] = 0 
 
     # Read from the reviews queue
     print("Voy a leer reviews")
@@ -99,33 +103,24 @@ def main():
         # Ignore titles with no reviews
         if counter[0] == 0:
             continue
-
-        if title == 'Flirting with Disaster':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'Flirting with Disaster' es: ", m, " con el counter ", counter)
-        elif title == 'Honest Illusions':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'Honest Illusions' es: ", m, " con el counter ", counter)
-        elif title == 'Brainfade':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'Brainfade' es: ", m, " con el counter ", counter)
-        elif title == 'The ice people':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'The ice people' es: ", m, " con el counter ", counter)
         
         batch[title] = str(counter[1] / counter[0])
         batch_size += 1
         if batch_size == 100: # TODO: Maybe the 100 could be an env var
+            TEMP[0] += 1
             serialized_message = serialize_message([serialize_dict(batch)])
             middleware.send_message(data_output_name, serialized_message)
             batch = {}
             batch_size = 0
 
     if len(batch) != 0:
+        TEMP[0] += 1
         serialized_message = serialize_message([serialize_dict(batch)])
         middleware.send_message(data_output_name, serialized_message)
     
-
+    TEMP[0] +=1
+    print("ME LLEGARON ESTA CANTIDAD DE MENSAJES: ", TEMP)
+    print("MANDO EL EOF A PERECENTILE")
     middleware.send_message(data_output_name, "EOF")
     
 main()

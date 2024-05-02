@@ -11,6 +11,7 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
         print('Me llego un EOF para la routing_key ', routing_key)
         middleware.publish_message(data_output_name, 'direct', routing_key, "EOF")
         middleware.stop_consuming(method)
+        middleware.ack_message(method)
         #if eof_counter[0] == 2:
         #    middleware.stop_consuming()
         return
@@ -18,9 +19,16 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
 
     desired_data = hash_title(data)
 
-    for row_dictionary in desired_data:
+    for row_dictionary in data:
                 
         worker_id = str(row_dictionary['hashed_title'] % hash_modulus)
+        ###################################
+        if "November of the Heart" in row_dictionary['Title']:
+            if 'reviews_Q5' in dataset_and_query:
+                title = row_dictionary['Title']
+                sentiment = row_dictionary['text_sentiment']
+                print(title, ' con sentiment: ', sentiment,' con routing_key: ', worker_id, dataset_and_query, ' @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        ###################################
         #if dataset_and_query == 'reviews':
         #    if row_dictionary['Title'] == 'Pride and Prejudice':
         #        temp['contador'] = temp.get('contador', 0) + 1
@@ -32,7 +40,9 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
         row_dictionary.pop('hashed_title')
         serialized_message = serialize_message([serialize_dict(row_dictionary)])
         routing_key = worker_id + '_' + dataset_and_query
-        middleware.publish_message(data_output_name, 'direct', routing_key, serialized_message) 
+        middleware.publish_message(data_output_name, 'direct', routing_key, serialized_message)
+    
+    middleware.ack_message(method)
     
 def main():
     time.sleep(15)
@@ -62,10 +72,6 @@ def main():
                                              '0_reviews_Q5': ['0_reviews_Q5', 'EOF_reviews_Q5'], '1_reviews_Q5': ['1_reviews_Q5', 'EOF_reviews_Q5'], 
                                              '2_reviews_Q5': ['2_reviews_Q5', 'EOF_reviews_Q5'], '3_reviews_Q5': ['3_reviews_Q5', 'EOF_reviews_Q5']
                                             })
-    #middleware.declare_exchange(data_output1_name, 'direct')
-
-    # Declare the output exchange for reviews
-    #middleware.declare_exchange(data_output2_name, 'direct')
 
     # Declare the source queue for the titles
     print("Voy a recibir los titulos")
@@ -83,7 +89,5 @@ def main():
     # For Q5
     middleware.receive_messages(data_source4_name, callback_with_params_reviews_q5)
     middleware.consume()
-
-    print(temp)
 
 main()   

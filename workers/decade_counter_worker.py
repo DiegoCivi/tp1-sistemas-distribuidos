@@ -4,20 +4,24 @@ from filters import different_decade_counter
 import os
 import time
 
-def handle_data(body, data_output_name, middleware):
+def handle_data(method, body, data_output_name, middleware):
     if body == b'EOF':
         middleware.stop_consuming()
         middleware.send_message(data_output_name, "EOF")
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
     desired_data = different_decade_counter(data)
 
     if not desired_data:
+        middleware.ack_message(method)
         return
 
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
+
+    middleware.ack_message(method)
     
 def main():
     time.sleep(15)
@@ -30,7 +34,7 @@ def main():
 
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output_name, middleware)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, data_output_name, middleware)
     
     # Declare the output queue
     #middleware.declare_queue(data_output_name)
