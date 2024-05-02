@@ -42,10 +42,7 @@ def main():
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
 
-    print(f"La cant de titulos con {minimum_quantity} reviews es: {len(filtered_titles)} con el dict: {filtered_titles}")
-
     serialized_data = serialize_message([serialize_dict(filtered_titles)])
-    print("El meensaje serializadoa  amndar es, ", serialized_data)
     if serialized_data != '':
         middleware.send_message(data_output2_name, serialized_data)
         middleware.send_message(data_output1_name, serialized_data)

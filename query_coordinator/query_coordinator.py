@@ -116,7 +116,6 @@ class QueryCoordinator:
         else:
             data = data.decode('utf-8')
             data = data.split(ROW_SEPARATOR)
-            print('El mensaje de Q5 tiene un largo de ', len(data))
             return data
         
     def build_result_line(self, data, fields_to_print, query):
@@ -137,5 +136,4 @@ class QueryCoordinator:
                 line += str(top_position) +'.   TITLE: ' + title + '    ' + 'MEAN-RATING: ' +  mean_rating + '\n'
             return line
         else:
-            print(len(data))
             return " - ".join(data)

@@ -17,7 +17,7 @@ def scrape_and_send_file(file_reader, socket):
         file_batch = read_csv_batch(file_reader)
         serialized_message = serialize_message(file_batch)
         if not file_batch:
-            print("[scrape_and_send_file] Termine de leer el archivo")
+            print("Termine de leer el archivo")
             break
         write_socket(socket, serialized_message)
 
@@ -45,7 +45,7 @@ def main():
     
     scrape_and_send_file(titles_file_reader, conn)
     sendEOF(conn)
-    print("[CLIENT] Ya mande todo el archivo titles")
+    print("Ya mande todo el archivo titles")
     scrape_and_send_file(reviews_file_reader, conn)
     sendEOF(conn)
 

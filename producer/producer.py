@@ -7,22 +7,6 @@ def main():
     time.sleep(30)
     print('Me conecto a rabbitmq')
 
-    #connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
-    #channel = connection.channel()
-#
-    ## Nombre del intercambiador del cual quieres verificar las uniones
-    #nombre_exchange = 'mi_exchange'
-#
-    ## Obtener las uniones del intercambiador
-    #bindings = channel.exchange_bindings(nombre_exchange)
-#
-    #if bindings:
-    #    print(f"El intercambiador '{nombre_exchange}' está vinculado a las siguientes colas:")
-    #    for binding in bindings:
-    #        print(binding['queue'])
-    #else:
-    #    print(f"No hay uniones vinculadas al intercambiador '{nombre_exchange}'.")
-
     mid = Middleware()
     for i in range(23):
         mid.send_message("chan", str(i))

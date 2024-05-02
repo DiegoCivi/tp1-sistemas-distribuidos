@@ -23,15 +23,12 @@ def title_condition(row_dictionary, value):
     """
     Check if the title of the item is in the values list
     """
-    #print(row_dictionary)
     return value.lower() in row_dictionary['Title'].lower()
 
 def category_condition(row_dictionary, value):
     """
     Check if the category of the item is in the values list
     """
-    #if row_dictionary['title'] == 'Windows 98 Hints & Hacks':
-    #    print(f'La categoria del titulo es: {row_dictionary['categories']} y la categoria a buscar es: {value}')
     title_category = row_dictionary['categories']
     title_category = re.sub(r'[^a-zA-Z]', '', title_category)
 
@@ -44,7 +41,6 @@ def review_quantity_value(batch, value):
     """
     filtered_dict = {}
     for row_dictionary in batch:
-        #print(row_dictionary)
         for title, values in row_dictionary.items():
             if int(values.split(',')[0]) >= value:
                 filtered_dict[title] = values
@@ -191,12 +187,33 @@ def titles_in_the_n_percentile(review_sentiment_dict, n):
     percentile_index = int(len(vals) * 0.9)
     percentile_val = vals[percentile_index]
     percentile_val = 0.37467883042883043
-    print("############### El percentil 90 es: ", percentile_val)
     titles_in_percentile_n = [title for title, valor in review_sentiment_dict.items() if valor >= percentile_val]
-
-    print("######### SI ROMPE LA SERIALIZACION/DESERIALIZACION MIRAR QUE ACA DEVOLVEMOS UNA LISTA #########")
     return titles_in_percentile_n
 
+def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
+    if body != b'EOF':
+        print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
+    
+    eof_counter[0] += 1
+    if eof_counter[0] == worker_quantity:
+        for _ in range(next_worker_quantity):
+            middleware.send_message(data_output_name, 'EOF')
+        middleware.stop_consuming()
+
+    middleware.ack_message(method)
+
+def eof_manage_process(worker_id, worker_quantity, next_worker_quantity, data_output_name, middleware, eof_queue):
+    if worker_id == '0':
+        if worker_quantity == 1:
+            for _ in range(next_worker_quantity):
+                middleware.send_message(data_output_name, 'EOF')
+            return
+        eof_counter = [0]
+        eof_callback = lambda ch, method, properties, body: handle_eof(method, body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
+        middleware.receive_messages(eof_queue, eof_callback)
+        middleware.consume()
+    else:
+        middleware.send_message(eof_queue, 'EOF')
 
 
 

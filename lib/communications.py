@@ -35,8 +35,6 @@ def _handle_short_read(socket, bytes_to_read):
         bytes_array.extend(msg_bytes)
     
     msg = bytes_array.decode('utf-8')
-    
-    #print(f"[_handle_short_read] El mensaje leido tiene un largo de {len(msg)} y es: {msg}")
     return msg
 
 def write_socket(socket, msg):

@@ -5,10 +5,8 @@ import os
 import time
 
 def handle_data(method, body, middleware, top, top_n, last, eof_counter, workers_quantity):
-    print(body)
     if body == b'EOF':
         eof_counter[0] += 1
-        print('Mi cantidad de EOFS es: ', eof_counter)
         if last and eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
         elif not last:
@@ -45,16 +43,13 @@ def main():
     serialized_data = serialize_message([serialize_dict(dict_to_send)])
     if not last:
         if len(top[0]) != 0:
-            print('Mi top es: ', top)
             middleware.send_message(data_output_name, serialized_data)
 
         middleware.send_message(data_output_name, 'EOF')
     else:
         # Send the results to the query_coordinator
-        print('El topp serializazado es: ', serialized_data)
         middleware.send_message(data_output_name, serialized_data)
         middleware.send_message(data_output_name, 'EOF')
-        print('El top en el acumulador es: ', top)
 
     middleware.close_connection()
 

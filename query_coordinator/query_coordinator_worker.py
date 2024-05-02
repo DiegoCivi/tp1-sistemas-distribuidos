@@ -23,9 +23,7 @@ def handle_data(method, body, query_coordinator):
     query_coordinator.middleware.ack_message(method)
 
 def handle_results(method, body, query_coordinator, results_string, fields_to_print, query):
-    #print("ME LLEGO, ", body)
     if body == b'EOF':
-        #print(f"Me llego un eof para {query}")
         query_coordinator.middleware.ack_message(method)
         query_coordinator.middleware.stop_consuming(method)
         return
@@ -82,7 +80,6 @@ def main():
 
     # Assemble the results 
     final_results = '\n'.join(results_string_q1 + results_string_q2 + results_string_q3 + results_string_q4 + results_string_q5)
-    #print(final_results)
 
     # Send the results to the server 
     chars_sent = 0
