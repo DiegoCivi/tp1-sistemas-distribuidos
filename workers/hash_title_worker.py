@@ -65,10 +65,6 @@ def main():
                                              '0_reviews_Q5': ['0_reviews_Q5', 'EOF_reviews_Q5'], '1_reviews_Q5': ['1_reviews_Q5', 'EOF_reviews_Q5'], 
                                              '2_reviews_Q5': ['2_reviews_Q5', 'EOF_reviews_Q5'], '3_reviews_Q5': ['3_reviews_Q5', 'EOF_reviews_Q5']
                                             })
-    #middleware.declare_exchange(data_output1_name, 'direct')
-
-    # Declare the output exchange for reviews
-    #middleware.declare_exchange(data_output2_name, 'direct')
 
     # Declare the source queue for the titles
     print("Voy a recibir los titulos")

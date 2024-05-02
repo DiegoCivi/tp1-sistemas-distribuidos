@@ -128,7 +128,6 @@ def calculate_review_sentiment(batch):
         text_sentiment = blob.sentiment.polarity
         sentiment_dict['Title'] = title
         sentiment_dict['text_sentiment'] = str(text_sentiment)
-        #sentiment_dict['text_sentiment'] = str(0.20)
         result.append(sentiment_dict)
     return result
 
