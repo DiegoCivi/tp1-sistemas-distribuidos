@@ -64,13 +64,16 @@ def main():
     # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
     # after receiving WORKER_QUANTITY EOF messages.
     if worker_id == '0':
+        if worker_quantity == 1:
+            for _ in range(next_worker_quantity):
+                print("MANDO UN EOF")
+                middleware.send_message(data_output_name, 'EOF')
+            return
         eof_counter = [0]
-        print('Voy a leer los eof de mis workers por la cola ', eof_queue)
         eof_callback = lambda ch, method, properties, body: handle_eof(method, body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
         middleware.receive_messages(eof_queue, eof_callback)
         middleware.consume()
     else:
-        print('Mando el EOF a mi lider por la cola ', eof_queue)
         middleware.send_message(eof_queue, 'EOF')
     
 

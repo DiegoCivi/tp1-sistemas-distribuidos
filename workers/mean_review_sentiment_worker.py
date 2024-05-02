@@ -3,12 +3,13 @@ from serialization import deserialize_titles_message, serialize_message, seriali
 import os
 import time
 
-def handle_titles_data(body, counter_dict, middleware):
+def handle_titles_data(method, body, counter_dict, middleware):
     """
     Acumulates the quantity of reviews for each book 
     """
     if body == b'EOF':
         middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
     
@@ -17,10 +18,13 @@ def handle_titles_data(body, counter_dict, middleware):
         if title == '101 favorite stories from the Bible':
             print("EN titles me llego000")
         counter_dict[title] = [0,0] # [reviews_quantity, review_sentiment_summation]
+    
+    middleware.ack_message(method)
 
-def handle_reviews_data(body, counter_dict, middleware):
+def handle_reviews_data(method, body, counter_dict, middleware):
     if body == b'EOF':
         middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
@@ -43,6 +47,8 @@ def handle_reviews_data(body, counter_dict, middleware):
         counter[0] += 1
         counter[1] += text_sentiment 
         counter_dict[title] = counter
+    
+    middleware.ack_message(method)
 
         #for title, review_sentiment in row_dictionary.items():
         #    if title not in counter_dict:
@@ -71,8 +77,8 @@ def main():
     counter_dict = {} 
 
     # Define a callback wrappers
-    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(body, counter_dict, middleware)
-    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, middleware)
+    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(method, body, counter_dict, middleware)
+    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(method, body, counter_dict, middleware)
 
     # The name of the queues the worker will read data
     titles_queue = worker_id + '_titles_Q5'
@@ -99,19 +105,6 @@ def main():
         # Ignore titles with no reviews
         if counter[0] == 0:
             continue
-
-        if title == 'Flirting with Disaster':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'Flirting with Disaster' es: ", m, " con el counter ", counter)
-        elif title == 'Honest Illusions':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'Honest Illusions' es: ", m, " con el counter ", counter)
-        elif title == 'Brainfade':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'Brainfade' es: ", m, " con el counter ", counter)
-        elif title == 'The ice people':
-            m = counter[1] / counter[0]
-            print("################## El mean para 'The ice people' es: ", m, " con el counter ", counter)
         
         batch[title] = str(counter[1] / counter[0])
         batch_size += 1

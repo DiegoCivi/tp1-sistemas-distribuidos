@@ -62,8 +62,8 @@ class QueryCoordinator:
          
         #self.parse_and_send_q1(batch)
         #self.parse_and_send_q2(batch)
-        self.parse_and_send_q3(batch)
-        #self.parse_and_send_q5(batch)
+        #self.parse_and_send_q3(batch)
+        self.parse_and_send_q5(batch)
 
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []

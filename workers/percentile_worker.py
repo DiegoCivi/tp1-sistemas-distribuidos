@@ -5,12 +5,13 @@ import os
 import time
 
 # titulo:cant_reviews,sumatoria_ratings,autores
-def handle_data(body, data_output2_name, middleware, titles_with_sentiment, eof_counter, workers_quantity):
+def handle_data(method, body, data_output2_name, middleware, titles_with_sentiment, eof_counter, workers_quantity):
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
             middleware.send_message(data_output2_name, "EOF")
+        middleware.ack_message(method)
         return
     
     data = deserialize_titles_message(body)
@@ -20,6 +21,7 @@ def handle_data(body, data_output2_name, middleware, titles_with_sentiment, eof_
             print("AAAAAAAAAAAAAAAAAAAAAAAA (Está acá), ", value)
         titles_with_sentiment[key] = float(value)
 
+    middleware.ack_message(method)
     
 def main():
     time.sleep(15)
@@ -34,7 +36,7 @@ def main():
     eof_counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, data_output_name, middleware, titles_with_sentiment, eof_counter, int(workers_quantity))
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, data_output_name, middleware, titles_with_sentiment, eof_counter, int(workers_quantity))
     
     # Read the titles with their sentiment
     middleware.receive_messages(data_source_name, callback_with_params)
