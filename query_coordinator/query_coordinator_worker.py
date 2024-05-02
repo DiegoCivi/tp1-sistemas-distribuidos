@@ -11,13 +11,21 @@ def handle_data(method, body, query_coordinator):
         # query_coordinator.middleware.ack_message(method)
         query_coordinator.send_EOF()
         query_coordinator.change_parse_mode('reviews')
+
+        ###################
+        #query_coordinator.middleware._channel.basic_ack(delivery_tag=method.delivery_tag)
+        query_coordinator.middleware.ack_message(method)
+        ###################
         return
     
     batch = deserialize_titles_message(body)
 
     query_coordinator.send_to_pipelines(batch)
 
-    # query_coordinator.middleware.ack_message(method)
+    ###################
+    #query_coordinator.middleware._channel.basic_ack(delivery_tag=method.delivery_tag)
+    query_coordinator.middleware.ack_message(method)
+    ###################
 
 def main():
     time.sleep(15)

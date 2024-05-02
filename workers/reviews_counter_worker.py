@@ -3,12 +3,13 @@ from serialization import deserialize_titles_message, serialize_message, seriali
 import os
 import time
 
-def handle_titles_data(body, counter_dict, middleware):
+def handle_titles_data(method, body, counter_dict, middleware):
     """
     Acumulates the quantity of reviews for each book 
     """
     if body == b'EOF':
         middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
     
@@ -17,10 +18,13 @@ def handle_titles_data(body, counter_dict, middleware):
         if title in counter_dict:
             print("######### El titulo: ", title, " Ya estaba en el dict con los valores: ", counter_dict[title], " #########")
         counter_dict[title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
+    
+    middleware.ack_message(method)
 
-def handle_reviews_data(body, counter_dict, middleware):
+def handle_reviews_data(method, body, counter_dict, middleware):
     if body == b'EOF':
         middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
@@ -41,24 +45,9 @@ def handle_reviews_data(body, counter_dict, middleware):
         counter[1] += title_rating
 
         counter_dict[title] = counter
+    
+    middleware.ack_message(method)
 
-        # print("Title: ", title, "new counter is: ", counter_dict[title])
-
-#def handle_reviews_data(body, counter_dict, data_output_name, middleware):
-#    data = deserialize_message(body)
-#    if data == 'EOF':
-#        middleware.stop_consuming()
-#        return
-#
-#    for row in data:
-#        key = row[1]
-#        if key in counter_dict:
-#            # Update counters_dict with reviews data
-#            reviews_quantity = counter_dict[key][0] + 1
-#            ratings_summation = counter_dict[key][1] + row[6]
-#            authors = counter_dict[key][2]
-#            counter_dict[key] = (reviews_quantity, ratings_summation, authors)
-      
             
 def main():
     time.sleep(15)
@@ -71,11 +60,8 @@ def main():
     counter_dict = {} 
 
     # Define a callback wrappers
-    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(body, counter_dict, middleware)
-    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(body, counter_dict, middleware)
-    
-    # Declare the output queue
-    #middleware.declare_queue(data_output_name)
+    callback_with_params_titles = lambda ch, method, properties, body: handle_titles_data(method, body, counter_dict, middleware)
+    callback_with_params_reviews = lambda ch, method, properties, body: handle_reviews_data(method, body, counter_dict, middleware)
 
     # The name of the queues the worker will read data
     titles_queue = worker_id + '_titles_Q3'

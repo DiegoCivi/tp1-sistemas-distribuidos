@@ -4,7 +4,7 @@ from filters import get_top_n
 import os
 import time
 
-def handle_data(body, middleware, top, top_n, last, eof_counter, workers_quantity):
+def handle_data(method, body, middleware, top, top_n, last, eof_counter, workers_quantity):
     print(body)
     if body == b'EOF':
         eof_counter[0] += 1
@@ -12,13 +12,12 @@ def handle_data(body, middleware, top, top_n, last, eof_counter, workers_quantit
             middleware.stop_consuming()
         else:
             middleware.stop_consuming()
+        middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)
 
-    new_top = get_top_n(data, top[0], top_n, last)
-    #print("El new top es: ", new_top)
     top[0] = get_top_n(data, top[0], top_n, last)
-    #print("Se modifico el top y quedo: ", top)
+    middleware.ack_message(method)
     
     
     
@@ -36,7 +35,7 @@ def main():
     eof_counter = [0]
 
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(body, middleware, top, top_n, last, eof_counter, workers_quantity)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, middleware, top, top_n, last, eof_counter, workers_quantity)
     
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
@@ -50,7 +49,7 @@ def main():
         middleware.send_message(data_output_name, 'EOF')
     else:
         # Send the results to the query_coordinator
-        print(top)
+        print('El top en el acumulador es: ', top)
 
 
 main()

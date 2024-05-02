@@ -529,7 +529,7 @@ services:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
       - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-      - WORKERS_QUANTITY=1
+      - WORKERS_QUANTITY=4
       - LAST=0
 
   top_10_worker1:
@@ -545,7 +545,7 @@ services:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
       - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-      - WORKERS_QUANTITY=3
+      - WORKERS_QUANTITY=4
       - LAST=0
 
   top_10_worker2:
@@ -561,7 +561,7 @@ services:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
       - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-      - WORKERS_QUANTITY=3
+      - WORKERS_QUANTITY=4
       - LAST=0
 
   top_10_worker3:
@@ -577,7 +577,7 @@ services:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_last_worker
       - DATA_OUTPUT_NAME=?????????????
-      - WORKERS_QUANTITY=3
+      - WORKERS_QUANTITY=4
       - LAST=1
 
 # QUERY 5
