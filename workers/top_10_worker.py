@@ -8,9 +8,10 @@ def handle_data(method, body, middleware, top, top_n, last, eof_counter, workers
     print(body)
     if body == b'EOF':
         eof_counter[0] += 1
+        print('Mi cantidad de EOFS es: ', eof_counter)
         if last and eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
-        else:
+        elif not last:
             middleware.stop_consuming()
         middleware.ack_message(method)
         return
@@ -42,6 +43,7 @@ def main():
 
     if not last:
         if len(top[0]) != 0:
+            print('Mi top es: ', top)
             dict_to_send = {title:str(mean_rating) for title,mean_rating in top[0]}
             serialized_data = serialize_message([serialize_dict(dict_to_send)])
             middleware.send_message(data_output_name, serialized_data)

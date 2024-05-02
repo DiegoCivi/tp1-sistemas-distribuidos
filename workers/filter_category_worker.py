@@ -15,6 +15,13 @@ def handle_data(method, body, category, data_output_name, middleware, counter):
     if not desired_data:
         middleware.ack_message(method)
         return
+    
+    ###################################
+    for d in desired_data:
+        if 'November of the Heart' in d['Title']:
+            print(d['Title'])
+    ###################################
+
     counter[0] = counter[0] + len(desired_data)
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
