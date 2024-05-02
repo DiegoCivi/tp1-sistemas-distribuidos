@@ -1,4 +1,4 @@
-from communications import write_socket, sendEOF
+from communications import write_socket, sendEOF, read_socket
 from files import create_file_reader, read_csv_batch
 import socket
 from csv import DictReader
@@ -49,7 +49,16 @@ def main():
     scrape_and_send_file(reviews_file_reader, conn)
     sendEOF(conn)
 
-    # TODO: Listen the server response and print it (Ponele colorcitos flaco)
+    # Listen the server response and print it
+    msg = None
+    while msg != "EOF":
+        msg, e = read_socket(conn)
+        if e != None:
+            # TODO: Maybe raise the exception or just print it and return
+            print(f"Hubo un error en la lectura del socket del server. El error fue: {e}")
+            return
+        
+        print(msg)
     
     
     

@@ -4,6 +4,10 @@ from query_coordinator import QueryCoordinator
 import time
 import os
 
+RECEIVE_SERVER_QUEUE = 'query_coordinator'
+SEND_SERVER_QUEUE = 'server'
+BATCH_SIZE = 100
+
 def handle_data(method, body, query_coordinator):
     if body == b'EOF':
         print('Ya mande todo el archivo ', query_coordinator.parse_mode)
@@ -21,7 +25,7 @@ def handle_data(method, body, query_coordinator):
 def handle_results(method, body, query_coordinator, results_string, fields_to_print, query):
     #print("ME LLEGO, ", body)
     if body == b'EOF':
-        print(f"Me llego un eof para {query}")
+        #print(f"Me llego un eof para {query}")
         query_coordinator.middleware.ack_message(method)
         query_coordinator.middleware.stop_consuming(method)
         return
@@ -55,7 +59,7 @@ def main():
     callback_with_params = lambda ch, method, properties, body: handle_data(method, body, query_coordinator)
 
     # Read the data from the server, parse it and fordward it
-    middleware.receive_messages('query_coordinator', callback_with_params)
+    middleware.receive_messages(RECEIVE_SERVER_QUEUE, callback_with_params)
     middleware.consume()
     
     results_string_q1 = ['[QUERY 1] Results']
@@ -78,9 +82,24 @@ def main():
 
     # Assemble the results 
     final_results = '\n'.join(results_string_q1 + results_string_q2 + results_string_q3 + results_string_q4 + results_string_q5)
-    print(final_results)
-    # Send the results to the server 
+    #print(final_results)
 
+    # Send the results to the server 
+    chars_sent = 0
+    chars_to_send = len(final_results)
+    while chars_sent < chars_to_send:
+        start_index = chars_sent
+        end_idex = chars_sent + BATCH_SIZE
+        if end_idex >= len(final_results):
+            end_idex = len(final_results) - 1
+
+        result_slice = final_results[start_index: end_idex]
+        middleware.send_message(SEND_SERVER_QUEUE, result_slice)
+        chars_sent += BATCH_SIZE
+
+    middleware.send_message(SEND_SERVER_QUEUE, 'EOF')
+
+    # TODO: Close middleware conn
     
 
 
