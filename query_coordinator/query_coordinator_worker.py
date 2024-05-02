@@ -100,7 +100,7 @@ def main():
     middleware.send_message(SEND_SERVER_QUEUE, 'EOF')
 
     # TODO: Close middleware conn
-    
+    middleware.close_connection()
 
 
 main()

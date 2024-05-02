@@ -50,4 +50,6 @@ def main():
     
     middleware.send_message(data_output_name, "EOF")
 
+    middleware.close_connection()
+
 main()

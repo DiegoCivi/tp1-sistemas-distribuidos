@@ -83,4 +83,6 @@ def main():
     middleware.receive_messages(data_source4_name, callback_with_params_reviews_q5)
     middleware.consume()
 
+    middleware.close_connection()
+
 main()   

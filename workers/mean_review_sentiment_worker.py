@@ -109,4 +109,6 @@ def main():
     print("MANDO EL EOF A PERECENTILE")
     middleware.send_message(data_output_name, "EOF")
     
+    middleware.close_connection()
+
 main()

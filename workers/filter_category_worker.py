@@ -83,5 +83,6 @@ def main():
     else:
         middleware.send_message(eof_queue, 'EOF')
     
+    middleware.close_connection()
 
 main()

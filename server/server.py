@@ -1,5 +1,5 @@
 import socket
-from communications import read_socket
+from communications import read_socket, write_socket
 from middleware import Middleware
 import os
 import time
@@ -18,7 +18,7 @@ class Server:
         self.listen_backlog = listen_backlog
         self.middleware = Middleware()
 
-        self.results = ''
+        self.results = ['']
 
         self._server_socket.bind((self.host, self.port))
         self._server_socket.listen(self.listen_backlog)  
@@ -43,6 +43,8 @@ class Server:
 
         # Finally read the results and send it to the client
         self._receive_and_forward_results(client_socket)  
+        client_socket.close()
+        self.middleware.close_connection()
         
     def _receive_and_forward_data(self, client_socket):
         msg = None
@@ -62,14 +64,17 @@ class Server:
             return
         
         result_slice = body.decode('utf-8')
-        self.results += result_slice
+        self.results[0] += result_slice
         self.middleware.ack_message(method)
     
     def _receive_and_forward_results(self, client_socket):
         callback_with_params = lambda ch, method, properties, body: self.read_results(method, body)
         self.middleware.receive_messages(RECEIVE_COORDINATOR_QUEUE, callback_with_params)
         self.middleware.consume()
-        print(self.results)
+        print("Mnadamos al clientee")
+        write_socket(client_socket, self.results[0])
+        write_socket(client_socket, 'EOF')
+
 
 def main():
     time.sleep(30)

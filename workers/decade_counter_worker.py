@@ -45,6 +45,8 @@ def main():
     middleware.subscribe(data_source_name, source_queue, callback_with_params)
     middleware.consume()
 
+    middleware.close_connection()
+
 main()
 
     

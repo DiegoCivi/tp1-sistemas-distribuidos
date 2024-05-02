@@ -60,6 +60,8 @@ def main():
         
         print(msg)
     
+    conn.close()
+    
     
     
 main()
