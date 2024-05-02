@@ -453,6 +453,7 @@ services:
   #     - WORKER_ID=0
   #     - DATA_SOURCE_NAME=hashed
   #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+  #     - EOF_QUANTITY=3
       
   # reviews_counter_worker2:
   #   container_name: reviews_counter_worker2
@@ -467,7 +468,8 @@ services:
   #     - WORKER_ID=1
   #     - DATA_SOURCE_NAME=hashed
   #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
-      
+  #     - EOF_QUANTITY=3
+
   # reviews_counter_worker3:
   #   container_name: reviews_counter_worker3
   #   build:
@@ -481,6 +483,7 @@ services:
   #     - WORKER_ID=2
   #     - DATA_SOURCE_NAME=hashed
   #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+  #     - EOF_QUANTITY=3
   
   # reviews_counter_worker4:
   #   container_name: reviews_counter_worker4
@@ -495,6 +498,7 @@ services:
   #     - WORKER_ID=3
   #     - DATA_SOURCE_NAME=hashed
   #     - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+  #     - EOF_QUANTITY=3
 
   # filter_review_quantity_worker:
   #   container_name: filter_review_quantity
@@ -600,8 +604,44 @@ services:
       - NEXT_WORKERS_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
 
-  filter_category_worker:
-    container_name: filter_category_worker
+  review_sentiment_worker1:
+    container_name: review_sentiment_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
+      - WORKER_ID=1
+      - WORKERS_QUANTITY=3
+      - NEXT_WORKERS_QUANTITY=3
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  review_sentiment_worker2:
+    container_name: review_sentiment_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
+      - WORKER_ID=2
+      - WORKERS_QUANTITY=3
+      - NEXT_WORKERS_QUANTITY=3
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  filter_category_worker0:
+    container_name: filter_category_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
@@ -617,7 +657,47 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - WORKER_ID=0
       - EOF_QUEUE=QUEUE_Q5|eof_category
-      - WORKER_QUANTITY=1
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=3
+
+  filter_category_worker1:
+    container_name: filter_category_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CATEGORY=Fiction
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_titles
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
+      - WORKER_ID=1
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=3
+
+  filter_category_worker2:
+    container_name: filter_category_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CATEGORY=Fiction
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_titles
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
+      - WORKER_ID=2
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
 
   mean_review_sentiment_worker0:
@@ -633,6 +713,7 @@ services:
       - WORKER_ID=0
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - EOF_QUANTITY=3
 
   mean_review_sentiment_worker1:
     container_name: mean_review_sentiment_worker1
@@ -648,6 +729,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - EOF_QUANTITY=3
 
   mean_review_sentiment_worker2:
     container_name: mean_review_sentiment_worker2
@@ -663,6 +745,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - EOF_QUANTITY=3
 
   mean_review_sentiment_worker3:
     container_name: mean_review_sentiment_worker3
@@ -678,6 +761,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - EOF_QUANTITY=3
 
   percentile_worker:
     container_name: percentile_worker
