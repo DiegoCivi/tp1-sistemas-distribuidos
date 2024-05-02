@@ -38,7 +38,7 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
     middleware.ack_message(method)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 

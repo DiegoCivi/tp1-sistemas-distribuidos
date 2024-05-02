@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import serialize_dict, serialize_message
+from serialization import serialize_dict, serialize_message, deserialize_titles_message, ROW_SEPARATOR
 
 TITLES_MODE = 'titles'
 REVIEWS_MODE = 'reviews'
@@ -60,10 +60,10 @@ class QueryCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
          
-        #self.parse_and_send_q1(batch)
-        #self.parse_and_send_q2(batch)
-        #self.parse_and_send_q3(batch)
-        self.parse_and_send_q5(batch)
+        self.parse_and_send_q1(batch)
+        # self.parse_and_send_q2(batch)
+        # self.parse_and_send_q3(batch)
+        #self.parse_and_send_q5(batch)
 
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []
@@ -106,4 +106,27 @@ class QueryCoordinator:
         else:
             desired_keys = ['Title', 'review/text']
             self.parse_and_send(batch, desired_keys, 'q5_reviews')
-    
+            
+    def deserialize_result(self, data, query):
+        """
+        Deserializes the data from the message
+        """
+        if query == 'Q1' or query == 'Q3':
+            return deserialize_titles_message(data)
+        else:
+            data = data.decode('utf-8')
+            return data.split(ROW_SEPARATOR)
+        
+    def build_result_line(self, data, fields_to_print, query):
+        """
+        Builds the result line for the query
+        """
+        if query == 'Q1':
+            return ' - '.join(f'{field.upper()}: {row[field]}' for row in data for field in fields_to_print)
+        elif query == 'Q3':
+            line = ''
+            for title, counter in data[0].items():
+                line += 'TITLE: ' + title + ' - ' + 'AUTHORS: ' + counter.split(',', 2)[2] + '\n' # The split is 2 until the second comma because the auuthors field can have comas
+            return line
+        else:
+            return " - ".join(data)

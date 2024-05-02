@@ -22,7 +22,7 @@ def handle_data(method, body, middleware, top, top_n, last, eof_counter, workers
     
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -49,6 +49,8 @@ def main():
         middleware.send_message(data_output_name, 'EOF')
     else:
         # Send the results to the query_coordinator
+        serialized_data = serialize_message(top[0])
+        middleware.send_message(data_output_name,)
         print('El top en el acumulador es: ', top)
 
 

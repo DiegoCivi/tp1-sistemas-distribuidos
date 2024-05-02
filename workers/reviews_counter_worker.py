@@ -52,7 +52,7 @@ def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eo
 
             
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 

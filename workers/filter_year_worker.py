@@ -37,7 +37,7 @@ def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, nex
     middleware.ack_message(method)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 

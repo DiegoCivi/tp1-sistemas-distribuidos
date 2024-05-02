@@ -22,7 +22,7 @@ def scrape_and_send_file(file_reader, socket):
         write_socket(socket, serialized_message)
 
 def main():
-    time.sleep(15)
+    time.sleep(30)
     host = os.getenv('HOST')
     port = os.getenv('PORT')
     titles_filepath = os.getenv('TITLES_FILEPATH')

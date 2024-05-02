@@ -24,7 +24,7 @@ def handle_data(method, body, data_output2_name, middleware, titles_with_sentime
     middleware.ack_message(method)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -45,9 +45,8 @@ def main():
     titles = titles_in_the_n_percentile(titles_with_sentiment, percentile)
     print(f"Los titulos en el percetil {percentile} son [{titles}]")
 
-    #serialized_data = serialize_message([serialize_dict(filtered_titles)])
-    #middleware.send_message('top_10', serialized_data)
-    #middleware.send_message('top_10', 'EOF')
+    serialized_data = serialize_message(titles_with_sentiment.keys())
+    middleware.send_message(data_output_name, serialized_data)
 
 
 
