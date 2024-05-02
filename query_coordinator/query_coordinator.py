@@ -61,8 +61,8 @@ class QueryCoordinator:
         # receives the data from the query 3 pipeline results
          
         self.parse_and_send_q1(batch)
-        # self.parse_and_send_q2(batch)
-        # self.parse_and_send_q3(batch)
+        self.parse_and_send_q2(batch)
+        self.parse_and_send_q3(batch)
         #self.parse_and_send_q5(batch)
 
     def parse_and_send(self, batch, desired_keys, routing_key):
@@ -111,7 +111,7 @@ class QueryCoordinator:
         """
         Deserializes the data from the message
         """
-        if query == 'Q1' or query == 'Q3':
+        if query == 'Q1' or query == 'Q3' or query == 'Q4':
             return deserialize_titles_message(data)
         else:
             data = data.decode('utf-8')
@@ -126,7 +126,13 @@ class QueryCoordinator:
         elif query == 'Q3':
             line = ''
             for title, counter in data[0].items():
-                line += 'TITLE: ' + title + ' - ' + 'AUTHORS: ' + counter.split(',', 2)[2] + '\n' # The split is 2 until the second comma because the auuthors field can have comas
+                line += 'TITLE: ' + title + '    ' + 'AUTHORS: ' + counter.split(',', 2)[2] + '\n' # The split is 2 until the second comma because the auuthors field can have comas
+            return line
+        elif query  == 'Q4':
+            line = ''
+            top_position = 1
+            for title, mean_rating in data[0].items():
+                line += str(top_position) +'.   TITLE: ' + title + '    ' + 'MEAN-RATING: ' +  mean_rating + '\n'
             return line
         else:
             return " - ".join(data)

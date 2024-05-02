@@ -8,9 +8,10 @@ def handle_data(method, body, middleware, top, top_n, last, eof_counter, workers
     print(body)
     if body == b'EOF':
         eof_counter[0] += 1
+        print('Mi cantidad de EOFS es: ', eof_counter)
         if last and eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
-        else:
+        elif not last:
             middleware.stop_consuming()
         middleware.ack_message(method)
         return
@@ -40,17 +41,19 @@ def main():
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
 
+    dict_to_send = {title:str(mean_rating) for title,mean_rating in top[0]}
+    serialized_data = serialize_message([serialize_dict(dict_to_send)])
     if not last:
         if len(top[0]) != 0:
-            dict_to_send = {title:str(mean_rating) for title,mean_rating in top[0]}
-            serialized_data = serialize_message([serialize_dict(dict_to_send)])
+            print('Mi top es: ', top)
             middleware.send_message(data_output_name, serialized_data)
 
         middleware.send_message(data_output_name, 'EOF')
     else:
         # Send the results to the query_coordinator
-        serialized_data = serialize_message(top[0])
-        middleware.send_message(data_output_name,)
+        print('El topp serializazado es: ', serialized_data)
+        middleware.send_message(data_output_name, serialized_data)
+        middleware.send_message(data_output_name, 'EOF')
         print('El top en el acumulador es: ', top)
 
 

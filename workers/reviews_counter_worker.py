@@ -10,6 +10,7 @@ def handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == eof_quantity:
+            print("Me llegaron los 3 EOFS de los hash_title_workers para titulos")
             middleware.stop_consuming()
         middleware.ack_message(method)
         return
@@ -25,6 +26,7 @@ def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eo
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == eof_quantity:
+            print("Me llegaron los 3 EOFS de los hash_title_workers para titulos")
             middleware.stop_consuming()
             
         middleware.ack_message(method)
@@ -92,9 +94,6 @@ def main():
     batch_size = 0
     batch = {}
     for title, counter in counter_dict.items():
-        if counter[0] >= 500 or title == 'Pride and Prejudice': # TODO: Erase
-            print(title, counter)
-
         batch[title] = counter
         batch_size += 1
         if batch_size == 100: # TODO: Maybe the 100 could be an env var
