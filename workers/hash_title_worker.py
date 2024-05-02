@@ -22,13 +22,6 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
     for row_dictionary in data:
                 
         worker_id = str(row_dictionary['hashed_title'] % hash_modulus)
-        ###################################
-        if "November of the Heart" in row_dictionary['Title']:
-            if 'reviews_Q5' in dataset_and_query:
-                title = row_dictionary['Title']
-                sentiment = row_dictionary['text_sentiment']
-                print(title, ' con sentiment: ', sentiment,' con routing_key: ', worker_id, dataset_and_query, ' @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        ###################################
         #if dataset_and_query == 'reviews':
         #    if row_dictionary['Title'] == 'Pride and Prejudice':
         #        temp['contador'] = temp.get('contador', 0) + 1
@@ -45,7 +38,7 @@ def handle_data(method, body, dataset_and_query, data_output_name, middleware, h
     middleware.ack_message(method)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -89,5 +82,7 @@ def main():
     # For Q5
     middleware.receive_messages(data_source4_name, callback_with_params_reviews_q5)
     middleware.consume()
+
+    middleware.close_connection()
 
 main()   

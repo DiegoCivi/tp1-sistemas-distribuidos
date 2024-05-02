@@ -23,7 +23,7 @@ def handle_data(method, body, middleware, top, top_n, last, eof_counter, workers
     
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -41,17 +41,22 @@ def main():
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
 
+    dict_to_send = {title:str(mean_rating) for title,mean_rating in top[0]}
+    serialized_data = serialize_message([serialize_dict(dict_to_send)])
     if not last:
         if len(top[0]) != 0:
             print('Mi top es: ', top)
-            dict_to_send = {title:str(mean_rating) for title,mean_rating in top[0]}
-            serialized_data = serialize_message([serialize_dict(dict_to_send)])
             middleware.send_message(data_output_name, serialized_data)
 
         middleware.send_message(data_output_name, 'EOF')
     else:
         # Send the results to the query_coordinator
+        print('El topp serializazado es: ', serialized_data)
+        middleware.send_message(data_output_name, serialized_data)
+        middleware.send_message(data_output_name, 'EOF')
         print('El top en el acumulador es: ', top)
+
+    middleware.close_connection()
 
 
 main()

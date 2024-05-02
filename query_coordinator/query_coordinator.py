@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import serialize_dict, serialize_message
+from serialization import serialize_dict, serialize_message, deserialize_titles_message, ROW_SEPARATOR
 
 TITLES_MODE = 'titles'
 REVIEWS_MODE = 'reviews'
@@ -106,4 +106,36 @@ class QueryCoordinator:
         else:
             desired_keys = ['Title', 'review/text']
             self.parse_and_send(batch, desired_keys, 'q5_reviews')
-    
+            
+    def deserialize_result(self, data, query):
+        """
+        Deserializes the data from the message
+        """
+        if query == 'Q1' or query == 'Q3' or query == 'Q4':
+            return deserialize_titles_message(data)
+        else:
+            data = data.decode('utf-8')
+            data = data.split(ROW_SEPARATOR)
+            print('El mensaje de Q5 tiene un largo de ', len(data))
+            return data
+        
+    def build_result_line(self, data, fields_to_print, query):
+        """
+        Builds the result line for the query
+        """
+        if query == 'Q1':
+            return ' - '.join(f'{field.upper()}: {row[field]}' for row in data for field in fields_to_print)
+        elif query == 'Q3':
+            line = ''
+            for title, counter in data[0].items():
+                line += 'TITLE: ' + title + '    ' + 'AUTHORS: ' + counter.split(',', 2)[2] + '\n' # The split is 2 until the second comma because the auuthors field can have comas
+            return line
+        elif query  == 'Q4':
+            line = ''
+            top_position = 1
+            for title, mean_rating in data[0].items():
+                line += str(top_position) +'.   TITLE: ' + title + '    ' + 'MEAN-RATING: ' +  mean_rating + '\n'
+            return line
+        else:
+            print(len(data))
+            return " - ".join(data)

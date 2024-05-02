@@ -54,7 +54,7 @@ def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eo
 
             
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -94,9 +94,6 @@ def main():
     batch_size = 0
     batch = {}
     for title, counter in counter_dict.items():
-        if counter[0] >= 500 or title == 'Pride and Prejudice': # TODO: Erase
-            print(title, counter)
-
         batch[title] = counter
         batch_size += 1
         if batch_size == 100: # TODO: Maybe the 100 could be an env var
@@ -111,5 +108,7 @@ def main():
     
 
     middleware.send_message(data_output_name, "EOF")
+
+    middleware.close_connection()
     
 main()

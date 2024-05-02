@@ -24,7 +24,7 @@ def handle_data(method, body, data_output_name, middleware):
     middleware.ack_message(method)
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -44,6 +44,8 @@ def main():
     middleware.define_exchange(data_source_name, {source_queue: [source_queue]})
     middleware.subscribe(data_source_name, source_queue, callback_with_params)
     middleware.consume()
+
+    middleware.close_connection()
 
 main()
 

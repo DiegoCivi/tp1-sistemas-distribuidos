@@ -12,8 +12,8 @@ class Main:
         #if os.getenv('HOST') == '2':
         #    time.sleep(25)
         #else:
-        #    time.sleep(15)
-        time.sleep(15)
+        #    time.sleep(30)
+        time.sleep(30)
         self.mid = Middleware()
         self.id = os.getenv('HOST')
         self.counter = 0

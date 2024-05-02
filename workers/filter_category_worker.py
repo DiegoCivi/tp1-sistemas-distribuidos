@@ -44,7 +44,7 @@ def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, nex
 
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -83,5 +83,6 @@ def main():
     else:
         middleware.send_message(eof_queue, 'EOF')
     
+    middleware.close_connection()
 
 main()

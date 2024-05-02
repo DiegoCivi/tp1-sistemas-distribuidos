@@ -17,10 +17,6 @@ def handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof
 
     for row_dictionary in data:
         title = row_dictionary['Title']
-        ###################################
-        if "November of the Heart" in row_dictionary['Title']:
-            print(row_dictionary['Title'], ' ', 'titles')
-        ###################################
         counter_dict[title] = [0,0] # [reviews_quantity, review_sentiment_summation]
     
     middleware.ack_message(method)
@@ -28,7 +24,6 @@ def handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof
 def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eof_counter):
     if body == b'EOF':
         eof_counter[0] += 1
-        print('me llego un eof, tengo una cantidad de: ', eof_counter)
         if eof_counter[0] == eof_quantity:
             middleware.stop_consuming()
         middleware.ack_message(method)
@@ -36,10 +31,6 @@ def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eo
     data = deserialize_titles_message(body)
 
     for row_dictionary in data:
-        ###################################
-        if "November of the Heart" in row_dictionary['Title']:
-            print(row_dictionary['Title'], ' ', 'reviews')
-        ###################################
         title = row_dictionary['Title']
         if title not in counter_dict:
             continue
@@ -60,7 +51,7 @@ def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eo
       
             
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -79,7 +70,6 @@ def main():
     titles_queue = worker_id + '_titles_Q5'
     reviews_queue = worker_id + '_reviews_Q5'
 
-    TEMP = [0]
     # Declare and subscribe to the titles queue in the exchange
     middleware.define_exchange(data_source_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
 
@@ -107,20 +97,18 @@ def main():
         batch[title] = str(counter[1] / counter[0])
         batch_size += 1
         if batch_size == 100: # TODO: Maybe the 100 could be an env var
-            TEMP[0] += 1
             serialized_message = serialize_message([serialize_dict(batch)])
             middleware.send_message(data_output_name, serialized_message)
             batch = {}
             batch_size = 0
 
     if len(batch) != 0:
-        TEMP[0] += 1
         serialized_message = serialize_message([serialize_dict(batch)])
         middleware.send_message(data_output_name, serialized_message)
     
-    TEMP[0] +=1
-    print("ME LLEGARON ESTA CANTIDAD DE MENSAJES: ", TEMP)
     print("MANDO EL EOF A PERECENTILE")
     middleware.send_message(data_output_name, "EOF")
     
+    middleware.close_connection()
+
 main()

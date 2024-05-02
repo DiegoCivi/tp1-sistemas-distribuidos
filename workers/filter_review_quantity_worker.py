@@ -23,7 +23,7 @@ def handle_data(method, body, data_output2_name, middleware, minimum_quantity, f
 
     
 def main():
-    time.sleep(15)
+    time.sleep(30)
 
     middleware = Middleware()
 
@@ -46,10 +46,16 @@ def main():
 
     serialized_data = serialize_message([serialize_dict(filtered_titles)])
     print("El meensaje serializadoa  amndar es, ", serialized_data)
-    middleware.send_message(data_output2_name, serialized_data)
+    if serialized_data != '':
+        middleware.send_message(data_output2_name, serialized_data)
+        middleware.send_message(data_output1_name, serialized_data)
+
     for _ in range(next_workers_quantity):
         middleware.send_message(data_output2_name, 'EOF')
 
+    
+    middleware.send_message(data_output1_name, 'EOF')
 
+    middleware.close_connection()
 
 main()
