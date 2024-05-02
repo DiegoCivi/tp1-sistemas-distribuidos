@@ -27,6 +27,22 @@ def handle_data(method, body, query_coordinator):
     query_coordinator.middleware.ack_message(method)
     ###################
 
+def handle_results(method, body, query_coordinator, results_string, fields_to_print, middleware):
+    if body == b'EOF':
+        query_coordinator.middleware.ack_message(method)
+        middleware.stop_consuming()
+        return
+
+    query_coordinator.middleware.ack_message(method)
+    data = deserialize_titles_message(body)
+
+    for row_dictionary in data:
+        results_string[0] += '\n' + ' - '.join([f'{field}: {row_dictionary[field]}' for field in fields_to_print])
+
+    query_coordinator.middleware.ack_message(method)
+
+
+
 def main():
     time.sleep(15)
     middleware = Middleware()
@@ -43,14 +59,38 @@ def main():
                    }
     middleware.define_exchange('data', queues_dict)
 
+
+
     callback_with_params = lambda ch, method, properties, body: handle_data(method, body, query_coordinator)
 
     # Read the data from the server, parse it and fordward it
     middleware.receive_messages('query_coordinator', callback_with_params)
     middleware.consume()
     
+    results_string_q1 = ['[QUERY 1] Results']
+    results_string_q2 = ['[QUERY 2] Results']
+    results_string_q3 = ['[QUERY 3] Results']
+    results_string_q4 = ['[QUERY 4] Results']
+    results_string_q5 = ['[QUERY 5] Results']
+    # Use queues to receive the queries results
+    q1_results_with_params = lambda ch, method, properties, body: handle_results(method, body, query_coordinator, results_string_q1, ['Title', 'authors', 'publisher'], middleware)
+    q2_results_with_params = lambda ch, method, properties, body: handle_results(method, body, query_coordinator, results_string_q2, ['authors'], middleware)
+    q3_results_with_params = lambda ch, method, properties, body: handle_results(method, body, query_coordinator, results_string_q3, ['Title', 'authors'], middleware)
+    q4_results_with_params = lambda ch, method, properties, body: handle_results(method, body, query_coordinator, results_string_q4, ['Title'], middleware)
+    q5_results_with_params = lambda ch, method, properties, body: handle_results(method, body, query_coordinator, results_string_q5, ['Title'], middleware)
+    middleware.receive_messages('q1_results', q1_results_with_params)
+    middleware.receive_messages('q2_results', q2_results_with_params)
+    middleware.receive_messages('q3_results', q3_results_with_params)
+    middleware.receive_messages('q4_results', q4_results_with_params)
+    middleware.receive_messages('q5_results', q5_results_with_params)
+    middleware.consume()
 
-    # Read the queries results
-    #middleware.receive_messages('', callback)
+    # Assemble the results
+    final_results = '\n'.join(results_string_q1 + results_string_q2 + results_string_q3 + results_string_q4 + results_string_q5)
+    print(final_results)
+    # Send the results to the server 
+
+    
+
 
 main()
