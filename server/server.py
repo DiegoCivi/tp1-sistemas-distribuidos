@@ -51,7 +51,6 @@ class Server:
         while msg != "EOF":
             msg, e = read_socket(client_socket)
             if e != None:
-                # TODO: Maybe raise the exception or just print it and return
                 print(f"Hubo un error en la lectura del socker del cliente. El error fue: {e}")
                 return
 
@@ -71,7 +70,7 @@ class Server:
         callback_with_params = lambda ch, method, properties, body: self.read_results(method, body)
         self.middleware.receive_messages(RECEIVE_COORDINATOR_QUEUE, callback_with_params)
         self.middleware.consume()
-        print("Mnadamos al clientee")
+        print("Enviando resultados de queries 1 a 5 al cliente...")
         write_socket(client_socket, self.results[0])
         write_socket(client_socket, 'EOF')
 

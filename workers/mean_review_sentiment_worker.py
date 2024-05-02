@@ -106,7 +106,6 @@ def main():
         serialized_message = serialize_message([serialize_dict(batch)])
         middleware.send_message(data_output_name, serialized_message)
     
-    print("MANDO EL EOF A PERECENTILE")
     middleware.send_message(data_output_name, "EOF")
     
     middleware.close_connection()

@@ -40,11 +40,8 @@ def main():
     for key, value in counter_dict.items():
         if len(value) >= 10:
             results.append(key)
-    print(len(results))
-    print(results)
     # Send the results to the output queue
     serialized_message = serialize_message(results)
-    #print(serialized_message)
     
     middleware.send_message(data_output_name, serialized_message)
     middleware.send_message(data_output_name, 'EOF')

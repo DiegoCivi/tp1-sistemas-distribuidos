@@ -1,6 +1,6 @@
 from middleware import Middleware
 from serialization import deserialize_titles_message, serialize_message, serialize_dict
-from filters import filter_by, title_condition
+from filters import filter_by, title_condition, eof_manage_process
 import os
 import time
 
@@ -18,20 +18,6 @@ def handle_data(method, body, title, data_output_name, middleware, counter):
     counter[0] = counter[0] + len(desired_data)
     serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
     middleware.send_message(data_output_name, serialized_data)
-
-    middleware.ack_message(method)
-    
-def handle_eof(method, body, eof_counter, worker_quantity, data_output_name, next_worker_quantity, middleware):
-    if body != b'EOF':
-        print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
-    
-    eof_counter[0] += 1
-    print('Me llego un eof, llevo ', eof_counter[0])
-    if eof_counter[0] == worker_quantity:
-        for _ in range(next_worker_quantity):
-            print("MANDO UN EOF")
-            middleware.send_message(data_output_name, 'EOF')
-        middleware.stop_consuming()
 
     middleware.ack_message(method)
 
@@ -58,18 +44,7 @@ def main():
 
     # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
     # after receiving WORKER_QUANTITY EOF messages.
-    if worker_id == '0':
-        if worker_quantity == 1:
-            for _ in range(next_worker_quantity):
-                print("MANDO UN EOF")
-                middleware.send_message(data_output_name, 'EOF')
-            return
-        eof_counter = [0]
-        eof_callback = lambda ch, method, properties, body: handle_eof(method, body, eof_counter, worker_quantity - 1, data_output_name, next_worker_quantity, middleware)
-        middleware.receive_messages(eof_queue, eof_callback)
-        middleware.consume()
-    else:
-        middleware.send_message(eof_queue, 'EOF')
+    eof_manage_process(worker_id, worker_quantity, next_worker_quantity, data_output_name, middleware, eof_queue)
 
     middleware.close_connection()
 main()

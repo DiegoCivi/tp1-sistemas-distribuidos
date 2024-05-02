@@ -10,7 +10,6 @@ def handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == eof_quantity:
-            print("Me llegaron los 3 EOFS de los hash_title_workers para titulos")
             middleware.stop_consuming()
         middleware.ack_message(method)
         return
@@ -26,7 +25,6 @@ def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eo
     if body == b'EOF':
         eof_counter[0] += 1
         if eof_counter[0] == eof_quantity:
-            print("Me llegaron los 3 EOFS de los hash_title_workers para titulos")
             middleware.stop_consuming()
             
         middleware.ack_message(method)
@@ -87,8 +85,6 @@ def main():
     print("Voy a leer reviews")
     middleware.subscribe(data_source_name, reviews_queue,  callback_with_params_reviews)
     middleware.consume()
-
-    #print(counter_dict)
 
     # Once all the reviews were received, the counter_dict needs to be sent to the next stage
     batch_size = 0

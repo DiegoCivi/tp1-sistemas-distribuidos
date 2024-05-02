@@ -8,7 +8,6 @@ import time
 def handle_data(method, body, middleware, titles_with_sentiment, eof_counter, workers_quantity):
     if body == b'EOF':
         eof_counter[0] += 1
-        print("ME LLEGO UN EOF, TENGO UNA CANTIDAD DE: ", eof_counter)
         if eof_counter[0] == workers_quantity:
             middleware.stop_consuming()
         middleware.ack_message(method)
@@ -43,7 +42,6 @@ def main():
 
 
     titles = titles_in_the_n_percentile(titles_with_sentiment, percentile)
-    print(f"Los titulos en el percetil con un largo de {len(titles)}")
 
     serialized_data = serialize_message(titles)
     middleware.send_message(data_output_name, serialized_data)
