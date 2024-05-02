@@ -102,8 +102,8 @@ services:
     links: 
       - rabbitmq
     environment:
-      - EOF_TITLES_MAX_SUBS=3
-      - EOF_REVIEWS_MAX_SUBS=3
+      - EOF_TITLES_MAX_SUBS=6
+      - EOF_REVIEWS_MAX_SUBS=6
 
 # QUERY 1
 
@@ -408,7 +408,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
-      - HASH_MODULUS=4
+      - HASH_MODULUS=6
 
   hash_title_worker1:
     container_name: hash_title_worker1
@@ -423,7 +423,7 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
-      - HASH_MODULUS=4
+      - HASH_MODULUS=6
 
   hash_title_worker2:
     container_name: hash_title_worker2
@@ -438,10 +438,10 @@ services:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
-      - HASH_MODULUS=4
+      - HASH_MODULUS=6
 
-  reviews_counter_worker1:
-    container_name: reviews_counter_worker1
+  reviews_counter_worker0:
+    container_name: reviews_counter_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
@@ -455,8 +455,8 @@ services:
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       
-  reviews_counter_worker2:
-    container_name: reviews_counter_worker2
+  reviews_counter_worker1:
+    container_name: reviews_counter_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
@@ -470,8 +470,8 @@ services:
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
 
-  reviews_counter_worker3:
-    container_name: reviews_counter_worker3
+  reviews_counter_worker2:
+    container_name: reviews_counter_worker2
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
@@ -485,6 +485,21 @@ services:
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
   
+  reviews_counter_worker3:
+    container_name: reviews_counter_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=3
+      - DATA_SOURCE_NAME=hashed
+      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - EOF_QUANTITY=3
+
   reviews_counter_worker4:
     container_name: reviews_counter_worker4
     build:
@@ -495,7 +510,22 @@ services:
     links: 
       - rabbitmq
     environment:
-      - WORKER_ID=3
+      - WORKER_ID=4
+      - DATA_SOURCE_NAME=hashed
+      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - EOF_QUANTITY=3
+
+  reviews_counter_worker5:
+    container_name: reviews_counter_worker5
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=5
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
@@ -513,7 +543,7 @@ services:
       - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
       - DATA_OUTPUT_NAME=q3_results,QUEUE_Q4|top10_worker
       - MIN_QUANTITY=500
-      - WORKERS_QUANTITY=4
+      - WORKERS_QUANTITY=6
       - NEXT_WORKERS_QUANTITY=3
       
 
@@ -600,7 +630,7 @@ services:
       - SOURCE_QUEUE=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=0
-      - WORKERS_QUANTITY=3
+      - WORKERS_QUANTITY=4
       - NEXT_WORKERS_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
 
@@ -618,7 +648,7 @@ services:
       - SOURCE_QUEUE=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=1
-      - WORKERS_QUANTITY=3
+      - WORKERS_QUANTITY=4
       - NEXT_WORKERS_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
 
@@ -636,7 +666,25 @@ services:
       - SOURCE_QUEUE=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=2
-      - WORKERS_QUANTITY=3
+      - WORKERS_QUANTITY=4
+      - NEXT_WORKERS_QUANTITY=3
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  review_sentiment_worker3:
+    container_name: review_sentiment_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
+      - WORKER_ID=3
+      - WORKERS_QUANTITY=4
       - NEXT_WORKERS_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
 
@@ -763,6 +811,38 @@ services:
       - DATA_OUTPUT_NAME=Q5|percentile_worker
       - EOF_QUANTITY=3
 
+  mean_review_sentiment_worker4:
+    container_name: mean_review_sentiment_worker4
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=4
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=hashed
+      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - EOF_QUANTITY=3
+
+  mean_review_sentiment_worker5:
+    container_name: mean_review_sentiment_worker5
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=5
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=hashed
+      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - EOF_QUANTITY=3
+
   percentile_worker:
     container_name: percentile_worker
     build:
@@ -777,4 +857,4 @@ services:
       - DATA_SOURCE_NAME=Q5|percentile_worker
       - DATA_OUTPUT_NAME=q5_results
       - PERCENTILE=90
-      - WORKERS_QUANTITY=4
+      - WORKERS_QUANTITY=6
