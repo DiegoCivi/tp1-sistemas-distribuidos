@@ -63,7 +63,7 @@ class QueryCoordinator:
         self.parse_and_send_q1(batch)
         self.parse_and_send_q2(batch)
         self.parse_and_send_q3(batch)
-        #self.parse_and_send_q5(batch)
+        self.parse_and_send_q5(batch)
 
     def parse_and_send(self, batch, desired_keys, routing_key):
         new_batch = []
@@ -115,7 +115,9 @@ class QueryCoordinator:
             return deserialize_titles_message(data)
         else:
             data = data.decode('utf-8')
-            return data.split(ROW_SEPARATOR)
+            data = data.split(ROW_SEPARATOR)
+            print('El mensaje de Q5 tiene un largo de ', len(data))
+            return data
         
     def build_result_line(self, data, fields_to_print, query):
         """
@@ -135,4 +137,5 @@ class QueryCoordinator:
                 line += str(top_position) +'.   TITLE: ' + title + '    ' + 'MEAN-RATING: ' +  mean_rating + '\n'
             return line
         else:
+            print(len(data))
             return " - ".join(data)

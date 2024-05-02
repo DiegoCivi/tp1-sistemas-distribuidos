@@ -5,8 +5,7 @@ import os
 import time
 
 # titulo:cant_reviews,sumatoria_ratings,autores
-def handle_data(method, body, middleware, titles_with_sentiment, eof_counter, workers_quantity, temp):
-    temp[0] += 1
+def handle_data(method, body, middleware, titles_with_sentiment, eof_counter, workers_quantity):
     if body == b'EOF':
         eof_counter[0] += 1
         print("ME LLEGO UN EOF, TENGO UNA CANTIDAD DE: ", eof_counter)
@@ -35,23 +34,20 @@ def main():
     eof_counter = [0]
 
 
-    temp = [0]
     # Define a callback wrapper
-    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, middleware, titles_with_sentiment, eof_counter, int(workers_quantity), temp)
+    callback_with_params = lambda ch, method, properties, body: handle_data(method, body, middleware, titles_with_sentiment, eof_counter, int(workers_quantity))
     
     # Read the titles with their sentiment
     middleware.receive_messages(data_source_name, callback_with_params)
     middleware.consume()
 
-    print('ME LLEGARON ESTA CANTIDAD DE MENSAJES: ', temp)
 
     titles = titles_in_the_n_percentile(titles_with_sentiment, percentile)
-    print(f"Los titulos en el percetil {percentile} son [{titles}] con un largo de {len(titles)}")
+    print(f"Los titulos en el percetil con un largo de {len(titles)}")
 
-    serialized_data = serialize_message(titles_with_sentiment.keys())
+    serialized_data = serialize_message(titles)
     middleware.send_message(data_output_name, serialized_data)
-
-
+    
     middleware.send_message(data_output_name, "EOF")
 
 main()
