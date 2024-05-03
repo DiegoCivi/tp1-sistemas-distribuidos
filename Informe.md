@@ -17,7 +17,7 @@ En la siguiente imagen se puede ver como sera la estructura del sistema completo
 <p align="center"><img src="./images/SistemaCompletoFinal.png" /> </p>
 
 Empezando por el cliente y el server, el primero se conecta mediante TCP a nuestro server el cual tiene como funcion recibir los datasets y mandarle cada batch a al query coordinator. Este se encargara de parsear cada batch para cada pipeline ya que estos usan distintas columnas del dataset. El query coordinator manda los datasets por un exchange con topico en donde cada cola tiene un distinto topico. Ademas, Query Coordinator se encarga de recibir por distintas colas los diferentes resultados de cada pipeline. 
-<p align="center"><img src="./images/SistemaCompletoClient-Server.png" /> </p>
+<p align="center"><img src="./images/InicioSist.png" /> </p>
 
 Cada pipeline se encarga de conseguir lo resultados de una query en especifico y eso lo hacen usando diferentes tipos de workers que se encargan de aplicarle un simple tipo de "job" a cada dato recibido.  
 
@@ -54,7 +54,7 @@ En el nivel 1 se muestra el sistema completo, en el nivel 2 se muestra el sistem
 <p align="center"><img src="./images/c4Component.png" /> </p>
 
 #### <span style="color:#09ff05">**Nivel 4**</span>
-<p align="center"><img src="./images/c4Code.png" /> </p>
+<p align="center"><img src="./images/C4Code.png" /> </p>
 
 ## <span style="color:#9669f0"> Diagrama de robustez </span>
 A continuación podemos observar el diagrama de robustez que nos indica cómo se relacionan las entidades del sistema y la manera de comunicación entre ellas mediante boundaries, controllers y entities.  

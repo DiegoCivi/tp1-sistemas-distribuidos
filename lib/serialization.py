@@ -2,14 +2,14 @@
 Client reads from csv file with DictReader and serializes the dicts by
 transforming them into a string, with the fields separated by FIELD_SEPARATOR = "@|@"
 
-All the serialized dicts that enter in one batch are joined, separated by the ROW_SEPARATOR = "-|-"
+All the serialized dicts that enter in one batch are joined, separated by the ROW_SEPARATOR = "$|$"
 
-To deserialize, first thhee rows have to be splitted by the ROW_SEPARATOR = "-|-".
+To deserialize, first thhee rows have to be splitted by the ROW_SEPARATOR = "$|$".
 Then each row has to be splitted by the FIELD_SEPARATOR = "@|@" 
 """
 
 FIELD_SEPARATOR = "@|@"
-ROW_SEPARATOR = "-|-"
+ROW_SEPARATOR = "$|$"
 KEY_VAL_SEPARATOR = "#|#"
 VALUES_SEPARATOR = ","
 
@@ -47,6 +47,8 @@ def deserialize_titles_message(bytes):
 def serialize_dict(dict_to_serialize):
     msg = ''
     for key, value in dict_to_serialize.items():
+        if 'A look back at a very corny past.' in value:
+            print(dict_to_serialize)
         if isinstance(value, set):
             value = serialize_set(value)
         elif isinstance(value, list):

@@ -4,8 +4,7 @@ from middleware import Middleware
 import os
 import time
 
-#FIELD_SEPARATOR = "@|@"
-#ROW_SEPARATOR = "-|-"
+
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
 RECEIVE_COORDINATOR_QUEUE = 'server' 
 

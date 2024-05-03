@@ -14,51 +14,6 @@ services:
         timeout: 5s
         retries: 10
 
-  # producer:
-  #   container_name: producer
-  #   build:
-  #     context: .
-  #     dockerfile: ./producer/producer.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - HOST=server
-  #     - PORT=12345
-  #     - LISTEN_BACKLOG=1
-
-  # consumer1:
-  #   container_name: consumer1
-  #   build:
-  #     context: .
-  #     dockerfile: ./consumer/consumer.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - HOST=1
-  #     - PORT=12345
-  #     - LISTEN_BACKLOG=1
-
-  # consumer2:
-  #   container_name: consumer2
-  #   build:
-  #     context: .
-  #     dockerfile: ./consumer/consumer.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links: 
-  #     - rabbitmq
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - HOST=2
-  #     - PORT=12345
-  #     - LISTEN_BACKLOG=1
-
   server:
     container_name: server
     build:
@@ -88,7 +43,7 @@ services:
       - HOST=server
       - PORT=12345
       - TITLES_FILEPATH=./datasets/books_data.csv
-      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
+      - REVIEWS_FILEPATH=./datasets/Books_rating.csv
     volumes:
       - ./datasets:/datasets
 
