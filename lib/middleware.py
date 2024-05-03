@@ -1,13 +1,26 @@
 import pika
+import time
 
 ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
 PREFETCH_COUNT = 1
 AUTO_ACK_MODE = False
+CONNECTION_TRIES = 10
+LOOP_LAPSE_START = 3
 
 class Middleware:
 
     def __init__(self):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+        loop_lapse = LOOP_LAPSE_START
+        for _ in range(CONNECTION_TRIES):
+            try:
+                connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+            except:
+                time.sleep(loop_lapse)
+                loop_lapse = loop_lapse * 2
+                
+        if not connection.is_open:
+            raise Exception('Connection to RabbitMQ failed')
+
         self._connection = connection
         self._channel = connection.channel()
         self._queues = set()
@@ -70,6 +83,7 @@ class Middleware:
         self._channel.basic_ack(delivery_tag=method.delivery_tag)
 
     def close_connection(self):
+        self._channel.stop_consuming()
         self._connection.close()
 
     def stop_consuming(self, method=None):

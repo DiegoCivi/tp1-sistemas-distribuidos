@@ -11,7 +11,7 @@ def create_file_reader(file_path):
         return None
     
     reader = DictReader(file)
-    return reader
+    return file, reader
 
 def read_csv_batch(file_reader, threshold=200):
     """
