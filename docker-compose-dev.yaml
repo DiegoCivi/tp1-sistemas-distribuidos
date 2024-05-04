@@ -410,7 +410,7 @@ services:
     environment:
       - WORKER_ID=0
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       
   reviews_counter_worker1:
@@ -425,7 +425,7 @@ services:
     environment:
       - WORKER_ID=1
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
 
   reviews_counter_worker2:
@@ -440,7 +440,7 @@ services:
     environment:
       - WORKER_ID=2
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
   
   reviews_counter_worker3:
@@ -455,7 +455,7 @@ services:
     environment:
       - WORKER_ID=3
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
 
   reviews_counter_worker4:
@@ -470,7 +470,7 @@ services:
     environment:
       - WORKER_ID=4
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
 
   reviews_counter_worker5:
@@ -485,7 +485,7 @@ services:
     environment:
       - WORKER_ID=5
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
 
   filter_review_quantity_worker:
@@ -498,7 +498,7 @@ services:
     links: 
       - rabbitmq
     environment:
-      - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|filter_review_quantity_worker
       - DATA_OUTPUT_NAME=QUEUE_q3_results,QUEUE_Q4|top10_worker
       - MIN_QUANTITY=500
       - WORKERS_QUANTITY=6
@@ -718,7 +718,7 @@ services:
     environment:
       - WORKER_ID=0
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
 
   mean_review_sentiment_worker1:
@@ -734,7 +734,7 @@ services:
       - WORKER_ID=1
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
 
   mean_review_sentiment_worker2:
@@ -750,7 +750,7 @@ services:
       - WORKER_ID=2
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
 
   mean_review_sentiment_worker3:
@@ -766,7 +766,7 @@ services:
       - WORKER_ID=3
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
 
   mean_review_sentiment_worker4:
@@ -782,7 +782,7 @@ services:
       - WORKER_ID=4
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
 
   mean_review_sentiment_worker5:
@@ -798,7 +798,7 @@ services:
       - WORKER_ID=5
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
 
   percentile_worker:
@@ -812,7 +812,7 @@ services:
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=Q5|percentile_worker
+      - DATA_SOURCE_NAME=QUEUE_Q5|percentile_worker
       - DATA_OUTPUT_NAME=QUEUE_q5_results
       - PERCENTILE=90
       - WORKERS_QUANTITY=6

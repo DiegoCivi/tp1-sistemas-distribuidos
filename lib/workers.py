@@ -6,6 +6,9 @@ import signal
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
 CATEGORY_CONDITION = 'CATEGORY'
+QUERY_5 = 5
+QUERY_3 = 3
+BATCH_SIZE = 100
 
 class FilterWorker:
 
@@ -157,3 +160,135 @@ class HashWorker:
         self.middleware.consume()
 
         self.middleware.close_connection()
+
+class JoinWorker:
+
+    def __init__(self, id, input_name, output_name, eof_quantity, query):
+        if query != QUERY_5 and query != QUERY_3:
+            raise Exception('Query not supported')
+
+        self.id = id
+        self.input_name = input_name
+        self.output_name = output_name
+        self.eof_counter = 0
+        self.eof_quantity = eof_quantity
+        self.counter_dict = {}
+        self.middleware = Middleware()
+        self.query = query
+
+    def handle_titles_data(self, method, body):
+        if body == b'EOF':
+            self.eof_counter += 1
+            if self.eof_counter == self.eof_quantity:
+                self.middleware.stop_consuming()
+            self.middleware.ack_message(method)
+            return
+        data = deserialize_titles_message(body)
+
+        for row_dictionary in data:
+            title = row_dictionary['Title']
+            if self.query == QUERY_5:
+                self.counter_dict[title] = [0,0] # [reviews_quantity, review_sentiment_summation]
+            else:
+                self.counter_dict[title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
+        
+        self.middleware.ack_message(method)
+
+    def handle_reviews_data(self, method, body):
+        if body == b'EOF':
+            self.eof_counter += 1
+            if self.eof_counter == self.eof_quantity:
+                self.middleware.stop_consuming()
+            self.middleware.ack_message(method)
+            return
+        data = deserialize_titles_message(body)
+
+        for row_dictionary in data:
+            title = row_dictionary['Title']
+            if title not in self.counter_dict:
+                continue
+            
+            try:
+                if self.query == QUERY_5:
+                    parsed_value = self.parse_text_sentiment(row_dictionary['text_sentiment'])
+                else:
+                    parsed_value = self.parse_review_rating(row_dictionary['review/score'])
+            except:
+                continue
+
+            counter = self.counter_dict[title]
+            counter[0] += 1
+            counter[1] += parsed_value 
+            self.counter_dict[title] = counter
+        
+        self.middleware.ack_message(method)
+
+    def parse_text_sentiment(self, text_sentiment):
+        try:
+            text_sentiment = float(text_sentiment)
+        except Exception as e:
+            print(f"Error: [{e}] when parsing 'text_sentiment' to float.")
+            raise e
+        return text_sentiment
+        
+    def parse_review_rating(self, rating):
+        try:
+            title_rating = float(rating)
+        except Exception as e:
+            print(f"Error: [{e}] when parsing 'review/score' to float.")
+            raise e
+        return title_rating
+            
+    def run(self):
+
+        # Define a callback wrappers
+        callback_with_params_titles = lambda ch, method, properties, body: self.handle_titles_data(method, body)
+        callback_with_params_reviews = lambda ch, method, properties, body: self.handle_reviews_data(method, body)
+
+        # The name of the queues the worker will read data
+        titles_queue = self.id + '_titles_Q' + str(self.query)
+        reviews_queue = self.id + '_reviews_Q' + str(self.query)
+
+        # Declare and subscribe to the titles queue in the exchange
+        self.middleware.define_exchange(self.input_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
+
+        # Read from the titles queue
+        print("Voy a leer titles")
+        self.middleware.subscribe(self.input_name, titles_queue, callback_with_params_titles)
+        self.middleware.consume()
+
+        self.eof_counter = 0 
+
+        # Read from the reviews queue
+        print("Voy a leer reviews")
+        self.middleware.subscribe(self.input_name, reviews_queue,  callback_with_params_reviews)
+        self.middleware.consume()
+
+
+        # Once all the reviews were received, the counter_dict needs to be sent to the next stage
+        batch_size = 0
+        batch = {}
+        for title, counter in self.counter_dict.items():
+            # Ignore titles with no reviews
+            if counter[0] == 0:
+                continue
+
+            if self.query == QUERY_5:
+                batch[title] = str(counter[1] / counter[0])
+            else:
+                batch[title] = counter
+
+            batch_size += 1
+            if batch_size == BATCH_SIZE: # TODO: Maybe the 100 could be an env var
+                serialized_message = serialize_message([serialize_dict(batch)])
+                self.middleware.send_message(self.output_name, serialized_message)
+                batch = {}
+                batch_size = 0
+
+        if len(batch) != 0:
+            serialized_message = serialize_message([serialize_dict(batch)])
+            self.middleware.send_message(self.output_name, serialized_message)
+        
+        self.middleware.send_message(self.output_name, "EOF")
+        
+        self.middleware.close_connection()  
