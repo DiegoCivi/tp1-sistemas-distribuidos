@@ -5,7 +5,7 @@ ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
 PREFETCH_COUNT = 1
 AUTO_ACK_MODE = False
 CONNECTION_TRIES = 10
-LOOP_LAPSE_START = 3
+LOOP_LAPSE_START = 10
 
 class Middleware:
 
@@ -13,9 +13,10 @@ class Middleware:
         loop_lapse = LOOP_LAPSE_START
         for _ in range(CONNECTION_TRIES):
             try:
-                connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
-            except:
                 time.sleep(loop_lapse)
+                connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+                break
+            except:
                 loop_lapse = loop_lapse * 2
                 
         if not connection.is_open:
