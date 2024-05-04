@@ -214,11 +214,11 @@ class QueryCoordinator:
         q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q3, ['Title', 'authors'], 'Q3')
         q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q4, ['Title'], 'Q4')
         q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q5, ['Title'], 'Q5')
-        self.middleware.receive_messages('q1_results', q1_results_with_params)
-        self.middleware.receive_messages('q2_results', q2_results_with_params)
-        self.middleware.receive_messages('q3_results', q3_results_with_params)
-        self.middleware.receive_messages('q4_results', q4_results_with_params)
-        self.middleware.receive_messages('q5_results', q5_results_with_params)
+        self.middleware.receive_messages('QUEUE_q1_results', q1_results_with_params)
+        self.middleware.receive_messages('QUEUE_q2_results', q2_results_with_params)
+        self.middleware.receive_messages('QUEUE_q3_results', q3_results_with_params)
+        self.middleware.receive_messages('QUEUE_q4_results', q4_results_with_params)
+        self.middleware.receive_messages('QUEUE_q5_results', q5_results_with_params)
         self.middleware.consume()
 
         # Assemble the results 

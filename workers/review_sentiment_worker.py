@@ -7,7 +7,6 @@ import time
 def handle_data(method, body, data_output_name, middleware):
     if body == b'EOF':
         middleware.stop_consuming()
-        #middleware.send_message(data_output_name, "EOF")
         middleware.ack_message(method)
         return
     data = deserialize_titles_message(body)

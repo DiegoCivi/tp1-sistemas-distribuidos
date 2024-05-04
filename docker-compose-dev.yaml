@@ -188,7 +188,7 @@ services:
       - NEXT_WORKER_QUANTITY=1
       - YEAR_RANGE_TO_FILTER=2000,2023
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=q1_results
+      - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
 
   filter_year_worker1_q1:
@@ -206,7 +206,7 @@ services:
       - NEXT_WORKER_QUANTITY=1
       - YEAR_RANGE_TO_FILTER=2000,2023
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=q1_results
+      - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
 
   filter_year_worker2_q1:
@@ -224,7 +224,7 @@ services:
       - NEXT_WORKER_QUANTITY=1
       - YEAR_RANGE_TO_FILTER=2000,2023
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=q1_results
+      - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
 
 # QUERY 2    
@@ -286,7 +286,7 @@ services:
    environment:
      - EOF_QUANTITY=3
      - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
-     - DATA_OUTPUT_NAME=q2_results
+     - DATA_OUTPUT_NAME=QUEUE_q2_results
 
 # QUERY 3
 
@@ -305,6 +305,7 @@ services:
       - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
+      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=0
       - NEXT_WORKER_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q3|eof_year
@@ -325,6 +326,7 @@ services:
       - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
+      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=1
       - NEXT_WORKER_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q3|eof_year
@@ -345,6 +347,7 @@ services:
       - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
+      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=2
       - NEXT_WORKER_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q3|eof_year
@@ -496,7 +499,7 @@ services:
       - rabbitmq
     environment:
       - DATA_SOURCE_NAME=Q3|filter_review_quantity_worker
-      - DATA_OUTPUT_NAME=q3_results,QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_q3_results,QUEUE_Q4|top10_worker
       - MIN_QUANTITY=500
       - WORKERS_QUANTITY=6
       - NEXT_WORKERS_QUANTITY=3
@@ -565,7 +568,7 @@ services:
     environment:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_last_worker
-      - DATA_OUTPUT_NAME=q4_results
+      - DATA_OUTPUT_NAME=QUEUE_q4_results
       - WORKERS_QUANTITY=3
       - LAST=1
 
@@ -810,6 +813,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=Q5|percentile_worker
-      - DATA_OUTPUT_NAME=q5_results
+      - DATA_OUTPUT_NAME=QUEUE_q5_results
       - PERCENTILE=90
       - WORKERS_QUANTITY=6

@@ -13,7 +13,6 @@ def handle_data(method, body, data_output_name, middleware):
     data = deserialize_titles_message(body)
 
     desired_data = different_decade_counter(data)
-
     if not desired_data:
         middleware.ack_message(method)
         return
