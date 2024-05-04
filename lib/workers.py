@@ -1,5 +1,5 @@
 from middleware import Middleware
-from filters import filter_by, eof_manage_process, hash_title
+from filters import filter_by, eof_manage_process, hash_title, accumulate_authors_decades, different_decade_counter
 from serialization import serialize_message, serialize_dict, deserialize_titles_message
 import signal
 
@@ -291,4 +291,87 @@ class JoinWorker:
         
         self.middleware.send_message(self.output_name, "EOF")
         
-        self.middleware.close_connection()  
+        self.middleware.close_connection()
+
+class DecadeWorker:
+
+    def __init__(self, input_name, output_name, source_queue):
+        self.input_name = input_name
+        self.output_name = output_name
+        self.source_queue = source_queue
+        self.middleware = Middleware()
+
+    def handle_data(self, method, body):
+        if body == b'EOF':
+            self.middleware.stop_consuming()
+            self.middleware.send_message(self.output_name, "EOF")
+            self.middleware.ack_message(method)
+            return
+        data = deserialize_titles_message(body)
+
+        desired_data = different_decade_counter(data)
+        if not desired_data:
+            self.middleware.ack_message(method)
+            return
+
+        serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
+        self.middleware.send_message(self.output_name, serialized_data)
+
+        self.middleware.ack_message(method)
+
+    def run(self):
+        # Define a callback wrapper
+        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+
+        # Declare and subscribe to the titles exchange
+        self.middleware.define_exchange(self.input_name, {self.source_queue: [self.source_queue]})
+        self.middleware.subscribe(self.input_name, self.source_queue, callback_with_params)
+        self.middleware.consume()
+
+        self.middleware.close_connection()
+
+
+class GlobalDecadeWorker:
+
+    def __init__(self, input_name, output_name, eof_quantity):
+        self.input_name = input_name
+        self.output_name = output_name
+        self.eof_quantity = eof_quantity
+        self.eof_counter = 0
+        self.counter_dict = {}
+        self.middleware = Middleware()
+
+    def handle_data(self, method, body):
+        if body == b'EOF':
+            self.eof_counter += 1
+            if self.eof_counter == self.eof_quantity:
+                self.middleware.stop_consuming()
+            self.middleware.ack_message(method)
+            return
+        data = deserialize_titles_message(body)
+
+        accumulate_authors_decades(data, self.counter_dict)
+
+        self.middleware.ack_message(method)
+
+    def run(self):
+        # Define a callback wrapper
+        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+        
+        # Declare the output queue
+        self.middleware.receive_messages(self.input_name, callback_with_params)
+        self.middleware.consume()
+
+        # Collect the results
+        results = []
+        for key, value in self.counter_dict.items():
+            if len(value) >= 10:
+                results.append(key)
+        # Send the results to the output queue
+        serialized_message = serialize_message(results)
+        
+        self.middleware.send_message(self.output_name, serialized_message)
+        self.middleware.send_message(self.output_name, 'EOF')
+
+        self.middleware.close_connection()
+        
