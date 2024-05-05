@@ -1,9 +1,5 @@
 from workers import TopNWorker
-import os
-import time
-
-
-    
+import os 
     
     
 def main():
@@ -16,5 +12,6 @@ def main():
     
     worker = TopNWorker(data_source_name, data_output_name, workers_quantity, top_n, last)
     worker.run()
+
 
 main()

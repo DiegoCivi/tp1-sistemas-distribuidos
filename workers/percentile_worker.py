@@ -7,8 +7,10 @@ def main():
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
     percentile = os.getenv('PERCENTILE')
     workers_quantity = int(os.getenv('WORKERS_QUANTITY'))
+    
 
     worker = PercentileWorker(data_source_name, data_output_name, percentile, workers_quantity)
     worker.run()
+
 
 main()

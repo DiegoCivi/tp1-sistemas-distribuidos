@@ -1,6 +1,3 @@
-from middleware import Middleware
-from serialization import deserialize_titles_message, serialize_message, serialize_dict
-from filters import calculate_review_sentiment, eof_manage_process
 import os
 from workers import ReviewSentimentWorker
 
@@ -15,6 +12,7 @@ def main():
 
     worker = ReviewSentimentWorker(data_source_name, data_output_name, source_queue, worker_id, workers_quantity, next_workers_quantity, eof_queue)
     worker.run()
+
     
 main()
 

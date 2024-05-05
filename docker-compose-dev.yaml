@@ -288,7 +288,7 @@ services:
      - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
      - DATA_OUTPUT_NAME=QUEUE_q2_results
 
-# QUERY 3
+# # QUERY 3
 
   filter_year_worker0_q3:
     container_name: filter_year_worker0_q3

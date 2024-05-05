@@ -14,7 +14,6 @@ def main():
         source_queue = os.getenv('SOURCE_QUEUE')
     except:
         source_queue = None
-
     worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity, source_queue)
     worker.set_filter_type('CATEGORY', category_condition, category_to_filter)
     worker.run()

@@ -5,13 +5,17 @@ ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
 PREFETCH_COUNT = 1
 AUTO_ACK_MODE = False
 CONNECTION_TRIES = 10
-LOOP_LAPSE_START = 10
+LOOP_LAPSE_START = 2
 
 class Middleware:
 
-    def __init__(self):
+    def __init__(self, sigterm_queue):
         loop_lapse = LOOP_LAPSE_START
+        connection = None
         for _ in range(CONNECTION_TRIES):
+            if not sigterm_queue.empty():
+                raise Exception('Sigterm received. Gracefully exiting...')
+
             try:
                 time.sleep(loop_lapse)
                 connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
@@ -19,7 +23,7 @@ class Middleware:
             except:
                 loop_lapse = loop_lapse * 2
                 
-        if not connection.is_open:
+        if not connection:
             raise Exception('Connection to RabbitMQ failed')
 
         self._connection = connection

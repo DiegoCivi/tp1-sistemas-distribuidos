@@ -9,8 +9,10 @@ def main():
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
     eof_quantity = int(os.getenv('EOF_QUANTITY'))
 
+    
     worker = GlobalDecadeWorker(data_source_name, data_output_name, eof_quantity)
     worker.run()
+
 
 main()
 

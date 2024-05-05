@@ -9,7 +9,6 @@ def main():
 
     worker = DecadeWorker(data_source_name, data_output_name, source_queue)
     worker.run()
-
 main()
 
     

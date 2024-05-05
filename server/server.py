@@ -2,8 +2,8 @@ import socket
 from communications import read_socket, write_socket
 from middleware import Middleware
 import os
-import time
 import signal
+import queue
 
 
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
@@ -15,19 +15,23 @@ class Server:
     def __init__(self, host, port, listen_backlog):
         signal.signal(signal.SIGTERM, self.handle_signal)
         
-        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = host
-        self.port = port
-        self.listen_backlog = listen_backlog
-        self.middleware = Middleware()
-        print("Middleware established the connection")
         self._client_socket = None
         self._stop_server= False
+        self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server_socket.bind((host, port))
+        self._server_socket.listen(listen_backlog) 
+        
+        self.middleware = None
+        self.queue = queue.Queue()
+        try:
+            middleware = Middleware(self.queue)
+        except Exception as e:
+            raise e
+        self.middleware = middleware
+        print("Middleware established the connection")
 
         self.results = ['']
 
-        self._server_socket.bind((self.host, self.port))
-        self._server_socket.listen(self.listen_backlog) 
 
 
     def run(self):
@@ -38,9 +42,12 @@ class Server:
                 self._client_socket = conn
                 print(f'New connection from address {addr}')
                 self.handle_client()
-            except OSError:
-                print("Server shutdown")
-                self._server_socket.close()
+            except Exception as e:
+                if self._stop_server:
+                    print("Server shutdown. With exception: ", e)
+                    self._server_socket.close()
+                else:
+                    print(f"Hubo un error en la lectura del socket del cliente. El error fue: {e}")
 
     def handle_client(self):
         """
@@ -63,7 +70,6 @@ class Server:
         while msg != "EOF":
             msg, e = read_socket(self._client_socket)
             if e != None:
-                print(f"Hubo un error en la lectura del socker del cliente. El error fue: {e}")
                 raise e
 
             self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
@@ -88,8 +94,10 @@ class Server:
 
     def handle_signal(self, *args):
         print("Gracefully exit")
+        self.queue.put('SIGTERM')
         self._stop_server = True
-        self.middleware.close_connection()
+        if self.middleware != None:
+            self.middleware.close_connection()
         if self._client_socket != None:
             self._client_socket.close()
         if self._server_socket != None:
@@ -98,9 +106,12 @@ class Server:
 
 
 def main():    
-    HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG') 
-    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
-    server.run()
+    HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG')
+    try:
+        server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
+        server.run()
+    except:
+        print('SIGTERM received')
 
 main()
     

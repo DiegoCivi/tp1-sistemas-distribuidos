@@ -1,7 +1,7 @@
 from middleware import Middleware
 from serialization import serialize_dict, serialize_message, deserialize_titles_message, ROW_SEPARATOR
 import signal
-
+import queue
 
 TITLES_MODE = 'titles'
 REVIEWS_MODE = 'reviews'
@@ -9,25 +9,31 @@ BATCH_SIZE = 100
 SEND_SERVER_QUEUE = 'server'
 RECEIVE_SERVER_QUEUE = 'query_coordinator'
 
-
-
 class QueryCoordinator:
 
-    def __init__(self, middleware, eof_titles_max_subscribers, eof_reviews_max_subscribers):
+    def __init__(self, eof_titles_max_subscribers, eof_reviews_max_subscribers):
         """
         Initializes the query coordinator with the title parse mode
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.parse_mode = TITLES_MODE
-        self.middleware = middleware
         self.eof_titles_max_subscribers = eof_titles_max_subscribers
         self.eof_reviews_max_subscribers = eof_reviews_max_subscribers
         self.stop_coordinator = False
+        self.middleware = None
+        self.queue = queue.Queue()
+        try:
+            middleware = Middleware(self.queue)
+        except Exception as e:
+            raise e
+        self.middleware = middleware        
 
     def handle_signal(self, *args):
         self.stop_coordinator = True
-        self.middleware.close_connection()
+        self.queue.put('SIGTERM')
+        if self.middleware != None:
+            self.middleware.close_connection()
 
     def run(self):
         try: 

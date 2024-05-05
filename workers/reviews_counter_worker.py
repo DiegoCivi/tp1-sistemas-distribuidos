@@ -12,5 +12,6 @@ def main():
 
     worker = JoinWorker(worker_id, data_source_name, data_output_name, eof_quantity, 3)
     worker.run()
+
     
 main()

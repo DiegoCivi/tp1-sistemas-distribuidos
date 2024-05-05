@@ -20,4 +20,5 @@ def main():
     worker.set_filter_type('YEAR', year_range_condition, years)
     worker.run()
 
+
 main()  
