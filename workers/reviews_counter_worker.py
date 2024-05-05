@@ -2,53 +2,6 @@ from middleware import Middleware
 from serialization import deserialize_titles_message, serialize_message, serialize_dict
 import os
 from workers import JoinWorker
-
-def handle_titles_data(method, body, counter_dict, middleware, eof_quantity, eof_counter):
-    """
-    Acumulates the quantity of reviews for each book 
-    """
-    if body == b'EOF':
-        eof_counter[0] += 1
-        if eof_counter[0] == eof_quantity:
-            middleware.stop_consuming()
-        middleware.ack_message(method)
-        return
-    data = deserialize_titles_message(body)
-    
-    for row_dictionary in data:
-        title = row_dictionary['Title']
-        counter_dict[title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
-    
-    middleware.ack_message(method)
-
-def handle_reviews_data(method, body, counter_dict, middleware, eof_quantity, eof_counter):
-    if body == b'EOF':
-        eof_counter[0] += 1
-        if eof_counter[0] == eof_quantity:
-            middleware.stop_consuming()
-        middleware.ack_message(method)
-        return
-    data = deserialize_titles_message(body)
-
-    for row_dictionary in data:
-        title = row_dictionary['Title']
-        if title not in counter_dict:
-            continue
-
-        try:
-            title_rating = float(row_dictionary['review/score'])
-        except Exception as e:
-            print(f"Error: [{e}] when parsing 'review/score' to float.")
-            continue
-
-        counter = counter_dict[title]
-        counter[0] += 1
-        counter[1] += title_rating
-
-        counter_dict[title] = counter
-    
-    middleware.ack_message(method)
-
             
 def main():
 

@@ -1,5 +1,5 @@
 from middleware import Middleware
-from filters import filter_by, eof_manage_process, hash_title, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n
+from filters import filter_by, eof_manage_process, hash_title, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n, calculate_review_sentiment
 from serialization import serialize_message, serialize_dict, deserialize_titles_message
 import signal
 
@@ -463,5 +463,43 @@ class TopNWorker:
             # Send the results to the query_coordinator
             self.middleware.send_message(self.output_name, serialized_data)
             self.middleware.send_message(self.output_name, 'EOF')
+
+        self.middleware.close_connection()
+
+class ReviewSentimentWorker:
+    
+    def __init__(self, input_name, output_name, source_queue, worker_id, workers_quantity, next_workers_quantity, eof_queue):
+        self.input_name = input_name
+        self.output_name = output_name
+        self.source_queue = source_queue
+        self.worker_id = worker_id
+        self.workers_quantity = workers_quantity
+        self.next_workers_quantity = next_workers_quantity
+        self.eof_queue = eof_queue
+        self.middleware = Middleware()
+
+    def handle_data(self, method, body):
+        if body == b'EOF':
+            self.middleware.stop_consuming()
+            self.middleware.ack_message(method)
+            return
+        data = deserialize_titles_message(body)
+
+        desired_data = calculate_review_sentiment(data)
+        serialized_data = serialize_message([serialize_dict(filtered_dict) for filtered_dict in desired_data])
+        self.middleware.send_message(self.output_name, serialized_data)
+        
+        self.middleware.ack_message(method)
+
+    def run(self):
+        # Define a callback wrapper
+        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+
+        # Declare and subscribe to the titles exchange
+        self.middleware.define_exchange(self.input_name, {self.source_queue: [self.source_queue]})
+        self.middleware.subscribe(self.input_name, self.source_queue, callback_with_params)
+        self.middleware.consume()
+
+        eof_manage_process(self.worker_id, self.workers_quantity, self.next_workers_quantity, self.output_name, self.middleware, self.eof_queue)
 
         self.middleware.close_connection()
