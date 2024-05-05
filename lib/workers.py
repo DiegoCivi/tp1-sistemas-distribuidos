@@ -1,5 +1,5 @@
 from middleware import Middleware
-from filters import filter_by, eof_manage_process, hash_title, accumulate_authors_decades, different_decade_counter
+from filters import filter_by, eof_manage_process, hash_title, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n
 from serialization import serialize_message, serialize_dict, deserialize_titles_message
 import signal
 
@@ -375,3 +375,93 @@ class GlobalDecadeWorker:
 
         self.middleware.close_connection()
         
+class PercentileWorker:
+
+    def __init__(self, input_name, output_name, percentile, eof_quantity):
+        self.input_name = input_name
+        self.output_name = output_name
+        self.percentile = percentile
+        self.eof_quantity = eof_quantity
+        self.eof_counter = 0
+        self.titles_with_sentiment = {}
+        self.middleware = Middleware()
+
+    def handle_data(self, method, body):
+        if body == b'EOF':
+            print('@@@@@@@@@@@@@@@@@@@@@@@ mE LLEGO UN eof. tENGO: ', self.eof_counter)
+            self.eof_counter += 1
+            if self.eof_counter == self.eof_quantity:
+                self.middleware.stop_consuming()
+            self.middleware.ack_message(method)
+            return
+        
+        data = deserialize_titles_message(body)
+        
+        for key, value in data[0].items():
+            self.titles_with_sentiment[key] = float(value)
+
+        self.middleware.ack_message(method)
+
+    def run(self):
+        # Define a callback wrapper
+        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+        
+        # Read the titles with their sentiment
+        self.middleware.receive_messages(self.input_name, callback_with_params)
+        self.middleware.consume()
+
+
+        titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
+
+        serialized_data = serialize_message(titles)
+        self.middleware.send_message(self.output_name, serialized_data)
+        self.middleware.send_message(self.output_name, "EOF")
+
+        self.middleware.close_connection()
+
+class TopNWorker:
+
+    def __init__(self, input_name, output_name, eof_quantity, n, last):
+        self.input_name = input_name
+        self.output_name = output_name
+        self.top_n = n
+        self.last = last
+        self.eof_quantity = eof_quantity
+        self.eof_counter = 0
+        self.top = []
+        self.middleware = Middleware()
+
+    def handle_data(self, method, body):
+        if body == b'EOF':
+            self.eof_counter += 1
+            if self.last and self.eof_counter == self.eof_quantity:
+                self.middleware.stop_consuming()
+            elif not self.last:
+                self.middleware.stop_consuming()
+            self.middleware.ack_message(method)
+            return
+        data = deserialize_titles_message(body)
+
+        self.top = get_top_n(data, self.top, self.top_n, self.last)
+        self.middleware.ack_message(method)        
+
+    def run(self):
+        # Define a callback wrapper
+        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+        
+        self.middleware.receive_messages(self.input_name, callback_with_params)
+        self.middleware.consume()
+
+        dict_to_send = {title:str(mean_rating) for title,mean_rating in self.top}
+        serialized_data = serialize_message([serialize_dict(dict_to_send)])
+        if not self.last:
+            if len(self.top) != 0:
+                self.middleware.send_message(self.output_name, serialized_data)
+
+            self.middleware.send_message(self.output_name, 'EOF')
+        else:
+            # Send the results to the query_coordinator
+            self.middleware.send_message(self.output_name, serialized_data)
+            self.middleware.send_message(self.output_name, 'EOF')
+
+        self.middleware.close_connection()
