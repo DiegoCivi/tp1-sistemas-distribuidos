@@ -11,12 +11,8 @@ def main():
     eof_queue = os.getenv('EOF_QUEUE')
     worker_quantity = int(os.getenv('WORKER_QUANTITY'))
     next_worker_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
-    try:
-        source_queue = os.getenv('SOURCE_QUEUE')
-    except:
-        source_queue = None
 
-    worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity, source_queue)
+    worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity)
     worker.set_filter_type('YEAR', year_range_condition, years)
     worker.run()
 

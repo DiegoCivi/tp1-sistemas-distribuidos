@@ -57,8 +57,12 @@ services:
     links: 
       - rabbitmq
     environment:
-      - EOF_TITLES_MAX_SUBS=6
-      - EOF_REVIEWS_MAX_SUBS=6
+      - WORKERS_Q1=3
+      - WORKERS_Q2=3
+      - WORKERS_Q3_TITLES=3
+      - WORKERS_Q3_REVIEWS=3
+      - WORKERS_Q5_TITLES=3
+      - WORKERS_Q5_REVIEWS=6
 
 # QUERY 1
 
@@ -76,8 +80,7 @@ services:
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
       - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
 
@@ -95,8 +98,7 @@ services:
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
       - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
 
@@ -114,8 +116,7 @@ services:
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
       - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
 
@@ -240,8 +241,7 @@ services:
      - rabbitmq
    environment:
      - WORKER_ID=0
-     - DATA_SOURCE_NAME=data
-     - SOURCE_QUEUE=q2_titles
+     - DATA_SOURCE_NAME=q2_titles
      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
 
   decade_counter_worker1:
@@ -255,8 +255,7 @@ services:
      - rabbitmq
    environment:
      - WORKER_ID=1
-     - DATA_SOURCE_NAME=data
-     - SOURCE_QUEUE=q2_titles
+     - DATA_SOURCE_NAME=q2_titles
      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
 
   decade_counter_worker2:
@@ -270,8 +269,7 @@ services:
      - rabbitmq
    environment:
      - WORKER_ID=2
-     - DATA_SOURCE_NAME=data
-     - SOURCE_QUEUE=q2_titles
+     - DATA_SOURCE_NAME=q2_titles
      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
 
   global_decade_counter_worker:
@@ -288,7 +286,7 @@ services:
      - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
      - DATA_OUTPUT_NAME=QUEUE_q2_results
 
-# # QUERY 3
+# QUERY 3
 
   filter_year_worker0_q3:
     container_name: filter_year_worker0_q3
@@ -302,10 +300,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q3_titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
-      - EXCHANGE_TYPE=fanout
-      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=0
       - NEXT_WORKER_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q3|eof_year
@@ -323,10 +319,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q3_titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
-      - EXCHANGE_TYPE=fanout
-      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=1
       - NEXT_WORKER_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q3|eof_year
@@ -344,10 +338,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q3_titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
-      - EXCHANGE_TYPE=fanout
-      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=2
       - NEXT_WORKER_QUANTITY=3
       - EOF_QUEUE=QUEUE_Q3|eof_year
@@ -364,7 +356,7 @@ services:
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
 
@@ -379,7 +371,7 @@ services:
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
 
@@ -394,7 +386,7 @@ services:
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
 
@@ -505,7 +497,6 @@ services:
       - NEXT_WORKERS_QUANTITY=3
       
 
-
 # QUERY 4
 
   top_10_worker0:
@@ -584,8 +575,7 @@ services:
     links: 
       - rabbitmq
     environment:
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_reviews
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=0
       - WORKERS_QUANTITY=4
@@ -602,8 +592,7 @@ services:
     links: 
       - rabbitmq
     environment:
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_reviews
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=1
       - WORKERS_QUANTITY=4
@@ -620,8 +609,7 @@ services:
     links: 
       - rabbitmq
     environment:
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_reviews
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=2
       - WORKERS_QUANTITY=4
@@ -638,8 +626,7 @@ services:
     links: 
       - rabbitmq
     environment:
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_reviews
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=3
       - WORKERS_QUANTITY=4
@@ -658,8 +645,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CATEGORY=Fiction
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_titles
+      - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - WORKER_ID=0
       - EOF_QUEUE=QUEUE_Q5|eof_category
@@ -678,8 +664,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CATEGORY=Fiction
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_titles
+      - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - WORKER_ID=1
       - EOF_QUEUE=QUEUE_Q5|eof_category
@@ -698,8 +683,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CATEGORY=Fiction
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q5_titles
+      - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - WORKER_ID=2
       - EOF_QUEUE=QUEUE_Q5|eof_category

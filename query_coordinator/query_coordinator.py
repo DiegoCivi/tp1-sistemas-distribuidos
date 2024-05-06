@@ -11,15 +11,16 @@ RECEIVE_SERVER_QUEUE = 'query_coordinator'
 
 class QueryCoordinator:
 
-    def __init__(self, eof_titles_max_subscribers, eof_reviews_max_subscribers):
+    def __init__(self, eof_quantity_q1, eof_quantity_q2, eof_quantity_q3_titles, eof_quantity_q3_reviews, eof_quantity_q5_titles, eof_quantity_q5_reviews):
         """
         Initializes the query coordinator with the title parse mode
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.parse_mode = TITLES_MODE
-        self.eof_titles_max_subscribers = eof_titles_max_subscribers
-        self.eof_reviews_max_subscribers = eof_reviews_max_subscribers
+        self.eof_quantity_dict = {'1': eof_quantity_q1, '2': eof_quantity_q2, '3_titles': eof_quantity_q3_titles, '3_reviews': eof_quantity_q3_reviews,
+                             '5_titles': eof_quantity_q5_titles, '5_reviews': eof_quantity_q5_reviews}
+
         self.stop_coordinator = False
         self.middleware = None
         self.queue = queue.Queue()
@@ -49,7 +50,7 @@ class QueryCoordinator:
     def handle_data(self, method, body):
         if body == b'EOF':
             print('Ya mande todo el archivo ', self.parse_mode)
-            self.send_EOF()
+            self.manage_EOF()
             self.change_parse_mode(REVIEWS_MODE)
 
             self.middleware.ack_message(method)
@@ -61,12 +62,6 @@ class QueryCoordinator:
         self.middleware.ack_message(method)
 
     def receive_and_fordward_data(self):
-        queues_dict = {'q1_titles': ['q1_titles', 'EOF_titles'], 'q2_titles': ['q2_titles', 'EOF_titles'], 
-               'q3_titles': ['q3_titles', 'EOF_titles'], 'q3_reviews': ['q3_reviews', 'EOF_reviews'],
-               'q5_titles': ['q5_titles', 'EOF_titles'], 'q5_reviews': ['q5_reviews', 'EOF_reviews'],
-               }
-        self.middleware.define_exchange('data', queues_dict)
-
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
 
         # Read the data from the server, parse it and fordward it
@@ -81,22 +76,25 @@ class QueryCoordinator:
             raise Exception("Mode not supported.")
         self.parse_mode = mode
     
-    def send_EOF(self):
+    def manage_EOF(self):
         """
         Sends the EOF message to the middleware
         """
-        routing_key = 'EOF_' + self.parse_mode
-
         if self.parse_mode == TITLES_MODE:
-            eof_quantity = self.eof_titles_max_subscribers
+            self.send_titles_EOF('1', 'q1_titles')
+            self.send_titles_EOF('2', 'q2_titles')
+            self.send_titles_EOF('3_titles', 'q3_titles')
+            self.send_titles_EOF('5_titles', 'q5_titles')
         else:
-            eof_quantity = self.eof_reviews_max_subscribers
-
-        for _ in range(eof_quantity):
-            self.middleware.publish_message('data', 'direct', routing_key, 'EOF')
-
-        if self.parse_mode == REVIEWS_MODE:
+            self.send_titles_EOF('3_reviews', 'q3_reviews')
+            self.send_titles_EOF('5_reviews', 'q5_reviews')
             self.middleware.stop_consuming()
+
+
+    def send_titles_EOF(self, eof_dict_key, queue):
+        for _ in range(self.eof_quantity_dict[eof_dict_key]):
+           self.middleware.send_message(queue, 'EOF')
+
 
     def drop_rows_with_missing_values(self, batch, columns):
         """
@@ -117,20 +115,19 @@ class QueryCoordinator:
         
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
-         
         self.parse_and_send_q1(batch)
         self.parse_and_send_q2(batch)
         self.parse_and_send_q3(batch)
         self.parse_and_send_q5(batch)
 
-    def parse_and_send(self, batch, desired_keys, routing_key):
+    def parse_and_send(self, batch, desired_keys, queue):
         new_batch = []
         for row in batch:
             row = {k: v for k, v in row.items() if k in desired_keys}
             new_batch.append(row)
             
         serialized_message = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in new_batch])
-        self.middleware.publish_message('data', 'direct', routing_key, serialized_message)
+        self.middleware.send_message(queue, serialized_message)
 
     def parse_and_send_q1(self, batch):
         """

@@ -4,12 +4,14 @@ import os
 
 def main():
 
-    eof_titles_max_subscribers = int(os.getenv('EOF_TITLES_MAX_SUBS'))
-    eof_reviews_max_subscribers = int(os.getenv('EOF_REVIEWS_MAX_SUBS'))
+    workers_q1 = int(os.getenv('WORKERS_Q1'))
+    workers_q2 = int(os.getenv('WORKERS_Q2'))
+    workers_q3_titles = int(os.getenv('WORKERS_Q3_TITLES'))
+    workers_q3_reviews = int(os.getenv('WORKERS_Q3_REVIEWS'))
+    workers_q5_titles = int(os.getenv('WORKERS_Q5_TITLES'))
+    workers_q5_reviews = int(os.getenv('WORKERS_Q5_REVIEWS'))
 
-    try:
-        query_coordinator = QueryCoordinator(eof_titles_max_subscribers, eof_reviews_max_subscribers)
-        query_coordinator.run()
-    except:
-        print('SIGTERM received')
+    query_coordinator = QueryCoordinator(workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews)
+    query_coordinator.run()
+
 main()
