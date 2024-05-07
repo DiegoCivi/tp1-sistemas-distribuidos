@@ -23,18 +23,18 @@ services = []
 
 # Leer el archivo de configuración línea por línea
 with open(config_file, "r") as file:
+    service_name, dockerfile_path = None, None
     for line in file:
         line = line.strip()
-        if line.startswith("+"):
-            # Procesar línea de variables de entorno
-            line = line[2:]  # Eliminar el prefijo '+'
-            service_name, env_var_str = line.split(":")
-            env_vars[service_name] = dict(item.split("=") for item in env_var_str.split("|"))
-        elif line.startswith("-"):
+        if line.startswith("-"):
             # Procesar línea de nombre de servicio y Dockerfile
             line = line[2:]  # Eliminar el prefijo '-'
-            service_name, dockerfile_path = line.split("|")
+            service_name, dockerfile_path = line.split("$")
             services.append((service_name.strip(), dockerfile_path.strip()))
+        elif line.startswith("+"):
+            # Procesar línea de variables de entorno
+            line = line[2:]  # Eliminar el prefijo '+'
+            env_vars[service_name] = dict(item.split("=") for item in line.split("$"))
         else:
             continue
 
