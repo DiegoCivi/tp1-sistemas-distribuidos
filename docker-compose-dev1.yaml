@@ -1,4 +1,6 @@
+version: '3'
 services:
+
   rabbitmq:
     container_name: rabbit
     build:
@@ -7,10 +9,10 @@ services:
     ports:
       - 15672:15672
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:15672"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+        test: ["CMD", "curl", "-f", "http://localhost:15672"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
 
   server:
     container_name: server
@@ -19,7 +21,7 @@ services:
       dockerfile: ./server/server.dockerfile
     depends_on:
       - rabbitmq
-    links:
+    links: 
       - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
@@ -34,7 +36,7 @@ services:
       dockerfile: ./client/client.dockerfile
     depends_on:
       - server
-    links:
+    links: 
       - server
     environment:
       - PYTHONUNBUFFERED=1
@@ -52,592 +54,765 @@ services:
       dockerfile: ./query_coordinator/query_coordinator_worker.dockerfile
     depends_on:
       - rabbitmq
-    links:
+    links: 
       - rabbitmq
     environment:
       - EOF_TITLES_MAX_SUBS=6
       - EOF_REVIEWS_MAX_SUBS=6
 
+# QUERY 1
+
   filter_category_computers_worker0:
-    container_name: filter_category_computers_worker
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
-  filter_category_computers_worker1:
     container_name: filter_category_computers_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=0
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - CATEGORY=Computers
       - SOURCE_QUEUE=q1_titles
       - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
-  filter_category_computers_worker2:
+
+  filter_category_computers_worker1:
     container_name: filter_category_computers_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=1
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - CATEGORY=Computers
       - SOURCE_QUEUE=q1_titles
       - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
-  filter_title_worker0:
-    container_name: filter_title_worker
+
+  filter_category_computers_worker2:
+    container_name: filter_category_computers_worker2
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
-      - WORKER_ID=0
+      - WORKER_ID=2
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
-  filter_title_worker1:
+      - CATEGORY=Computers
+      - SOURCE_QUEUE=q1_titles
+      - DATA_SOURCE_NAME=data
+      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+      - EOF_QUEUE=QUEUE_Q1|eof_category
+
+  filter_title_worker0:
     container_name: filter_title_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=0
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - TITLE_TO_FILTER=distributed
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
       - EOF_QUEUE=QUEUE_Q1|eof_title
-  filter_title_worker2:
+
+  filter_title_worker1:
     container_name: filter_title_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=1
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - TITLE_TO_FILTER=distributed
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
       - EOF_QUEUE=QUEUE_Q1|eof_title
-  filter_year_worker_q1-0:
-    container_name: filter_year_worker_q1-
+
+  filter_title_worker2:
+    container_name: filter_title_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=2
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=3
+      - TITLE_TO_FILTER=distributed
+      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+      - EOF_QUEUE=QUEUE_Q1|eof_title
+  
+  filter_year_worker0_q1:
+    container_name: filter_year_worker0_q1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=0
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=3
       - YEAR_RANGE_TO_FILTER=2000,2023
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
       - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
-  filter_year_worker_q1-1:
-    container_name: filter_year_worker_q1-0
+
+  filter_year_worker1_q1:
+    container_name: filter_year_worker1_q1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=3
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=QUEUE_q1_results
-      - EOF_QUEUE=QUEUE_Q1|eof_year
-  filter_year_worker_q1-2:
-    container_name: filter_year_worker_q1-1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=1
       - WORKER_QUANTITY=3
       - NEXT_WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=3
       - YEAR_RANGE_TO_FILTER=2000,2023
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
       - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
+
+  filter_year_worker2_q1:
+    container_name: filter_year_worker2_q1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=2
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=1
+      - YEAR_RANGE_TO_FILTER=2000,2023
+      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+      - DATA_OUTPUT_NAME=QUEUE_q1_results
+      - EOF_QUEUE=QUEUE_Q1|eof_year
+
+# QUERY 2    
+
   decade_counter_worker0:
-    container_name: decade_counter_worker
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q2_titles
-      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+   container_name: decade_counter_worker0
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - WORKER_ID=0
+     - DATA_SOURCE_NAME=data
+     - SOURCE_QUEUE=q2_titles
+     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+
   decade_counter_worker1:
-    container_name: decade_counter_worker0
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q2_titles
-      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+   container_name: decade_counter_worker1
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - WORKER_ID=1
+     - DATA_SOURCE_NAME=data
+     - SOURCE_QUEUE=q2_titles
+     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+
   decade_counter_worker2:
-    container_name: decade_counter_worker1
+   container_name: decade_counter_worker2
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - WORKER_ID=2
+     - DATA_SOURCE_NAME=data
+     - SOURCE_QUEUE=q2_titles
+     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+
+  global_decade_counter_worker:
+   container_name: global_decade_counter_worker
+   build:
+     context: .
+     dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
+   depends_on:
+     - rabbitmq
+   links: 
+     - rabbitmq
+   environment:
+     - EOF_QUANTITY=3
+     - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
+     - DATA_OUTPUT_NAME=QUEUE_q2_results
+
+# QUERY 3
+
+  filter_year_worker0_q3:
+    container_name: filter_year_worker0_q3
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
+      - PYTHONUNBUFFERED=1
+      - YEAR_RANGE_TO_FILTER=1990,1999
+      - DATA_SOURCE_NAME=data
+      - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
+      - EXCHANGE_TYPE=fanout
+      - SOURCE_QUEUE=q3_titles
+      - WORKER_ID=0
+      - NEXT_WORKER_QUANTITY=3
+      - EOF_QUEUE=QUEUE_Q3|eof_year
+      - WORKER_QUANTITY=3
+
+  filter_year_worker1_q3:
+    container_name: filter_year_worker1_q3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - YEAR_RANGE_TO_FILTER=1990,1999
+      - DATA_SOURCE_NAME=data
+      - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
+      - EXCHANGE_TYPE=fanout
+      - SOURCE_QUEUE=q3_titles
       - WORKER_ID=1
+      - NEXT_WORKER_QUANTITY=3
+      - EOF_QUEUE=QUEUE_Q3|eof_year
       - WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q2_titles
-      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
-  global_decade_counter_worker0:
-    container_name: global_decade_counter_worker
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=1
-      - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
-      - DATA_OUTPUT_NAME=QUEUE_q2_results
-      - EOF_QUANTITY=3
-  filter_year_worker_q3-0:
-    container_name: filter_year_worker_q3-
+
+  filter_year_worker2_q3:
+    container_name: filter_year_worker2_q3
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - YEAR_RANGE_TO_FILTER=1990,1999
       - DATA_SOURCE_NAME=data
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
-      - EOF_QUEUE=QUEUE_Q3|eof_year
       - SOURCE_QUEUE=q3_titles
-  filter_year_worker_q3-1:
-    container_name: filter_year_worker_q3-0
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    environment:
-      - PYTHONUNBUFFERED=1
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
+      - WORKER_ID=2
       - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
-      - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - SOURCE_QUEUE=q3_titles
-  filter_year_worker_q3-2:
-    container_name: filter_year_worker_q3-1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    environment:
-      - PYTHONUNBUFFERED=1
-      - WORKER_ID=1
       - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
-      - EXCHANGE_TYPE=fanout
-      - EOF_QUEUE=QUEUE_Q3|eof_year
-      - SOURCE_QUEUE=q3_titles
+      
   hash_title_worker0:
-    container_name: hash_title_worker
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
-      - DATA_OUTPUT_NAME=hashed
-      - HASH_MODULUS=6
-      - WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-  hash_title_worker1:
     container_name: hash_title_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
-      - WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-  hash_title_worker2:
+
+  hash_title_worker1:
     container_name: hash_title_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
-      - WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-  reviews_counter_worker0:
-    container_name: reviews_counter_worker
+
+  hash_title_worker2:
+    container_name: hash_title_worker2
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
-      - WORKER_ID=0
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=6
-      - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=3
-  reviews_counter_worker1:
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_OUTPUT_NAME=hashed
+      - HASH_MODULUS=6
+
+  reviews_counter_worker0:
     container_name: reviews_counter_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=0
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
-  reviews_counter_worker2:
+      
+  reviews_counter_worker1:
     container_name: reviews_counter_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=1
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
-  reviews_counter_worker3:
+
+  reviews_counter_worker2:
     container_name: reviews_counter_worker2
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=2
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
-  reviews_counter_worker4:
+  
+  reviews_counter_worker3:
     container_name: reviews_counter_worker3
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=3
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
-  reviews_counter_worker5:
+
+  reviews_counter_worker4:
     container_name: reviews_counter_worker4
     build:
       context: .
       dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=4
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
-  filter_review_quantity_worker0:
-    container_name: filter_review_quantity_worker
+
+  reviews_counter_worker5:
+    container_name: reviews_counter_worker5
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=5
+      - DATA_SOURCE_NAME=hashed
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY=3
+
+  filter_review_quantity_worker:
+    container_name: filter_review_quantity
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_review_quantity_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - DATA_SOURCE_NAME=QUEUE_Q3|filter_review_quantity_worker
       - DATA_OUTPUT_NAME=QUEUE_q3_results,QUEUE_Q4|top10_worker
       - MIN_QUANTITY=500
-      - WORKER_QUANTITY=6
-      - WORKERS_QUANTITY=1
+      - WORKERS_QUANTITY=6
       - NEXT_WORKERS_QUANTITY=3
-  top10_worker0:
-    container_name: top10_worker
+      
+
+
+# QUERY 4
+
+  top_10_worker0:
+    container_name: top_10_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
       - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-      - WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - LAST=0
-      - WORKER_ID=0
-  top10_worker1:
-    container_name: top10_worker0
+
+  top_10_worker1:
+    container_name: top_10_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
       - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-      - WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - LAST=0
-      - WORKER_ID=0
-  top10_worker2:
-    container_name: top10_worker1
+
+  top_10_worker2:
+    container_name: top_10_worker2
     build:
       context: .
       dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
       - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-      - WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - LAST=0
-      - WORKER_ID=1
-  top_10_worker_last0:
-    container_name: top_10_worker_last
+
+  top_10_worker3:
+    container_name: top_10_worker3
     build:
       context: .
       dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - TOP_N=10
       - DATA_SOURCE_NAME=QUEUE_Q4|top10_last_worker
       - DATA_OUTPUT_NAME=QUEUE_q4_results
-      - WORKERS_QUANTITY=1
+      - WORKERS_QUANTITY=3
       - LAST=1
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
+
+# QUERY 5
+
   review_sentiment_worker0:
-    container_name: review_sentiment_worker
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - WORKERS_QUANTITY=4
-      - WORKER_QUANTITY=4
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-      - NEXT_WORKERS_QUANTITY=3
-      - SOURCE_QUEUE=q5_reviews
-  review_sentiment_worker1:
     container_name: review_sentiment_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=0
       - WORKERS_QUANTITY=4
-      - WORKER_QUANTITY=4
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKERS_QUANTITY=3
-      - SOURCE_QUEUE=q5_reviews
-  review_sentiment_worker2:
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  review_sentiment_worker1:
     container_name: review_sentiment_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=1
       - WORKERS_QUANTITY=4
-      - WORKER_QUANTITY=4
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKERS_QUANTITY=3
-      - SOURCE_QUEUE=q5_reviews
-  review_sentiment_worker3:
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  review_sentiment_worker2:
     container_name: review_sentiment_worker2
     build:
       context: .
       dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - WORKER_ID=2
       - WORKERS_QUANTITY=4
-      - WORKER_QUANTITY=4
-      - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKERS_QUANTITY=3
-      - SOURCE_QUEUE=q5_reviews
-  filter_category_worker0:
-    container_name: filter_category_worker
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  review_sentiment_worker3:
+    container_name: review_sentiment_worker3
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
-      - PYTHONUNBUFFERED=1
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - CATEGORY=Fiction
       - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_category
-      - SOURCE_QUEUE=q5_titles
-  filter_category_worker1:
+      - SOURCE_QUEUE=q5_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
+      - WORKER_ID=3
+      - WORKERS_QUANTITY=4
+      - NEXT_WORKERS_QUANTITY=3
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+
+  filter_category_worker0:
     container_name: filter_category_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - WORKER_ID=0
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_category
       - SOURCE_QUEUE=q5_titles
-  filter_category_worker2:
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
+      - WORKER_ID=0
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=3
+
+  filter_category_worker1:
     container_name: filter_category_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - WORKER_ID=1
-      - WORKER_QUANTITY=3
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=data
-      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
-      - EOF_QUEUE=QUEUE_Q5|eof_category
       - SOURCE_QUEUE=q5_titles
-  mean_review_sentiment_worker0:
-    container_name: mean_review_sentiment_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
+      - WORKER_ID=1
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=3
+
+  filter_category_worker2:
+    container_name: filter_category_worker2
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
-      - WORKER_ID=0
-      - WORKERS_QUANTITY=6
-      - DATA_SOURCE_NAME=hashed
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=3
-  mean_review_sentiment_worker1:
+      - PYTHONUNBUFFERED=1
+      - CATEGORY=Fiction
+      - DATA_SOURCE_NAME=data
+      - SOURCE_QUEUE=q5_titles
+      - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
+      - WORKER_ID=2
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - WORKER_QUANTITY=3
+      - NEXT_WORKER_QUANTITY=3
+
+  mean_review_sentiment_worker0:
     container_name: mean_review_sentiment_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=0
-      - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
-  mean_review_sentiment_worker2:
+
+  mean_review_sentiment_worker1:
     container_name: mean_review_sentiment_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=1
-      - WORKERS_QUANTITY=6
+      - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
-  mean_review_sentiment_worker3:
+
+  mean_review_sentiment_worker2:
     container_name: mean_review_sentiment_worker2
     build:
       context: .
       dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=2
-      - WORKERS_QUANTITY=6
+      - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
-  mean_review_sentiment_worker4:
+
+  mean_review_sentiment_worker3:
     container_name: mean_review_sentiment_worker3
     build:
       context: .
       dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=3
-      - WORKERS_QUANTITY=6
+      - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
-  mean_review_sentiment_worker5:
+
+  mean_review_sentiment_worker4:
     container_name: mean_review_sentiment_worker4
     build:
       context: .
       dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - WORKER_ID=4
-      - WORKERS_QUANTITY=6
+      - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
-  percentile_worker0:
+
+  mean_review_sentiment_worker5:
+    container_name: mean_review_sentiment_worker5
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
+    environment:
+      - WORKER_ID=5
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=hashed
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY=3
+
+  percentile_worker:
     container_name: percentile_worker
     build:
       context: .
       dockerfile: ./workers_dockerfiles/percentile_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links: 
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
       - DATA_SOURCE_NAME=QUEUE_Q5|percentile_worker
       - DATA_OUTPUT_NAME=QUEUE_q5_results
       - PERCENTILE=90
-      - WORKER_ID=0
-      - WORKERS_QUANTITY=1
-      - WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=6
