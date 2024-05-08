@@ -101,23 +101,14 @@ with open("docker-compose-dev.yaml", "w") as outfile:
     outfile.write("      - EOF_REVIEWS_MAX_SUBS=6\n")
     outfile.write("\n")
     for service_name, dockerfile_path in services:
-        outfile.write(f"  {service_name}0:\n")
-        outfile.write(f"    container_name: {service_name}\n")
-        outfile.write(f"    build:\n")
-        outfile.write(f"      context: .\n")
-        outfile.write(f"      dockerfile: {dockerfile_path}\n")
         if service_name in env_vars:
-            # Write environment variables
-            outfile.write("    environment:\n")
-            for key, value in env_vars[service_name].items():
-                outfile.write(f"      - {key}={value}\n")
             # Write as many workers as specified in WORKERS_QUANTITY
             if "WORKERS_QUANTITY" in env_vars[service_name]:
                 workers_quantity = int(env_vars[service_name]["WORKERS_QUANTITY"])
-                
-                for i in range(workers_quantity - 1):
-                    outfile.write(f"  {service_name}{i + 1}:\n")
-                    outfile.write(f"    container_name: {service_name}{i}\n")
+                for i in range(workers_quantity):
+                    worker_name = f"{service_name}{str(i)}"
+                    outfile.write(f"  {worker_name}:\n")
+                    outfile.write(f"    container_name: {worker_name}\n")
                     outfile.write(f"    build:\n")
                     outfile.write(f"      context: .\n")
                     outfile.write(f"      dockerfile: {dockerfile_path}\n")

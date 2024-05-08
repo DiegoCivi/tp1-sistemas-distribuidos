@@ -9,7 +9,7 @@ def main():
     output_name = os.getenv('DATA_OUTPUT_NAME')
     worker_id = os.getenv('WORKER_ID')
     eof_queue = os.getenv('EOF_QUEUE')
-    worker_quantity = int(os.getenv('WORKER_QUANTITY'))
+    worker_quantity = int(os.getenv('WORKERS_QUANTITY'))
     next_worker_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
     try:
         source_queue = os.getenv('SOURCE_QUEUE')
