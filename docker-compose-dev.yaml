@@ -62,7 +62,7 @@ services:
       - WORKERS_Q3_TITLES=3
       - WORKERS_Q3_REVIEWS=3
       - WORKERS_Q5_TITLES=3
-      - WORKERS_Q5_REVIEWS=6
+      - WORKERS_Q5_REVIEWS=4
 
 # QUERY 1
 

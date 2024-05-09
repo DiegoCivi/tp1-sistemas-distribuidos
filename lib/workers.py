@@ -703,7 +703,6 @@ class FilterReviewsWorker:
             self.eof_counter += 1
             if self.eof_counter == self.eof_quantity:
                 self.middleware.stop_consuming()
-                self.middleware.send_message(self.output_name2, "EOF")
             self.middleware.ack_message(method)
             return
         
