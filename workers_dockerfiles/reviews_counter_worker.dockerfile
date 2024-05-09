@@ -1,9 +1,4 @@
-FROM rabbitmq:3.9.16-management-alpine
-
-RUN apk update && \
-    apk add --no-cache python3 py3-pip gcc python3-dev musl-dev && \
-    rm -rf /var/cache/apk/*
-
+FROM python:3.9.7-slim
 
 RUN python3 -m pip install pika
 RUN python3 -m pip install textblob
