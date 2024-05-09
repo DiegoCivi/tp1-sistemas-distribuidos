@@ -150,7 +150,6 @@ def hash_title(batch):
         hashed_title = hash_djb2(title) # TODO: This returns an int. Maybe we need a string
         row_dictionary['hashed_title'] = hashed_title  
 
-    return batch
 
 def get_top_n(batch, top, top_n, last):
     """
