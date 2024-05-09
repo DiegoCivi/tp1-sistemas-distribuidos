@@ -22,6 +22,7 @@ services = []
 # Read the configuration file
 with open(config_file, "r") as file:
     service_name, dockerfile_path = None, None
+    last_service_name = None
     for line in file:
         line = line.strip()
         if line.startswith("-"):
@@ -34,6 +35,23 @@ with open(config_file, "r") as file:
             line = line[1:]  # Delete the prefix '+'
             print(line)
             env_vars[service_name] = dict(item.split("=") for item in line.split("$"))
+            if service_name in ("review_sentiment_worker", "filter_category_worker"):
+                env_vars[service_name]["NEXT_WORKER_QUANTITY"] = env_vars["hash_title_worker"]["WORKERS_QUANTITY"]
+            if last_service_name and "NEXT_WORKER_QUANTITY" in env_vars[last_service_name] and service_name not in ("review_sentiment_worker", "filter_category_worker"):
+                if not "END" in env_vars[last_service_name]:
+                    env_vars[last_service_name]["NEXT_WORKER_QUANTITY"] = env_vars[service_name]["WORKERS_QUANTITY"]
+            if "ACCUMULATOR" in env_vars[service_name] and env_vars[service_name]["ACCUMULATOR"] == "True":
+                if service_name in ("reviews_counter_worker", "mean_review_sentiment_worker"):
+                    env_vars[service_name]["EOF_QUANTITY"] = env_vars["hash_title_worker"]["WORKERS_QUANTITY"]
+                    current_quantity = int(env_vars[service_name]["WORKERS_QUANTITY"])
+                    if service_name == "reviews_counter_worker":
+                        env_vars["hash_title_worker"]["Q3_QUANTITY"] = current_quantity
+                    else:
+                        env_vars["hash_title_worker"]["Q5_QUANTITY"] = current_quantity
+                    last_service_name = service_name
+                    continue
+                env_vars[service_name]["EOF_QUANTITY"] = env_vars[last_service_name]["WORKERS_QUANTITY"]
+            last_service_name = service_name
         else:
             continue
 

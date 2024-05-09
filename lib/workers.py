@@ -102,7 +102,7 @@ class FilterWorker:
 
 class HashWorker:
 
-    def __init__(self, input_titles_q3, input_titles_q5, input_reviews_q3, input_reviews_q5, output, hash_modulus):
+    def __init__(self, input_titles_q3, input_titles_q5, input_reviews_q3, input_reviews_q5, output, hash_modulus, q3_quantity, q5_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         self.input_titles_q3 = input_titles_q3
@@ -111,6 +111,8 @@ class HashWorker:
         self.input_reviews_q5 = input_reviews_q5
         self.output = output
         self.hash_modulus = hash_modulus
+        self.q3_quantity = q3_quantity
+        self.q5_quantity = q5_quantity
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -158,23 +160,26 @@ class HashWorker:
         callback_with_params_titles_q5 = lambda ch, method, properties, body: self.handle_data(method, body, 'titles_Q5')
         callback_with_params_reviews_q5 = lambda ch, method, properties, body: self.handle_data(method, body, 'reviews_Q5')
         try:
+            queues_dict = {}
+            # Titles and reviews for Q3
+            for i in range(self.q3_quantity):
+                key_titles = f'{i}_titles_Q3'
+                key_reviews = f'{i}_reviews_Q3'
+                value_titles = [key_titles, 'EOF_titles_Q3']
+                value_reviews = [key_reviews, 'EOF_reviews_Q3'] 
+                queues_dict[key_titles] = value_titles
+                queues_dict[key_reviews] = value_reviews
+            # Titles and reviews for Q5
+            for i in range(self.q5_quantity):
+                key_titles = f'{i}_titles_Q5'
+                key_reviews = f'{i}_reviews_Q5'
+                value_titles = [key_titles, 'EOF_titles_Q5']
+                value_reviews = [key_reviews, 'EOF_reviews_Q5'] 
+                queues_dict[key_titles] = value_titles
+                queues_dict[key_reviews] = value_reviews
 
             # Declare the output exchange for query 3 and query 5
-            self.middleware.define_exchange(self.output,   {'0_titles_Q3': ['0_titles_Q3', 'EOF_titles_Q3'], '1_titles_Q3': ['1_titles_Q3', 'EOF_titles_Q3'], 
-                                                    '2_titles_Q3': ['2_titles_Q3', 'EOF_titles_Q3'], '3_titles_Q3': ['3_titles_Q3', 'EOF_titles_Q3'],
-                                                    '4_titles_Q3': ['4_titles_Q3', 'EOF_titles_Q3'], '5_titles_Q3': ['5_titles_Q3', 'EOF_titles_Q3'],
-                                                    '0_reviews_Q3': ['0_reviews_Q3', 'EOF_reviews_Q3'], '1_reviews_Q3': ['1_reviews_Q3', 'EOF_reviews_Q3'], 
-                                                    '2_reviews_Q3': ['2_reviews_Q3', 'EOF_reviews_Q3'], '3_reviews_Q3': ['3_reviews_Q3', 'EOF_reviews_Q3'],
-                                                    '4_reviews_Q3': ['4_reviews_Q3', 'EOF_reviews_Q3'], '5_reviews_Q3': ['5_reviews_Q3', 'EOF_reviews_Q3'],
-
-                                                    '0_titles_Q5': ['0_titles_Q5', 'EOF_titles_Q5'], '1_titles_Q5': ['1_titles_Q5', 'EOF_titles_Q5'], 
-                                                    '2_titles_Q5': ['2_titles_Q5', 'EOF_titles_Q5'], '3_titles_Q5': ['3_titles_Q5', 'EOF_titles_Q5'],
-                                                    '4_titles_Q5': ['4_titles_Q5', 'EOF_titles_Q5'], '5_titles_Q5': ['5_titles_Q5', 'EOF_titles_Q5'],
-
-                                                    '0_reviews_Q5': ['0_reviews_Q5', 'EOF_reviews_Q5'], '1_reviews_Q5': ['1_reviews_Q5', 'EOF_reviews_Q5'], 
-                                                    '2_reviews_Q5': ['2_reviews_Q5', 'EOF_reviews_Q5'], '3_reviews_Q5': ['3_reviews_Q5', 'EOF_reviews_Q5'],
-                                                    '4_reviews_Q5': ['4_reviews_Q5', 'EOF_reviews_Q5'], '5_reviews_Q5': ['5_reviews_Q5', 'EOF_reviews_Q5']
-                                                    })
+            self.middleware.define_exchange(self.output, queues_dict)
 
             # Declare the source queue for the titles
             print("Voy a recibir los titulos")
@@ -579,6 +584,7 @@ class TopNWorker:
     def handle_data(self, method, body):
         if body == b'EOF':
             self.eof_counter += 1
+            print(f'EOF Counter: {self.eof_counter} y mi condición LAST es {self.last}')
             if self.last and self.eof_counter == self.eof_quantity:
                 self.middleware.stop_consuming()
             elif not self.last:
