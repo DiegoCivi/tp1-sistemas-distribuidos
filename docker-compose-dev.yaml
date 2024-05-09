@@ -57,6 +57,12 @@ services:
     environment:
       - EOF_TITLES_MAX_SUBS=6
       - EOF_REVIEWS_MAX_SUBS=6
+      - WORKERS_Q1=3
+      - WORKERS_Q2=3
+      - WORKERS_Q3_TITLES=3
+      - WORKERS_Q3_REVIEWS=3
+      - WORKERS_Q5_TITLES=3
+      - WORKERS_Q5_REVIEWS=4
 
   filter_category_computers_worker0:
     container_name: filter_category_computers_worker0
@@ -68,8 +74,7 @@ services:
       - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
   filter_category_computers_worker1:
@@ -82,8 +87,7 @@ services:
       - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
   filter_category_computers_worker2:
@@ -96,8 +100,7 @@ services:
       - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Computers
-      - SOURCE_QUEUE=q1_titles
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
   filter_title_worker0:
@@ -189,8 +192,7 @@ services:
     environment:
       - WORKER_ID=0
       - WORKERS_QUANTITY=3
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q2_titles
+      - DATA_SOURCE_NAME=q2_titles
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
   decade_counter_worker1:
     container_name: decade_counter_worker1
@@ -200,8 +202,7 @@ services:
     environment:
       - WORKER_ID=1
       - WORKERS_QUANTITY=3
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q2_titles
+      - DATA_SOURCE_NAME=q2_titles
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
   decade_counter_worker2:
     container_name: decade_counter_worker2
@@ -211,8 +212,7 @@ services:
     environment:
       - WORKER_ID=2
       - WORKERS_QUANTITY=3
-      - DATA_SOURCE_NAME=data
-      - SOURCE_QUEUE=q2_titles
+      - DATA_SOURCE_NAME=q2_titles
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
   global_decade_counter_worker0:
     container_name: global_decade_counter_worker0
@@ -234,14 +234,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=0
-      - NEXT_WORKER_QUANTITY=4
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q3_titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - SOURCE_QUEUE=q3_titles
   filter_year_worker_q3-1:
     container_name: filter_year_worker_q3-1
     build:
@@ -250,14 +249,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=1
-      - NEXT_WORKER_QUANTITY=4
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q3_titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - SOURCE_QUEUE=q3_titles
   filter_year_worker_q3-2:
     container_name: filter_year_worker_q3-2
     build:
@@ -266,14 +264,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=2
-      - NEXT_WORKER_QUANTITY=4
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - YEAR_RANGE_TO_FILTER=1990,1999
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q3_titles
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - SOURCE_QUEUE=q3_titles
   hash_title_worker0:
     container_name: hash_title_worker0
     build:
@@ -281,10 +278,10 @@ services:
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
-      - WORKERS_QUANTITY=4
+      - WORKERS_QUANTITY=3
       - Q3_QUANTITY=6
       - Q5_QUANTITY=6
       - EOF_QUANTITY=3
@@ -296,10 +293,10 @@ services:
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
-      - WORKERS_QUANTITY=4
+      - WORKERS_QUANTITY=3
       - Q3_QUANTITY=6
       - Q5_QUANTITY=6
       - EOF_QUANTITY=3
@@ -311,25 +308,10 @@ services:
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
     environment:
       - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
+      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
-      - WORKERS_QUANTITY=4
-      - Q3_QUANTITY=6
-      - Q5_QUANTITY=6
-      - EOF_QUANTITY=3
-      - ACCUMULATOR=True
-  hash_title_worker3:
-    container_name: hash_title_worker3
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,data,QUEUE_Q5|hash_review_worker
-      - DATA_OUTPUT_NAME=hashed
-      - HASH_MODULUS=6
-      - WORKERS_QUANTITY=4
+      - WORKERS_QUANTITY=3
       - Q3_QUANTITY=6
       - Q5_QUANTITY=6
       - EOF_QUANTITY=3
@@ -344,7 +326,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   reviews_counter_worker1:
     container_name: reviews_counter_worker1
@@ -356,7 +338,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   reviews_counter_worker2:
     container_name: reviews_counter_worker2
@@ -368,7 +350,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   reviews_counter_worker3:
     container_name: reviews_counter_worker3
@@ -380,7 +362,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   reviews_counter_worker4:
     container_name: reviews_counter_worker4
@@ -392,7 +374,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   reviews_counter_worker5:
     container_name: reviews_counter_worker5
@@ -404,7 +386,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   filter_review_quantity_worker0:
     container_name: filter_review_quantity_worker0
@@ -506,11 +488,10 @@ services:
     environment:
       - WORKER_ID=0
       - WORKERS_QUANTITY=4
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-      - NEXT_WORKER_QUANTITY=4
-      - SOURCE_QUEUE=q5_reviews
+      - NEXT_WORKER_QUANTITY=3
   review_sentiment_worker1:
     container_name: review_sentiment_worker1
     build:
@@ -519,11 +500,10 @@ services:
     environment:
       - WORKER_ID=1
       - WORKERS_QUANTITY=4
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-      - NEXT_WORKER_QUANTITY=4
-      - SOURCE_QUEUE=q5_reviews
+      - NEXT_WORKER_QUANTITY=3
   review_sentiment_worker2:
     container_name: review_sentiment_worker2
     build:
@@ -532,11 +512,10 @@ services:
     environment:
       - WORKER_ID=2
       - WORKERS_QUANTITY=4
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-      - NEXT_WORKER_QUANTITY=4
-      - SOURCE_QUEUE=q5_reviews
+      - NEXT_WORKER_QUANTITY=3
   review_sentiment_worker3:
     container_name: review_sentiment_worker3
     build:
@@ -545,11 +524,10 @@ services:
     environment:
       - WORKER_ID=3
       - WORKERS_QUANTITY=4
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_reviews
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_review_worker
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-      - NEXT_WORKER_QUANTITY=4
-      - SOURCE_QUEUE=q5_reviews
+      - NEXT_WORKER_QUANTITY=3
   filter_category_worker0:
     container_name: filter_category_worker0
     build:
@@ -561,10 +539,9 @@ services:
       - NEXT_WORKER_QUANTITY=6
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - EOF_QUEUE=QUEUE_Q5|eof_category
-      - SOURCE_QUEUE=q5_titles
   filter_category_worker1:
     container_name: filter_category_worker1
     build:
@@ -576,10 +553,9 @@ services:
       - NEXT_WORKER_QUANTITY=6
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - EOF_QUEUE=QUEUE_Q5|eof_category
-      - SOURCE_QUEUE=q5_titles
   filter_category_worker2:
     container_name: filter_category_worker2
     build:
@@ -591,10 +567,9 @@ services:
       - NEXT_WORKER_QUANTITY=6
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
-      - DATA_SOURCE_NAME=data
+      - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - EOF_QUEUE=QUEUE_Q5|eof_category
-      - SOURCE_QUEUE=q5_titles
   mean_review_sentiment_worker0:
     container_name: mean_review_sentiment_worker0
     build:
@@ -605,7 +580,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   mean_review_sentiment_worker1:
     container_name: mean_review_sentiment_worker1
@@ -617,7 +592,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   mean_review_sentiment_worker2:
     container_name: mean_review_sentiment_worker2
@@ -629,7 +604,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   mean_review_sentiment_worker3:
     container_name: mean_review_sentiment_worker3
@@ -641,7 +616,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   mean_review_sentiment_worker4:
     container_name: mean_review_sentiment_worker4
@@ -653,7 +628,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   mean_review_sentiment_worker5:
     container_name: mean_review_sentiment_worker5
@@ -665,7 +640,7 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_NAME=hashed
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-      - EOF_QUANTITY=4
+      - EOF_QUANTITY=3
       - ACCUMULATOR=True
   percentile_worker0:
     container_name: percentile_worker0

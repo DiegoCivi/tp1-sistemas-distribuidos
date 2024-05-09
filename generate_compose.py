@@ -117,6 +117,12 @@ with open("docker-compose-dev.yaml", "w") as outfile:
     outfile.write("    environment:\n")
     outfile.write("      - EOF_TITLES_MAX_SUBS=6\n")
     outfile.write("      - EOF_REVIEWS_MAX_SUBS=6\n")
+    outfile.write("      - WORKERS_Q1=3\n")
+    outfile.write("      - WORKERS_Q2=3\n")
+    outfile.write("      - WORKERS_Q3_TITLES=3\n")
+    outfile.write("      - WORKERS_Q3_REVIEWS=3\n")
+    outfile.write("      - WORKERS_Q5_TITLES=3\n")
+    outfile.write("      - WORKERS_Q5_REVIEWS=4\n")
     outfile.write("\n")
     for service_name, dockerfile_path in services:
         if service_name in env_vars:

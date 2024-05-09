@@ -13,14 +13,13 @@ BATCH_SIZE = 100
 
 class FilterWorker:
 
-    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, exchange_queue):
+    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.id = id
         self.eof_queue = eof_queue
         self.input_name = input_name
         self.output_name = output_name
-        self.exchange_queue = exchange_queue
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
         self.middleware = None
@@ -67,20 +66,13 @@ class FilterWorker:
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         try:
-            # Declare the source
-            if not self.input_name.startswith("QUEUE_"):
-                self.middleware.define_exchange(self.input_name, {self.exchange_queue: [self.exchange_queue]})
-
             # Declare the output
             print("Voy a leer titulos")
             if not self.output_name.startswith("QUEUE_"):
                 self.middleware.define_exchange(self.output_name, {self.exchange_queue: [self.exchange_queue]})
 
             # Read the data
-            if self.input_name.startswith("QUEUE_"):
-                self.middleware.receive_messages(self.input_name, callback_with_params)
-            else:
-                self.middleware.subscribe(self.input_name, self.exchange_queue, callback_with_params)
+            self.middleware.receive_messages(self.input_name, callback_with_params)
 
             self.middleware.consume()
 
@@ -192,8 +184,7 @@ class HashWorker:
             # Declare and subscribe to the reviews exchange
             print("Voy a recibir los reviews")
             # For Q3
-            self.middleware.define_exchange(self.input_reviews_q3, {'q3_reviews': ['q3_reviews']})
-            self.middleware.subscribe(self.input_reviews_q3, 'q3_reviews', callback_with_params_reviews_q3)
+            self.middleware.receive_messages(self.input_reviews_q3, callback_with_params_reviews_q3)
             # For Q5
             self.middleware.receive_messages(self.input_reviews_q5, callback_with_params_reviews_q5)
             self.middleware.consume()
@@ -363,12 +354,11 @@ class JoinWorker:
 
 class DecadeWorker:
 
-    def __init__(self, input_name, output_name, source_queue):
+    def __init__(self, input_name, output_name):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         self.input_name = input_name
         self.output_name = output_name
-        self.source_queue = source_queue
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -408,8 +398,7 @@ class DecadeWorker:
 
         try:
             # Declare and subscribe to the titles exchange
-            self.middleware.define_exchange(self.input_name, {self.source_queue: [self.source_queue]})
-            self.middleware.subscribe(self.input_name, self.source_queue, callback_with_params)
+            self.middleware.receive_messages(self.input_name, callback_with_params)
             self.middleware.consume()
 
             self.middleware.close_connection()
@@ -626,13 +615,12 @@ class TopNWorker:
 
 class ReviewSentimentWorker:
     
-    def __init__(self, input_name, output_name, source_queue, worker_id, workers_quantity, next_workers_quantity, eof_queue):
+    def __init__(self, input_name, output_name, worker_id, workers_quantity, next_workers_quantity, eof_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         
         self.input_name = input_name
         self.output_name = output_name
-        self.source_queue = source_queue
         self.worker_id = worker_id
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
@@ -671,8 +659,7 @@ class ReviewSentimentWorker:
 
         try:
             # Declare and subscribe to the titles exchange
-            self.middleware.define_exchange(self.input_name, {self.source_queue: [self.source_queue]})
-            self.middleware.subscribe(self.input_name, self.source_queue, callback_with_params)
+            self.middleware.receive_messages(self.input_name, callback_with_params)
             self.middleware.consume()
 
             eof_manage_process(self.worker_id, self.workers_quantity, self.next_workers_quantity, self.output_name, self.middleware, self.eof_queue)
@@ -722,7 +709,6 @@ class FilterReviewsWorker:
             self.eof_counter += 1
             if self.eof_counter == self.eof_quantity:
                 self.middleware.stop_consuming()
-                self.middleware.send_message(self.output_name2, "EOF")
             self.middleware.ack_message(method)
             return
         
