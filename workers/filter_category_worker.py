@@ -8,7 +8,7 @@ def main():
     output_name = os.getenv('DATA_OUTPUT_NAME')
     worker_id = os.getenv('WORKER_ID')
     eof_queue = os.getenv('EOF_QUEUE')
-    worker_quantity = int(os.getenv('WORKER_QUANTITY'))
+    worker_quantity = int(os.getenv('WORKERS_QUANTITY'))
     next_worker_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
 
     worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity)
