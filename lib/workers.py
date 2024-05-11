@@ -587,7 +587,7 @@ class PercentileWorker:
 
 class TopNWorker:
 
-    def __init__(self, input_name, output_name, eof_quantity, n, last):
+    def __init__(self, input_name, output_name, eof_quantity, n, last, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         
@@ -596,6 +596,7 @@ class TopNWorker:
         self.top_n = n
         self.last = last
         self.eof_quantity = eof_quantity
+        self.iteration_queue = iteration_queue
         self.eof_counter = 0
         self.top = []
         self.middleware = None
@@ -625,35 +626,54 @@ class TopNWorker:
         data = deserialize_titles_message(body)
 
         self.top = get_top_n(data, self.top, self.top_n, self.last)
-        self.middleware.ack_message(method)        
+        self.middleware.ack_message(method) 
+
+    def handle_ok(self, method, body):
+        """
+        If an 'OK' was received, it means we can continue to the next iteration 
+        """
+        self.middleware.ack_message(method)
+        self.middleware.stop_consuming()      
 
     def run(self):
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         
-        try:
-            self.middleware.receive_messages(self.input_name, callback_with_params)
-            self.middleware.consume()
+        while not self.stop_worker:
+            try:
+                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.consume()
 
-            dict_to_send = {title:str(mean_rating) for title,mean_rating in self.top}
-            serialized_data = serialize_message([serialize_dict(dict_to_send)])
-            if not self.last:
-                if len(self.top) != 0:
+                dict_to_send = {title:str(mean_rating) for title,mean_rating in self.top}
+                serialized_data = serialize_message([serialize_dict(dict_to_send)])
+                if not self.last:
+                    if len(self.top) != 0:
+                        self.middleware.send_message(self.output_name, serialized_data)
+                    self.middleware.send_message(self.output_name, 'EOF')
+
+                    # Wait for the accumulator worker in the next stage to notify
+                    # when to start the next iteration
+                    callback = lambda ch, method, properties, body: self.handle_ok(method, body)
+                    self.middleware.receive_messages(self.iteration_queue, callback)
+                    self.middleware.consume()
+                else:
+                    # Send the results to the query_coordinator
                     self.middleware.send_message(self.output_name, serialized_data)
+                    self.middleware.send_message(self.output_name, 'EOF')
 
-                self.middleware.send_message(self.output_name, 'EOF')
-            else:
-                # Send the results to the query_coordinator
-                self.middleware.send_message(self.output_name, serialized_data)
-                self.middleware.send_message(self.output_name, 'EOF')
+                    # Notify the workers in the previous stage they can continue
+                    # with the next iteration
+                    for _ in range(self.eof_quantity): # The eof qquantity represents the quantity of workers in the previous stage
+                        self.middleware.send_message(self.iteration_queue, 'OK')
 
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+                # As the iteration finished, it means a new client will arrive. So the top is emptied
+                self.top = []
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
+                
 
 class ReviewSentimentWorker:
     

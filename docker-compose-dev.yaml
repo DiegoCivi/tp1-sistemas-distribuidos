@@ -426,6 +426,7 @@ services:
       - LAST=0
       - WORKER_ID=0
       - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
   top10_worker1:
     container_name: top10_worker1
     build:
@@ -439,6 +440,7 @@ services:
       - LAST=0
       - WORKER_ID=1
       - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
   top10_worker2:
     container_name: top10_worker2
     build:
@@ -452,6 +454,7 @@ services:
       - LAST=0
       - WORKER_ID=2
       - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
   top10_worker3:
     container_name: top10_worker3
     build:
@@ -465,6 +468,7 @@ services:
       - LAST=0
       - WORKER_ID=3
       - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
   top10_worker4:
     container_name: top10_worker4
     build:
@@ -478,6 +482,7 @@ services:
       - LAST=0
       - WORKER_ID=4
       - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
   top_10_worker_last0:
     container_name: top_10_worker_last0
     build:
@@ -492,6 +497,7 @@ services:
       - WORKER_ID=0
       - EOF_QUANTITY=5
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
   review_sentiment_worker0:
     container_name: review_sentiment_worker0
     build:
