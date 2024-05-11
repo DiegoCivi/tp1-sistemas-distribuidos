@@ -13,12 +13,14 @@ BATCH_SIZE = 100
 
 class FilterWorker:
 
-    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity):
+    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, loop_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.id = id
         self.eof_queue = eof_queue
         self.input_name = input_name
+        self.loop_queue = loop_queue
+        self.eof_counter = 0
         self.output_name = output_name
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
@@ -45,6 +47,47 @@ class FilterWorker:
         self.filter_condition = type
         self.filter_value = value
 
+    def handle_eof(self, method, body):
+        if body != b'EOF':
+            print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
+        
+        self.eof_counter += 1
+        if self.eof_counter == self.workers_quantity - 1:
+            # Send the EOFs to the next filter stage
+            for _ in range(self.next_workers_quantity):
+                self.middleware.send_message(self.output_name, 'EOF')
+            self.middleware.stop_consuming()
+
+            # Notify the workers in my filter stage that they can start another loop
+            for _ in range(self.workers_quantity - 1):
+                print("################ SOY LIDER y mi loop_queuee es: ", self.loop_queue)
+                self.middleware.send_message(self.loop_queue, 'OK')
+
+        self.middleware.ack_message(method)
+
+    def handle_ok(self, method, body):
+        """
+        If an 'OK' was received, it means we can continue to the next iteration 
+        """
+        self.middleware.ack_message(method)
+        self.middleware.stop_consuming()
+
+    def eof_manage_process(self):
+        if self.id == '0':
+            if self.workers_quantity == 1:
+                for _ in range(self.next_workers_quantity):
+                    self.middleware.send_message(self.output_name, 'EOF')
+                return
+            eof_callback = lambda ch, method, properties, body: self.handle_eof(method, body)
+            self.middleware.receive_messages(self.eof_queue, eof_callback)
+            self.middleware.consume()
+        else:
+            self.middleware.send_message(self.eof_queue, 'EOF')
+            callback = lambda ch, method, properties, body: self.handle_ok(method, body)
+            print("@@@@@@@@@@@@@@@@@@@ NO SOY LIDER y mi loop_queue es: ", self.loop_queue)
+            self.middleware.receive_messages(self.loop_queue, callback)
+            self.middleware.consume()
+
     def handle_data(self, method, body):
         if body == b'EOF':
             self.middleware.stop_consuming()
@@ -65,7 +108,8 @@ class FilterWorker:
 
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        try:
+        while not self.stop_worker:
+            #try:
             # Declare the output
             print("Voy a leer titulos")
             if not self.output_name.startswith("QUEUE_"):
@@ -79,17 +123,14 @@ class FilterWorker:
             print(f'El worker se quedo con {self.filtered_results_quantity} cantidad de titulos')
             # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
             # after receiving WORKER_QUANTITY EOF messages.
-            eof_manage_process(self.id, self.workers_quantity, self.next_workers_quantity, self.output_name, self.middleware, self.eof_queue)
+            self.eof_manage_process()
 
-            self.middleware.close_connection()
 
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
-
+            #except Exception as e:
+            #    if self.stop_worker:
+            #        print("Gracefully exited")
+            #    else:
+            #        print("An errror ocurred: ", e)
 
 
 class HashWorker:
@@ -143,6 +184,28 @@ class HashWorker:
             self.middleware.publish_message(self.output, 'direct', routing_key, serialized_message)
         
         self.middleware.ack_message(method)
+    
+    def _define_exchange(self):
+        queues_dict = {}
+        # Titles and reviews for Q3
+        for i in range(self.q3_quantity):
+            key_titles = f'{i}_titles_Q3'
+            key_reviews = f'{i}_reviews_Q3'
+            value_titles = [key_titles, 'EOF_titles_Q3']
+            value_reviews = [key_reviews, 'EOF_reviews_Q3'] 
+            queues_dict[key_titles] = value_titles
+            queues_dict[key_reviews] = value_reviews
+        # Titles and reviews for Q5
+        for i in range(self.q5_quantity):
+            key_titles = f'{i}_titles_Q5'
+            key_reviews = f'{i}_reviews_Q5'
+            value_titles = [key_titles, 'EOF_titles_Q5']
+            value_reviews = [key_reviews, 'EOF_reviews_Q5'] 
+            queues_dict[key_titles] = value_titles
+            queues_dict[key_reviews] = value_reviews
+
+        # Declare the output exchange for query 3 and query 5
+        self.middleware.define_exchange(self.output, queues_dict)
 
     def run(self):
         # Define a callback wrapper
@@ -151,28 +214,10 @@ class HashWorker:
 
         callback_with_params_titles_q5 = lambda ch, method, properties, body: self.handle_data(method, body, 'titles_Q5')
         callback_with_params_reviews_q5 = lambda ch, method, properties, body: self.handle_data(method, body, 'reviews_Q5')
+        # Define the exchangge where joiners will read
+        self._define_exchange()
+        #while not self.stop_worker:
         try:
-            queues_dict = {}
-            # Titles and reviews for Q3
-            for i in range(self.q3_quantity):
-                key_titles = f'{i}_titles_Q3'
-                key_reviews = f'{i}_reviews_Q3'
-                value_titles = [key_titles, 'EOF_titles_Q3']
-                value_reviews = [key_reviews, 'EOF_reviews_Q3'] 
-                queues_dict[key_titles] = value_titles
-                queues_dict[key_reviews] = value_reviews
-            # Titles and reviews for Q5
-            for i in range(self.q5_quantity):
-                key_titles = f'{i}_titles_Q5'
-                key_reviews = f'{i}_reviews_Q5'
-                value_titles = [key_titles, 'EOF_titles_Q5']
-                value_reviews = [key_reviews, 'EOF_reviews_Q5'] 
-                queues_dict[key_titles] = value_titles
-                queues_dict[key_reviews] = value_reviews
-
-            # Declare the output exchange for query 3 and query 5
-            self.middleware.define_exchange(self.output, queues_dict)
-
             # Declare the source queue for the titles
             print("Voy a recibir los titulos")
             # For Q3
@@ -180,7 +225,7 @@ class HashWorker:
             # For Q5
             self.middleware.receive_messages(self.input_titles_q5, callback_with_params_titles_q5)
             self.middleware.consume()
-
+            
             # Declare and subscribe to the reviews exchange
             print("Voy a recibir los reviews")
             # For Q3
@@ -189,13 +234,12 @@ class HashWorker:
             self.middleware.receive_messages(self.input_reviews_q5, callback_with_params_reviews_q5)
             self.middleware.consume()
 
-            self.middleware.close_connection()
         except Exception as e:
             if self.stop_worker:
                 print("Gracefully exited")
             else:
                 print("An errror ocurred: ", e)
-            return
+                self.middleware.close_connection()
 
 class JoinWorker:
 
@@ -573,7 +617,6 @@ class TopNWorker:
     def handle_data(self, method, body):
         if body == b'EOF':
             self.eof_counter += 1
-            print(f'EOF Counter: {self.eof_counter} y mi condición LAST es {self.last}')
             if self.last and self.eof_counter == self.eof_quantity:
                 self.middleware.stop_consuming()
             elif not self.last:

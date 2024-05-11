@@ -77,6 +77,7 @@ services:
       - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
+      - LOOP_QUEUE=QUEUE_Q1|loop_category
   filter_category_computers_worker1:
     container_name: filter_category_computers_worker1
     build:
@@ -90,6 +91,7 @@ services:
       - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
+      - LOOP_QUEUE=QUEUE_Q1|loop_category
   filter_category_computers_worker2:
     container_name: filter_category_computers_worker2
     build:
@@ -103,6 +105,7 @@ services:
       - DATA_SOURCE_NAME=q1_titles
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
       - EOF_QUEUE=QUEUE_Q1|eof_category
+      - LOOP_QUEUE=QUEUE_Q1|loop_category
   filter_title_worker0:
     container_name: filter_title_worker0
     build:
@@ -116,6 +119,7 @@ services:
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
       - EOF_QUEUE=QUEUE_Q1|eof_title
+      - LOOP_QUEUE=QUEUE_Q1|loop_title
   filter_title_worker1:
     container_name: filter_title_worker1
     build:
@@ -129,6 +133,7 @@ services:
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
       - EOF_QUEUE=QUEUE_Q1|eof_title
+      - LOOP_QUEUE=QUEUE_Q1|loop_title
   filter_title_worker2:
     container_name: filter_title_worker2
     build:
@@ -142,6 +147,7 @@ services:
       - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
       - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
       - EOF_QUEUE=QUEUE_Q1|eof_title
+      - LOOP_QUEUE=QUEUE_Q1|loop_title
   filter_year_worker_q1-0:
     container_name: filter_year_worker_q1-0
     build:
@@ -156,6 +162,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
       - END=True
+      - LOOP_QUEUE=QUEUE_Q1|loop_year
   filter_year_worker_q1-1:
     container_name: filter_year_worker_q1-1
     build:
@@ -170,6 +177,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
       - END=True
+      - LOOP_QUEUE=QUEUE_Q1|loop_year
   filter_year_worker_q1-2:
     container_name: filter_year_worker_q1-2
     build:
@@ -184,6 +192,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_q1_results
       - EOF_QUEUE=QUEUE_Q1|eof_year
       - END=True
+      - LOOP_QUEUE=QUEUE_Q1|loop_year
   decade_counter_worker0:
     container_name: decade_counter_worker0
     build:
@@ -241,6 +250,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
+      - LOOP_QUEUE=QUEUE_Q5|loop_year
   filter_year_worker_q3-1:
     container_name: filter_year_worker_q3-1
     build:
@@ -256,6 +266,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
+      - LOOP_QUEUE=QUEUE_Q5|loop_year
   filter_year_worker_q3-2:
     container_name: filter_year_worker_q3-2
     build:
@@ -271,6 +282,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
+      - LOOP_QUEUE=QUEUE_Q5|loop_year
   hash_title_worker0:
     container_name: hash_title_worker0
     build:
@@ -536,12 +548,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=0
-      - NEXT_WORKER_QUANTITY=6
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - EOF_QUEUE=QUEUE_Q5|eof_category
+      - LOOP_QUEUE=QUEUE_Q5|loop_category
   filter_category_worker1:
     container_name: filter_category_worker1
     build:
@@ -550,12 +563,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=1
-      - NEXT_WORKER_QUANTITY=6
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - EOF_QUEUE=QUEUE_Q5|eof_category
+      - LOOP_QUEUE=QUEUE_Q5|loop_category
   filter_category_worker2:
     container_name: filter_category_worker2
     build:
@@ -564,12 +578,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=2
-      - NEXT_WORKER_QUANTITY=6
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=q5_titles
       - DATA_OUTPUT_NAME=QUEUE_Q5|hash_title_worker
       - EOF_QUEUE=QUEUE_Q5|eof_category
+      - LOOP_QUEUE=QUEUE_Q5|loop_category
   mean_review_sentiment_worker0:
     container_name: mean_review_sentiment_worker0
     build:
