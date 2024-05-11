@@ -536,7 +536,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=0
-      - NEXT_WORKER_QUANTITY=6
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=q5_titles
@@ -550,7 +550,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=1
-      - NEXT_WORKER_QUANTITY=6
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=q5_titles
@@ -564,7 +564,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - WORKER_ID=2
-      - NEXT_WORKER_QUANTITY=6
+      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
       - CATEGORY=Fiction
       - DATA_SOURCE_NAME=q5_titles
