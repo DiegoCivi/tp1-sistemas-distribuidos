@@ -13,13 +13,13 @@ BATCH_SIZE = 100
 
 class FilterWorker:
 
-    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, loop_queue):
+    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.id = id
         self.eof_queue = eof_queue
         self.input_name = input_name
-        self.loop_queue = loop_queue
+        self.iteration_queue = iteration_queue
         self.eof_counter = 0
         self.output_name = output_name
         self.workers_quantity = workers_quantity
@@ -60,8 +60,9 @@ class FilterWorker:
 
             # Notify the workers in my filter stage that they can start another loop
             for _ in range(self.workers_quantity - 1):
-                print("################ SOY LIDER y mi loop_queuee es: ", self.loop_queue)
-                self.middleware.send_message(self.loop_queue, 'OK')
+                self.middleware.send_message(self.iteration_queue, 'OK')
+
+            self.eof_counter = 0
 
         self.middleware.ack_message(method)
 
@@ -84,8 +85,7 @@ class FilterWorker:
         else:
             self.middleware.send_message(self.eof_queue, 'EOF')
             callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-            print("@@@@@@@@@@@@@@@@@@@ NO SOY LIDER y mi loop_queue es: ", self.loop_queue)
-            self.middleware.receive_messages(self.loop_queue, callback)
+            self.middleware.receive_messages(self.iteration_queue, callback)
             self.middleware.consume()
 
     def handle_data(self, method, body):
@@ -109,28 +109,27 @@ class FilterWorker:
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         while not self.stop_worker:
-            #try:
-            # Declare the output
-            print("Voy a leer titulos")
-            if not self.output_name.startswith("QUEUE_"):
-                self.middleware.define_exchange(self.output_name, {self.exchange_queue: [self.exchange_queue]})
+            try:
+                # Declare the output
+                print("Voy a leer titulos")
+                if not self.output_name.startswith("QUEUE_"):
+                    self.middleware.define_exchange(self.output_name, {self.exchange_queue: [self.exchange_queue]})
 
-            # Read the data
-            self.middleware.receive_messages(self.input_name, callback_with_params)
+                # Read the data
+                self.middleware.receive_messages(self.input_name, callback_with_params)
 
-            self.middleware.consume()
+                self.middleware.consume()
 
-            print(f'El worker se quedo con {self.filtered_results_quantity} cantidad de titulos')
-            # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
-            # after receiving WORKER_QUANTITY EOF messages.
-            self.eof_manage_process()
+                print(f'El worker se quedo con {self.filtered_results_quantity} cantidad de titulos')
+                # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
+                # after receiving WORKER_QUANTITY EOF messages.
+                self.eof_manage_process()
 
-
-            #except Exception as e:
-            #    if self.stop_worker:
-            #        print("Gracefully exited")
-            #    else:
-            #        print("An errror ocurred: ", e)
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
 
 
 class HashWorker:
@@ -658,16 +657,18 @@ class TopNWorker:
 
 class ReviewSentimentWorker:
     
-    def __init__(self, input_name, output_name, worker_id, workers_quantity, next_workers_quantity, eof_queue):
+    def __init__(self, input_name, output_name, worker_id, workers_quantity, next_workers_quantity, eof_queue, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         
         self.input_name = input_name
         self.output_name = output_name
-        self.worker_id = worker_id
+        self.id = worker_id
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
         self.eof_queue = eof_queue
+        self.iteration_queue = iteration_queue
+        self.eof_counter = 0
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -696,24 +697,65 @@ class ReviewSentimentWorker:
         
         self.middleware.ack_message(method)
 
+    def handle_eof(self, method, body):
+        if body != b'EOF':
+            print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
+        
+        self.eof_counter += 1
+        if self.eof_counter == self.workers_quantity - 1:
+            # Send the EOFs to the next filter stage
+            for _ in range(self.next_workers_quantity):
+                self.middleware.send_message(self.output_name, 'EOF')
+            self.middleware.stop_consuming()
+
+            # Notify the workers in my filter stage that they can start another loop
+            for _ in range(self.workers_quantity - 1):
+                print("################ SOY LIDER y mi loop_queuee es: ", self.iteration_queue)
+                self.middleware.send_message(self.iteration_queue, 'OK')
+            
+            self.eof_counter = 0
+
+        self.middleware.ack_message(method)
+
+    def handle_ok(self, method, body):
+        """
+        If an 'OK' was received, it means we can continue to the next iteration 
+        """
+        self.middleware.ack_message(method)
+        self.middleware.stop_consuming()
+
+    def eof_manage_process(self):
+        if self.id == '0':
+            if self.workers_quantity == 1:
+                for _ in range(self.next_workers_quantity):
+                    self.middleware.send_message(self.output_name, 'EOF')
+                return
+            eof_callback = lambda ch, method, properties, body: self.handle_eof(method, body)
+            self.middleware.receive_messages(self.eof_queue, eof_callback)
+            self.middleware.consume()
+        else:
+            self.middleware.send_message(self.eof_queue, 'EOF')
+            callback = lambda ch, method, properties, body: self.handle_ok(method, body)
+            print("@@@@@@@@@@@@@@@@@@@ NO SOY LIDER y mi loop_queue es: ", self.iteration_queue)
+            self.middleware.receive_messages(self.iteration_queue, callback)
+            self.middleware.consume()
+
     def run(self):
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+        while not self.stop_worker:
+            try:
+                # Declare and subscribe to the titles exchange
+                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.consume()
 
-        try:
-            # Declare and subscribe to the titles exchange
-            self.middleware.receive_messages(self.input_name, callback_with_params)
-            self.middleware.consume()
+                self.eof_manage_process()
 
-            eof_manage_process(self.worker_id, self.workers_quantity, self.next_workers_quantity, self.output_name, self.middleware, self.eof_queue)
-
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
         
 class FilterReviewsWorker:
     
