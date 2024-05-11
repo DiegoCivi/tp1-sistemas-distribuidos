@@ -46,16 +46,27 @@ La arquitectura C4 es una forma de representar la arquitectura de un sistema de 
 En el nivel 1 se muestra el sistema completo, en el nivel 2 se muestra el sistema dividido en containers y en el nivel 3 se muestran los componentes dentro de los containers y en el nivel 4 se observa la interacción entre el código de cada componente.  
 #### <span style="color:#09ff05">**Nivel 1**</span>
 <p align="center"><img src="./images/c4System.png" /> </p>
+En el primer nivel podemos observar un contexto general de lo que es el sistema completo, donde el usuario interactua con el sistema para hacer consultas o queries y el sistema se encarga de procesar y devolver los resultados.  
 
 #### <span style="color:#09ff05">**Nivel 2**</span>
 <p align="center"><img src="./images/c4Containers.png" /> </p>
+En el nivel 2, adentrandonos más en el sistema, vemos los diferentes containers que hay en el sistema. Un container es externo a este y se trata del cliente quien proveera los datos para que las queries hagan el procesamiento correspondiente. El server se encarga de recibir los datos y enviar los resultados, es la boundary entre el cliente y el sistema, mientras que el query coordinator recibe la información del servidor utilizando el middleware (container RabbitMQ que se encarga de la comunicación entre el resto de containers) y se encarga de distribuir los datos a los pipelines correspondientes. Por último, los pipelines son los encargados de procesar los datos y devolver los resultados al query coordinator, estos están compuestos por los containers "Workers" que realizan la tarea de procesamiento. 
 
 #### <span style="color:#09ff05">**Nivel 3**</span>
 <p align="center"><img src="./images/c4Component.png" /> </p>
 
 #### <span style="color:#09ff05">**Nivel 4**</span>
-<p align="center"><img src="./images/C4Code.png" /> </p>
-
+##### <span style="color:#09ff05">**Codigo de container de workers**</span>
+Para este container, como vimos en el Nivel 3, tenemos 3 componentes distintos. El primero del que hablaremos es el Middleware component. Este es muy simple ya que nos dejara comunicar las distintas partes de nuestro sistema. Primero tenemos una funcion para inicar la conexion con el broker. Una vez ejecutada podremos escribir o leer atraves de otras 2 funciones. Esto se simplifico con lo que realmente pasa en el codigo del proyecto para poder facilitar la comprension del diagrama. La parte de la inicializacion creacion de una instancia de la clase Middleware la que por dentro al iniciarse ahce la conexion al broker. Luego las partes de lectura y escritura en el codigo se pueden ver como _receive_messages()_ o _subscribe()_ y _send_message()_ o _publish_message()_.  
+Luego tenemos el componente de serializacion. Este componente nos permite de manera consistente usar una misma  serializacion y des-serializacion a lo largo de todo el sistema. Por dentro hay varias funciones que consideran distintos casos y los transforman en uno.  
+Por ultimo, tenemos el job component. Este es muy simple ya que se refiere al trabajo que debe ejecutar el worker. Aqui se recibe un batch de datos, se procesa y se mandan los resultados al siguiente filtro.
+![](./images/c4CodeWorker.png)
+##### <span style="color:#09ff05">**Codigo de container de server**</span>
+Devuelta en este container tenemos los componentes de middleware y serialization previamente explicados. Lo que se agrega es un nuevo componente que tiene una funcion muy simple la cual es fordwardear data. El server es nuestra entidad boundary por ende debe recibir data que viene desde afuera del sistema y enviarla adentor. Lo mismo a la hora de recibir resultados y enviarlos hacia afuera del sistema.
+![](./images/c4CodeServer.png)
+##### <span style="color:#09ff05">**Codigo de container de Query Coordinator**</span>
+Por ultimo tenemos el componente del Query Coordinator. Usando el middleware y el modulo de serializacion, el coordinator puede recibir informacion recien recibida en el sistema y gestionarla de tal manera que le permite a las queries recibir la informacion que cada una necesita y no mas que eso. Ademas, es el encargado de sincronizar los resultados y ir guardandolos hasta que sea el momento de enviarlos.
+![](./images/c4CodeCoordinator.png)
 ## <span style="color:#9669f0"> Diagrama de robustez </span>
 A continuación podemos observar el diagrama de robustez que nos indica cómo se relacionan las entidades del sistema y la manera de comunicación entre ellas mediante boundaries, controllers y entities.  
 ![](./images/DiagramaRobustez.png)
@@ -68,24 +79,30 @@ En el diagrama de despligue podemos ver como se agrupan los diferentes nodos del
 En los diagramas de actividad se muestra el flujo de la actividad de cada consulta en el sistema y cómo pasa un mensaje para su procesamiento entre los distintos workers y el middleware.  
 #### <span style="color:#09ff05">**Diagrama de flujo**</span>
 <p align="center"><img src="./images/DiagramaActividadFlujo.png" /> </p>
-
+Se dá el intercambio de mensajes entre el sistema y el cliente de manera que este último tiene los resultados de las queries al final del flujo.
+ 
 #### <span style="color:#09ff05">**Query 1**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ1.png" /> </p>
+Se pasa por los diferentes filtros donde cada uno se encarga de filtrar los datos según su funcionalidad específica. En cada caso siempre se comunican todo mediante el middleware hasta llegar al final donde se envían los resultados al query coordinator.
 
 #### <span style="color:#09ff05">**Query 2**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ2.png" /> </p>
+El worker contador cuenta las décadas distintas en las que un autor ha publicado y luego se envía al worker acumulador que se encarga de acumular los resultados de todos los workers contadores obviando aquellos que ya han sido contados.
 
 #### <span style="color:#09ff05">**Query 3**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ3.png" /> </p>
+Se filtra primero por la década de los 90 con el mismo filtro que la query 1, luego se cuenta las reseñas de cada uno de estos títulos filtrados y se acumulan para luego ver al final si tienen más de 500 reseñas.
 
 #### <span style="color:#09ff05">**Query 4**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ4.png" /> </p>
+Esta query reutiliza los resultados de la query 3 para calcular el promedio de rating de los libros. A partir de estos promedios, varios workers generan sus propios top 10. Una vez que no llegan mas datos envian sus top 10 a un acumulador. Este ultimo worker se encarga de conseguir el top 10 entre todos los top 10 recibidos y ese es el resultado del pipeline.
 
 #### <span style="color:#09ff05">**Query 5**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ5.png" /> </p>
 
 #### <span style="color:#09ff05">**Manejo de EOF entre workers**</span>
 <p align="center"><img src="./images/DiagramaActividadesEOF.drawio.png" /> </p>
+Un worker puede ser líder o no lider, si no lo es simplemente recibe mensajes hasta que este sea un EOF y en ese caso lo manda al líder. El líder hace lo mismo pero en caso de recibir un EOF espera que todos los workers le manden un EOF para poder mandar el EOF al siguiente worker.
 
 ## <span style="color:#9669f0"> Resultados </span>
 
