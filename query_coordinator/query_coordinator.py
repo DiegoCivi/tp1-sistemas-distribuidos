@@ -37,14 +37,15 @@ class QueryCoordinator:
             self.middleware.close_connection()
 
     def run(self):
-        try: 
-            self.receive_and_fordward_data()
-            self.manage_results()
-        except Exception as e:
-            if self.stop_coordinator:
-                print("Gracefully exit")
-                return
-            raise e
+        while not self.stop_coordinator:
+            try: 
+                self.receive_and_fordward_data()
+                self.manage_results()
+            except Exception as e:
+                if self.stop_coordinator:
+                    print("Gracefully exit")
+                else:
+                    raise e
 
 
     def handle_data(self, method, body):
@@ -242,4 +243,3 @@ class QueryCoordinator:
 
         self.middleware.send_message(SEND_SERVER_QUEUE, 'EOF')
 
-        self.middleware.close_connection()
