@@ -1,5 +1,5 @@
 import socket
-from communications import read_socket, write_socket
+from communications import read_socket, write_socket, Message
 from middleware import Middleware
 import os
 import signal
@@ -30,7 +30,7 @@ class Server:
         self.middleware = middleware
         print("Middleware established the connection")
 
-        self.results = ['']
+        self.results = Message("")
 
 
 
@@ -66,22 +66,26 @@ class Server:
         self._client_socket.close()
         
     def _receive_and_forward_data(self):
-        msg = None
-        while msg != "EOF":
-            msg, e = read_socket(self._client_socket)
+        msg = Message("")
+        while msg.decode() != "EOF":
+            socket_content, e = read_socket(self._client_socket)
             if e != None:
                 raise e
+            
+            msg = Message(socket_content)
 
-            self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
+            self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg.encode())
 
     def read_results(self, method, body):
-        if body == b'EOF':
+        result_slice = Message(body).decode()
+
+        if result_slice == "EOF":
+            self.results.set_end_flag()
             self.middleware.stop_consuming()
             self.middleware.ack_message(method)
             return
         
-        result_slice = body.decode('utf-8')
-        self.results[0] += result_slice
+        self.results.push(result_slice)
         self.middleware.ack_message(method)
     
     def _receive_and_forward_results(self):
@@ -89,8 +93,9 @@ class Server:
         self.middleware.receive_messages(RECEIVE_COORDINATOR_QUEUE, callback_with_params)
         self.middleware.consume()
         print("Enviando resultados de queries 1 a 5 al cliente...")
-        write_socket(self._client_socket, self.results[0])
-        write_socket(self._client_socket, 'EOF')
+        if self.results.is_ended():
+            write_socket(self._client_socket, self.results.get_message())
+            write_socket(self._client_socket, 'EOF')
 
     def handle_signal(self, *args):
         print("Gracefully exit")
