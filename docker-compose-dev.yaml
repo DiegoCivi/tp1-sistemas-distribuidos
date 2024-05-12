@@ -254,7 +254,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - ITERATION_QUEUE=QUEUE_Q5|iteration_year
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_year
   filter_year_worker_q3-1:
     container_name: filter_year_worker_q3-1
     build:
@@ -270,7 +270,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - ITERATION_QUEUE=QUEUE_Q5|iteration_year
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_year
   filter_year_worker_q3-2:
     container_name: filter_year_worker_q3-2
     build:
@@ -286,14 +286,14 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|hash_title_worker
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
-      - ITERATION_QUEUE=QUEUE_Q5|iteration_year
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_year
   hash_title_worker0:
     container_name: hash_title_worker0
     build:
       context: .
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
     environment:
-      - PYTHONUNBUFFERED=1
+      - WORKER_ID=0
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
@@ -302,13 +302,15 @@ services:
       - Q5_QUANTITY=6
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - EOF_QUEUE=QUEUE_Q3|eof_hash
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_hash
   hash_title_worker1:
     container_name: hash_title_worker1
     build:
       context: .
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
     environment:
-      - PYTHONUNBUFFERED=1
+      - WORKER_ID=1
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
@@ -317,13 +319,15 @@ services:
       - Q5_QUANTITY=6
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - EOF_QUEUE=QUEUE_Q3|eof_hash
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_hash
   hash_title_worker2:
     container_name: hash_title_worker2
     build:
       context: .
       dockerfile: ./workers_dockerfiles/hash_title_worker.dockerfile
     environment:
-      - PYTHONUNBUFFERED=1
+      - WORKER_ID=2
       - DATA_SOURCE_NAME=QUEUE_Q3|hash_title_worker,QUEUE_Q5|hash_title_worker,q3_reviews,QUEUE_Q5|hash_review_worker
       - DATA_OUTPUT_NAME=hashed
       - HASH_MODULUS=6
@@ -332,6 +336,8 @@ services:
       - Q5_QUANTITY=6
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - EOF_QUEUE=QUEUE_Q3|eof_hash
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_hash
   reviews_counter_worker0:
     container_name: reviews_counter_worker0
     build:
