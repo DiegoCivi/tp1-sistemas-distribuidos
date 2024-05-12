@@ -7,9 +7,10 @@ def main():
     data_output_name = os.getenv('DATA_OUTPUT_NAME')
     percentile = os.getenv('PERCENTILE')
     workers_quantity = int(os.getenv('EOF_QUANTITY'))
+    iteration_queue = os.getenv('ITERATION_QUEUE')
     
 
-    worker = PercentileWorker(data_source_name, data_output_name, percentile, workers_quantity)
+    worker = PercentileWorker(data_source_name, data_output_name, percentile, workers_quantity, iteration_queue)
     worker.run()
 
 

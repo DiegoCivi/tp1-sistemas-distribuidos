@@ -9,8 +9,9 @@ def main():
     data_output1_name, data_output2_name = os.getenv('DATA_OUTPUT_NAME').split(',')
     workers_quantity = int(os.getenv('EOF_QUANTITY'))
     next_workers_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
+    iteration_queue = os.getenv('ITERATION_QUEUE')
 
-    worker = FilterReviewsWorker(data_source_name, data_output1_name, data_output2_name, minimum_quantity, workers_quantity, next_workers_quantity)
+    worker = FilterReviewsWorker(data_source_name, data_output1_name, data_output2_name, minimum_quantity, workers_quantity, next_workers_quantity, iteration_queue)
     worker.run()
 
 main()
