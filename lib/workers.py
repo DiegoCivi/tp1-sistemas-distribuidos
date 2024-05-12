@@ -289,7 +289,7 @@ class HashWorker:
 
 class JoinWorker:
 
-    def __init__(self, id, input_name, output_name, eof_quantity, query):
+    def __init__(self, id, input_name, output_name, eof_quantity, query, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
 
@@ -299,6 +299,7 @@ class JoinWorker:
         self.id = id
         self.input_name = input_name
         self.output_name = output_name
+        self.iteration_queue = iteration_queue
         self.eof_counter = 0
         self.eof_quantity = eof_quantity
         self.counter_dict = {}
@@ -380,6 +381,38 @@ class JoinWorker:
             print(f"Error: [{e}] when parsing 'review/score' to float.")
             raise e
         return title_rating
+    
+    def send_results(self):
+        batch_size = 0
+        batch = {}
+        for title, counter in self.counter_dict.items():
+            # Ignore titles with no reviews
+            if counter[0] == 0:
+                continue
+            if self.query == QUERY_5:
+                batch[title] = str(counter[1] / counter[0])
+            else:
+                batch[title] = counter
+
+            batch_size += 1
+            if batch_size == BATCH_SIZE:
+                serialized_message = serialize_message([serialize_dict(batch)])
+                self.middleware.send_message(self.output_name, serialized_message)
+                batch = {}
+                batch_size = 0
+
+        if len(batch) != 0:
+            serialized_message = serialize_message([serialize_dict(batch)])
+            self.middleware.send_message(self.output_name, serialized_message)
+            
+        self.middleware.send_message(self.output_name, "EOF")
+
+    def handle_ok(self, method, body):
+        """
+        If an 'OK' was received, it means we can continue to the next iteration 
+        """
+        self.middleware.ack_message(method)
+        self.middleware.stop_consuming()  
             
     def run(self):
 
@@ -391,56 +424,39 @@ class JoinWorker:
         titles_queue = self.id + '_titles_Q' + str(self.query)
         reviews_queue = self.id + '_reviews_Q' + str(self.query)
 
-        try:
-            # Declare and subscribe to the titles queue in the exchange
-            self.middleware.define_exchange(self.input_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
+        while not self.stop_worker:
+            try:
+                # Declare and subscribe to the titles queue in the exchange
+                self.middleware.define_exchange(self.input_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
 
-            # Read from the titles queue
-            print("Voy a leer titles")
-            self.middleware.subscribe(self.input_name, titles_queue, callback_with_params_titles)
-            self.middleware.consume()
+                # Read from the titles queue
+                print("Voy a leer titles")
+                self.middleware.subscribe(self.input_name, titles_queue, callback_with_params_titles)
+                self.middleware.consume()
 
-            self.eof_counter = 0 
+                self.eof_counter = 0 
 
-            # Read from the reviews queue
-            print("Voy a leer reviews")
-            self.middleware.subscribe(self.input_name, reviews_queue,  callback_with_params_reviews)
-            self.middleware.consume()
+                # Read from the reviews queue
+                print("Voy a leer reviews")
+                self.middleware.subscribe(self.input_name, reviews_queue,  callback_with_params_reviews)
+                self.middleware.consume()
 
 
-            # Once all the reviews were received, the counter_dict needs to be sent to the next stage
-            batch_size = 0
-            batch = {}
-            for title, counter in self.counter_dict.items():
-                # Ignore titles with no reviews
-                if counter[0] == 0:
-                    continue
+                # Once all the reviews were received, the counter_dict needs to be sent to the next stage
+                self.send_results()
 
-                if self.query == QUERY_5:
-                    batch[title] = str(counter[1] / counter[0])
+                # Wait for the accumulator worker in the next stage to notify
+                # when to start the next iteration
+                callback = lambda ch, method, properties, body: self.handle_ok(method, body)
+                self.middleware.receive_messages(self.iteration_queue, callback)
+                self.middleware.consume()
+                
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
                 else:
-                    batch[title] = counter
-
-                batch_size += 1
-                if batch_size == BATCH_SIZE: # TODO: Maybe the 100 could be an env var
-                    serialized_message = serialize_message([serialize_dict(batch)])
-                    self.middleware.send_message(self.output_name, serialized_message)
-                    batch = {}
-                    batch_size = 0
-
-            if len(batch) != 0:
-                serialized_message = serialize_message([serialize_dict(batch)])
-                self.middleware.send_message(self.output_name, serialized_message)
-            
-            self.middleware.send_message(self.output_name, "EOF")
-            
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+                    print("An errror ocurred: ", e)
+                    return
 
 class DecadeWorker:
 
@@ -589,12 +605,13 @@ class GlobalDecadeWorker:
         
 class PercentileWorker:
 
-    def __init__(self, input_name, output_name, percentile, eof_quantity):
+    def __init__(self, input_name, output_name, percentile, eof_quantity, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         
         self.input_name = input_name
         self.output_name = output_name
+        self.iteration_queue = iteration_queue
         self.percentile = percentile
         self.eof_quantity = eof_quantity
         self.eof_counter = 0
@@ -633,25 +650,28 @@ class PercentileWorker:
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         
-        try:
-            # Read the titles with their sentiment
-            self.middleware.receive_messages(self.input_name, callback_with_params)
-            self.middleware.consume()
+        while not self.stop_worker:
+            try:
+                # Read the titles with their sentiment
+                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.consume()
 
+                titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
 
-            titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
+                serialized_data = serialize_message(titles)
+                self.middleware.send_message(self.output_name, serialized_data)
+                self.middleware.send_message(self.output_name, "EOF")
 
-            serialized_data = serialize_message(titles)
-            self.middleware.send_message(self.output_name, serialized_data)
-            self.middleware.send_message(self.output_name, "EOF")
+                # Send the OKs to the workers in the previous stage
+                for _ in range(self.eof_quantity): # The eof_quantity represents the quantity of workers in the previous stage 
+                    self.middleware.send_message(self.iteration_queue, 'OK')
 
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
+                    return
 
 class TopNWorker:
 
@@ -845,11 +865,12 @@ class ReviewSentimentWorker:
         
 class FilterReviewsWorker:
     
-    def __init__(self, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity):
+    def __init__(self, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.input_name = input_name
         self.output_name1 = output_name1
+        self.iteration_queue = iteration_queue
         self.output_name2 = output_name2
         self.eof_quantity = eof_quantity
         self.minimum_quantity = minimum_quantity
@@ -894,27 +915,33 @@ class FilterReviewsWorker:
     def run(self):
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        try:
+        while not self.stop_worker:
+            try:
 
-            # Declare and subscribe to the titles exchange
-            self.middleware.receive_messages(self.input_name, callback_with_params)
-            self.middleware.consume()
+                # Declare and subscribe to the titles exchange
+                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.consume()
 
-            serialized_data = serialize_message([serialize_dict(self.filtered_titles)])
-            if serialized_data != '':
-                self.middleware.send_message(self.output_name1, serialized_data)
-                self.middleware.send_message(self.output_name2, serialized_data)
+                # Send the results to the query 4 and the QueryCoordinator
+                serialized_data = serialize_message([serialize_dict(self.filtered_titles)])
+                if serialized_data != '':
+                    self.middleware.send_message(self.output_name1, serialized_data)
+                    self.middleware.send_message(self.output_name2, serialized_data)
 
-            for _ in range(self.next_workers_quantity):
-                self.middleware.send_message(self.output_name2, 'EOF')
+                # Send the EOFs to the workers on the query 4
+                for _ in range(self.next_workers_quantity):
+                    self.middleware.send_message(self.output_name2, 'EOF')
 
-            
-            self.middleware.send_message(self.output_name1, 'EOF')
+                # Send the EOF to the QueryCoordinator
+                self.middleware.send_message(self.output_name1, 'EOF')
 
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+                # Send the OKs to the workers in the previous stage
+                for _ in range(self.eof_quantity): # The eof_quantity represents the quantity of workers in the previous stage 
+                    self.middleware.send_message(self.iteration_queue, 'OK')
+
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
+                    return

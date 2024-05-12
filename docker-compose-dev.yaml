@@ -350,6 +350,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   reviews_counter_worker1:
     container_name: reviews_counter_worker1
     build:
@@ -362,6 +363,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   reviews_counter_worker2:
     container_name: reviews_counter_worker2
     build:
@@ -374,6 +376,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   reviews_counter_worker3:
     container_name: reviews_counter_worker3
     build:
@@ -386,6 +389,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   reviews_counter_worker4:
     container_name: reviews_counter_worker4
     build:
@@ -398,6 +402,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   reviews_counter_worker5:
     container_name: reviews_counter_worker5
     build:
@@ -410,6 +415,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   filter_review_quantity_worker0:
     container_name: filter_review_quantity_worker0
     build:
@@ -423,6 +429,7 @@ services:
       - WORKERS_QUANTITY=1
       - NEXT_WORKER_QUANTITY=5
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
   top10_worker0:
     container_name: top10_worker0
     build:
@@ -617,6 +624,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
   mean_review_sentiment_worker1:
     container_name: mean_review_sentiment_worker1
     build:
@@ -629,6 +637,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
   mean_review_sentiment_worker2:
     container_name: mean_review_sentiment_worker2
     build:
@@ -641,6 +650,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
   mean_review_sentiment_worker3:
     container_name: mean_review_sentiment_worker3
     build:
@@ -653,6 +663,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
   mean_review_sentiment_worker4:
     container_name: mean_review_sentiment_worker4
     build:
@@ -665,6 +676,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
   mean_review_sentiment_worker5:
     container_name: mean_review_sentiment_worker5
     build:
@@ -677,6 +689,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
   percentile_worker0:
     container_name: percentile_worker0
     build:
@@ -691,3 +704,4 @@ services:
       - WORKERS_QUANTITY=1
       - EOF_QUANTITY=6
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
