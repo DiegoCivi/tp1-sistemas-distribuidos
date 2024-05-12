@@ -397,11 +397,12 @@ class JoinWorker:
 
 class DecadeWorker:
 
-    def __init__(self, input_name, output_name):
+    def __init__(self, input_name, output_name, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         self.input_name = input_name
         self.output_name = output_name
+        self.iteration_queue = iteration_queue
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -435,32 +436,46 @@ class DecadeWorker:
 
         self.middleware.ack_message(method)
 
+    def handle_ok(self, method, body):
+        """
+        If an 'OK' was received, it means we can continue to the next iteration 
+        """
+        self.middleware.ack_message(method)
+        self.middleware.stop_consuming()
+
     def run(self):
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
 
-        try:
-            # Declare and subscribe to the titles exchange
-            self.middleware.receive_messages(self.input_name, callback_with_params)
-            self.middleware.consume()
+        while not self.stop_worker:
+            try:
+                # Declare and subscribe to the titles exchange
+                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.consume()
 
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+                # Wait for the accumulator worker in the next stage to notify
+                # when to start the next iteration
+                callback = lambda ch, method, properties, body: self.handle_ok(method, body)
+                self.middleware.receive_messages(self.iteration_queue, callback)
+                self.middleware.consume()
+
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
+                    return
 
 
 class GlobalDecadeWorker:
 
-    def __init__(self, input_name, output_name, eof_quantity):
+    def __init__(self, input_name, output_name, eof_quantity, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         self.input_name = input_name
         self.output_name = output_name
         self.eof_quantity = eof_quantity
+        self.iteration_queue = iteration_queue
         self.eof_counter = 0
         self.counter_dict = {}
         self.middleware = None
@@ -495,29 +510,35 @@ class GlobalDecadeWorker:
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         
-        try:
-            # Declare the output queue
-            self.middleware.receive_messages(self.input_name, callback_with_params)
-            self.middleware.consume()
+        while not self.stop_worker:
+            try:
+                # Declare the output queue
+                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.consume()
 
-            # Collect the results
-            results = []
-            for key, value in self.counter_dict.items():
-                if len(value) >= 10:
-                    results.append(key)
-            # Send the results to the output queue
-            serialized_message = serialize_message(results)
-            
-            self.middleware.send_message(self.output_name, serialized_message)
-            self.middleware.send_message(self.output_name, 'EOF')
+                # Collect the results
+                results = []
+                for key, value in self.counter_dict.items():
+                    if len(value) >= 10:
+                        results.append(key)
+                # Send the results to the output queue
+                serialized_message = serialize_message(results)
+                
+                self.middleware.send_message(self.output_name, serialized_message)
+                self.middleware.send_message(self.output_name, 'EOF')
 
-            self.middleware.close_connection()
-        except Exception as e:
-            if self.stop_worker:
-                print("Gracefully exited")
-            else:
-                print("An errror ocurred: ", e)
-            return
+                # Notify the workers in the previous stage they can continue
+                # with the next iteration
+                for _ in range(self.eof_quantity): # The eof quantity represents the quantity of workers in the previous stage
+                    self.middleware.send_message(self.iteration_queue, 'OK')
+
+
+            except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    print("An errror ocurred: ", e)
+                    return
         
 class PercentileWorker:
 

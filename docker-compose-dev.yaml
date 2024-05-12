@@ -203,6 +203,7 @@ services:
       - WORKERS_QUANTITY=3
       - DATA_SOURCE_NAME=q2_titles
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
   decade_counter_worker1:
     container_name: decade_counter_worker1
     build:
@@ -213,6 +214,7 @@ services:
       - WORKERS_QUANTITY=3
       - DATA_SOURCE_NAME=q2_titles
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
   decade_counter_worker2:
     container_name: decade_counter_worker2
     build:
@@ -223,6 +225,7 @@ services:
       - WORKERS_QUANTITY=3
       - DATA_SOURCE_NAME=q2_titles
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
   global_decade_counter_worker0:
     container_name: global_decade_counter_worker0
     build:
@@ -235,6 +238,7 @@ services:
       - DATA_OUTPUT_NAME=QUEUE_q2_results
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
   filter_year_worker_q3-0:
     container_name: filter_year_worker_q3-0
     build:
