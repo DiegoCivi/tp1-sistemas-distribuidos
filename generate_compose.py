@@ -33,14 +33,10 @@ with open(config_file, "r") as file:
         elif line.startswith("+"):
             # Environment variables
             line = line[1:]  # Delete the prefix '+'
-            print(line)
             env_vars[service_name] = dict(item.split("=") for item in line.split("$"))
             if service_name in ("review_sentiment_worker", "filter_category_worker"):
                 if service_name == "filter_category_worker":
-                    print("SOY EL SERVICE NAME", service_name, "Y TENGO ESTOS ENV VARS", env_vars[service_name])
                     env_vars[service_name]["NEXT_WORKER_QUANTITY"] = env_vars["hash_title_worker"]["WORKERS_QUANTITY"]
-                    print("EL WORKER QUANTITY DEL HASH_TITLE_WORKER ES", env_vars["hash_title_worker"]["WORKERS_QUANTITY"])
-                    print("MI NUEVO NEXT WORKER QUANTITY ES", env_vars[service_name]["NEXT_WORKER_QUANTITY"])
             if last_service_name and "NEXT_WORKER_QUANTITY" in env_vars[last_service_name] and service_name not in ("review_sentiment_worker", "filter_category_worker", "mean_review_sentiment_worker"):
                 if not "END" in env_vars[last_service_name]:
                     env_vars[last_service_name]["NEXT_WORKER_QUANTITY"] = env_vars[service_name]["WORKERS_QUANTITY"]
