@@ -26,7 +26,6 @@ def serialize_message(message_items):
     on each item and deleting the newline character
     """
     return ROW_SEPARATOR.join(message_items)
-    #return (''.join([serialize_item(item) for item in message_items]))[:-1]
 
 def deserialize_item(item):
     """
@@ -47,8 +46,6 @@ def deserialize_titles_message(bytes):
 def serialize_dict(dict_to_serialize):
     msg = ''
     for key, value in dict_to_serialize.items():
-        if 'A look back at a very corny past.' in value:
-            print(dict_to_serialize)
         if isinstance(value, set):
             value = serialize_set(value)
         elif isinstance(value, list):
@@ -80,7 +77,4 @@ def deserialize_into_titles_dict(row):
             raise e
 
     return title_dict
-
-#def deserialize_into_reviews_dict(row):
-
 
