@@ -14,9 +14,9 @@ También hemos decidido que en el sistema las consultas se harán _X (secuencial
 
 ## <span style="color:#9669f0"> Sistema completo </span>
 En la siguiente imagen se puede ver como sera la estructura del sistema completo.  
-<p align="center"><img src="./images/SistemaCompletoFinal.png" /> </p>
+<p align="center"><img src="./images/SistemaCompletoRentrega.png" /> </p>
 
-Empezando por el cliente y el server, el primero se conecta mediante TCP a nuestro server el cual tiene como funcion recibir los datasets y mandarle cada batch a al query coordinator. Este se encargara de parsear cada batch para cada pipeline ya que estos usan distintas columnas del dataset. El query coordinator manda los datasets por un exchange con topico en donde cada cola tiene un distinto topico. Ademas, Query Coordinator se encarga de recibir por distintas colas los diferentes resultados de cada pipeline. 
+Empezando por el cliente y el server, el primero se conecta mediante TCP a nuestro server el cual tiene como funcion recibir los datasets y mandarle cada batch a al query coordinator. Este se encargara de parsear cada batch para cada pipeline ya que estos usan distintas columnas del dataset. El query coordinator manda los datasets por diferentes queues,donde cada una va a una query distinta. Ademas, Query Coordinator se encarga de recibir por distintas colas los diferentes resultados de cada pipeline. 
 <p align="center"><img src="./images/InicioSist.png" /> </p>
 
 Cada pipeline se encarga de conseguir lo resultados de una query en especifico y eso lo hacen usando diferentes tipos de workers que se encargan de aplicarle un simple tipo de "job" a cada dato recibido.  
@@ -32,7 +32,7 @@ Como en la query anterior, solo se reciben los datos de los titulos los cuale so
 <span style="color:#09ff05">**Query 3 y Query 5**</span>: _Títulos y autores de libros publicados en los 90' con al menos 500 reseñas._ _Títulos en categoría "Fiction" cuyo sentimiento de reseña promedio esté en
 el percentil 90 más alto._  
 Para resolver estas queries se necesitan los datos de ambas tablas. Empezando por Q3, primero con un pool de workers se hace el primer filtro de decada del 90' y desde ahi se manda los titulos filtrados al hasher de titulos. Este hasher le indicara a los titulos a que worker deben ir, de esta manera hay un solo worker destinado a contar reseñas de un grupo acotado de titulos. Lo mismo sucedera con los titulos de las reseñas. De esta manera, estos workers que tienen como proposito contar las reseñas de cada titulo, recibiran titulos y sus respectivas reseñas.  
-Siguiendo por Q5, es la misma logica. A los titulos enviados por el Query Coordinator que vienen desde el exchange, se los pasa por un pool de workers de filtro de categoria Fiction y luego son enviados al hasher de titulos. Desde ahi son enviados a su respectivo worker en donde tambien llegaran las reseñas de ese titulo, las cuales ya pasaron por un pool de workers que les calcularon el sentimiento. En la ultima etapa, para cada titulo se le genera su promedio de sentimiento de reseña y una vez que se acumularon todos, se envian al calculador de percentil el cual decidira cuales son los titulos que estan por encima del percentil 90.
+Siguiendo por Q5, es la misma logica. A los titulos enviados por el Query Coordinator, se los pasa por un pool de workers de filtro de categoria Fiction y luego son enviados al hasher de titulos. Desde ahi son enviados a su respectivo worker en donde tambien llegaran las reseñas de ese titulo, las cuales ya pasaron por un pool de workers que les calcularon el sentimiento. En la ultima etapa, para cada titulo se le genera su promedio de sentimiento de reseña y una vez que se acumularon todos, se envian al calculador de percentil el cual decidira cuales son los titulos que estan por encima del percentil 90.
 Cabe aclarar, que cada uno de esos workers a los que les llegan reseñas y titulos, no leeran reseñas hasta que le termine de llegar todos los titulos.
 <p align="center"><img src="./images/Q5Q3SistCompleto.png" /> </p>
 
@@ -91,7 +91,7 @@ El worker contador cuenta las décadas distintas en las que un autor ha publicad
 
 #### <span style="color:#09ff05">**Query 3**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ3.png" /> </p>
-Se filtra primero por la década de los 90 con el mismo filtro que la query 1, luego se cuenta las reseñas de cada uno de estos títulos filtrados y se acumulan para luego ver al final si tienen más de 500 reseñas.
+Se filtra primero por la década de los 90 con el mismo filtro que la query 1, se pasan estos títulos filtrados al hasheador de títulos cuyo propósito es distribuir de manera equitativa los títulos entre los workers del siguiente filtro, luego se cuenta las reseñas de cada uno de estos títulos filtrados y se acumulan para luego ver al final si tienen más de 500 reseñas.
 
 #### <span style="color:#09ff05">**Query 4**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ4.png" /> </p>
@@ -99,10 +99,42 @@ Esta query reutiliza los resultados de la query 3 para calcular el promedio de r
 
 #### <span style="color:#09ff05">**Query 5**</span>
 <p align="center"><img src="./images/DiagramaActividadesQ5.png" /> </p>
+Filtramos por categoría "Fiction", se calcula el sentimiento de las reseñas y se pasa al hasher de títulos para que mande los títulos a los workers correspondientes. Luego se calcula el promedio de sentimiento de cada título y se acumulan los resultados para finalmente calcular el percentil 90 y devolver los títulos que cumplen con la condición.
 
-#### <span style="color:#09ff05">**Manejo de EOF entre workers**</span>
-<p align="center"><img src="./images/DiagramaActividadesEOF.drawio.png" /> </p>
-Un worker puede ser líder o no lider, si no lo es simplemente recibe mensajes hasta que este sea un EOF y en ese caso lo manda al líder. El líder hace lo mismo pero en caso de recibir un EOF espera que todos los workers le manden un EOF para poder mandar el EOF al siguiente worker.
+#### <span style="color:#09ff05">**Manejo de EOF entre workers de filtros**</span>
+<p align="center"><img src="./images/DiagramaActividadesEOFFilters.png" /> </p>
+Un worker puede ser líder o no lider, si no lo es simplemente recibe mensajes hasta que este sea un EOF y en ese caso lo manda al líder. El líder hace lo mismo pero en caso de recibir un EOF espera que todos los workers le manden un EOF para poder mandar los EOFs a la siguiente etapa de workers.  
+Una vez que los workes mandan el EOF a su lider, esperan por el mensaje OK del lider para poder comenzar con la siguiente iteracion. Este mensaje OK lo manda el lider una vez que le llegaron todos los EOFs. De esta manera coordinamos que todo el grupo de workers en una etapa se coordinen a la hora de mandar los EOFs y comenzar con la siguiente iteracion, la cual estara trabajando con otro cliente. Este tipo de coordinacion se puede ver en etapas como las de la query 1, las etapas de calcular sentimiento y filtro de categoria de Fiction en la query 3, y por ultimo la etapa de filtro de decada 90 en la query 3.  
+
+#### <span style="color:#09ff05">**Manejo de EOF entre workers con acumuladores**</span>
+<p align="center"><img src="./images/DiagramaActividadesEOFAcumuladores.png" /> </p>
+Hay otros casos en donde los workers de una etapa no necesitan sincronizar sus EOFs, pero si deben sincronizarse para saber cuando empezar su siguiente iteracion. Estos son los casos de las queries 4, 2 y las ultimas etapas de las queries 3 y 5.  
+Lo que sucede en este caso es que cada workere no acumulador envia su EOF al worker acumulador. Este tiene informacion de cuantos workers hay en la etapa anterior, entonces cuando recibe esa cantidad de EOFs este envia los mensajes OK a los workers anteriores. Estos, que se habian quedado esperando luego de mandar el EOF al acumulador, entienden que pueden seguir con la nueva iteracion.
+
+## <span style="color:#09ff05">**Protocolo de comunicacion y serialiazacion**</span>
+El protocolo en cuanto a la comunicación cliente-servidor es muy simple. Se usa un header que siempre tendra un largo de 4 bytes. En este header se informa la longitud del mensaje. Entonces si tenemos el mensaje "Hola!", el header sera "0005" y el mensaje completo que se envia por el socket sera "0005Hola!". Para evitar un short-write, se envia el mensaje y se va contando cuantos bytes se escribieron. Si no se escribieron todos los bytes, se sigue enviado desde el byte que no se pudo escribir en el socket. Del lado del lector, este sabe que siempre primero tiene que leer 4 bytes, asi consigue el header y sabe cuantos bytes mas tiene que leer para conseguir el mensaje completo. No para de hacer intentos de leer el socket hasta que no se haya leido la cantidad de bytes indicada por el header.  
+Además, para poder complementar el protocolo y evitar manejar strings, se serializa todo lo que se envía y encapsula la responsabilidad del encoding y decoding en el servidor con una estructura `Message` que tiene un contenido y un _stop state_ de forma que si ya está terminado el mensaje, ya no se pueda escribir más (útil en el caso de esperar un EOF para saber cuando el mensaje posee todos los resultados).  
+En cuanto a la serialización, se implementa una librería propia de la misma para poder serializar y deseralizar mensajes acorde a las necesidades de los datos, por ejemplo hay casos en los que necesitaremos mandar batches completos de datos y otros en los que solo necesitaremos mandar un dato en particular, en su mayoría manejándonos con diccionarios para poder separar los datos de manera clara en un formato {key: value}. Para ello utilizamos separadores custom que definen si se trata del final de un dato en particular o de una tanda de datos. Esta serialización soporta distintos formatos como ser un set, lista, diccionario y demás, y se encarga de la serialización de manera consistente usando como convención los separadores definidos como constantes que se importan a lo largo del sistema para poder mantener los datos limpios acorde a este protocolo.  
+Más en lo específico se detallarán las funciones proveidas por la librería de serialización:  
+Un item está compuesto por múltiples columnas o campos separados por el separador `@|@`, un batch está compuesto por múltiples items separados por el separador `$|$`, y en cuanto a la utilización de diccionarios, para separar claves de valores usamos `#|#`, y cuando encontramos múltiples valores en un campo usamos `,`.  
+- `serialize_message`: recibe listas de items y los serializa en un string
+- `serialize_item`: recibe una item y lo serializa en un string sacando los posibles saltos de línea
+- `serialize_dict`: recibe un diccionario y lo serializa en un string usando los separadores definidos, además verifica si el valor es un set o una lista para serializarlo de manera correcta usando `serialize_set` o `serialize_list`.
+- `serialize_set`: recibe un set y lo serializa en un string usando el separador de múltiples valores.
+- `serialize_list`: recibe una lista y lo serializa en un string usando el separador de múltiples valores, además pasando a string valores que podrían ser numéricos.
+- `deserialize_item`: contraparte directa de `serialize_item`, recibe un string y lo deserializa en un item.
+- `deserialize_titles_message`: recibe una lista de múltiples diccionarios serializados y los deserializa utilizando `deserialize_into_titles_dict`.
+- `deserialize_into_titles_dict`: recibe un string y lo deserializa utilizando el field separator `#|#` y el value separator `,` para separar claves de valores y múltiples valores en un campo, logrando un diccionario de títulos.  
+De esta manera, contando con estas funciones el flujo de un mensaje sería:  
+1. El cliente usa un lector de archivo que produce rows representadas con un diccionarios usando `serialize_dict`, utiliza `serialize_message` para serializar múltiples rows acorde a los separadores mencionados y envía el mensaje al servidor.
+2. Se hace el pase del mensaje hasta cada worker que lo deserializa con `deserialize_titles_message` para poder trabajar con los datos y luego serializarlos mediante `serialize_message([serialize_dict(result)])` de nuevo para enviarlos al siguiente worker o al query coordinator.
+3. El query coordinator recibe los resultados y los deserializa con `deserialize_titles_message` para poder trabajar con ellos y enviarlos al servidor de nuevo.
+
+## <span style="color:#9669f0"> Mejoras </span>
+Para la reentrega se hicieron ciertos cambios que mejoran la performance del tp. Lo primero que se hizo fue sacar el exchange "data". Este exchange era la manera que tenia el _QueryCoordinator_ de enviarle a cada pipeline los datos de los datasets y los EOFs. En este exchange existian varios topicos, entre ellos EOF_reviews y EOF_titles. Estos se usaban para informarle a cada pipeline que ya se habia mandado toda la informacion disponible. Pero en el primer filtro de cada pipeline podia haber distinta cantidad de workers. Entonces si en el pipeline de la query 5 habia 6 workers esperando a que le lleguen los EOFs con el topico EOF_reviews, pero en el pipeline de la query 3 habia solo 3 workers que esperaban lo mismo, el _QueryCoordinator_ enviaba 6 EOFs por ese topico. En el pipeline 5 de iban a leer todos los EOFs pero en el pipeline 3 sobrarian 3 que quedaban encolados en la cola sin sere leidos. Esto en este tp no generaba problemas, pero si despues se necesitaba soportar multiple clientes, estos EOFs sobrantes generarian problemas. Es por eso que se decidio sacar este exchange y usar colas para cada pipeline. De esta manera el _QueryCoordinator_ se le informa cuantos EOFs tiene que enviar a cada cola y no sobraran EOFs.   
+
+Otra de los problemas que se tenia, era el tiempo que tardaba en ejecutarse con el dataset completo. Para mejorar esto, se trato de identificar nuestro cuello de botella y se llego a la conclusion de que se encontraba en las queries 3 y 5. Mas especificamente en las partes de el hasheador por titulo en adelante. Para ambas queries se usa el mismo worker que recibe un batch de titulos o reviews y con eso hashea el titulo y lo envia al siguiente worker correspondiente. Al hacer esto, se genera 1 mensaje por cada titulo o review recibida. El problema no es tanto la cantidad de estos mensajes sino el rate en el cual los siguientes workers procesaban y les hacian aknowledge. Se habia elegido un prefetch_count=1 para que en casos en los que varios workers leen de una misma cola, no lean el EOF de otro de los workers del mismo filtro. Pero los workers que viene despues del hasheador por titulo tienen una cola para cada uno. Al darnos cuenta de eso, se le agrego al middleware la posibilidad de elegir el prefetch_count para que estos workers lo puedan aumentar y de esta manera agilizar esa seccion. Esto tuvo grandes resultados ya que ahora una ejecucion completa con el dataset original, tarda menos de 30 min cuando antes de esta mejora tardaba 60 min
+
 
 ## <span style="color:#9669f0"> Resultados </span>
 
