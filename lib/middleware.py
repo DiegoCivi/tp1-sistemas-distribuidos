@@ -55,20 +55,20 @@ class Middleware:
         
         self._channel.basic_publish(exchange='', routing_key=queue, body=message)
         
-    def receive_messages(self, queue, callback):
+    def receive_messages(self, queue, callback, prefetch_count=PREFETCH_COUNT):
         if queue not in self._queues:
             self._declare_queue(queue)
 
-        self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
+        self._channel.basic_qos(prefetch_count=prefetch_count)
         self._channel.basic_consume(queue, callback, auto_ack=AUTO_ACK_MODE)
 
-    def subscribe(self, exchange, queue, callback):
+    def subscribe(self, exchange, queue, callback, prefetch_count=PREFETCH_COUNT):
         if exchange not in self._exchanges:
             raise Exception(f'Exchange {exchange} not defined before')
         elif queue not in self._queues:
             raise Exception(f'Queue {queue} not declared/binded before')
         
-        self._channel.basic_qos(prefetch_count=PREFETCH_COUNT)
+        self._channel.basic_qos(prefetch_count=prefetch_count)
         self._channel.basic_consume(queue, callback, auto_ack=AUTO_ACK_MODE)
 
     def define_exchange(self, exchange, queues_dict):

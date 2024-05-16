@@ -10,6 +10,7 @@ CATEGORY_CONDITION = 'CATEGORY'
 QUERY_5 = 5
 QUERY_3 = 3
 BATCH_SIZE = 100
+PREFETCH_COUNT = 200
 
 class FilterWorker:
 
@@ -131,6 +132,7 @@ class FilterWorker:
                     print("Gracefully exited")
                 else:
                     print("An errror ocurred: ", e)
+                    return
 
 
 class HashWorker:
@@ -285,7 +287,7 @@ class HashWorker:
                    print("Gracefully exited")
                else:
                    print("An errror ocurred: ", e)
-                   self.middleware.close_connection()
+                   return
 
 class JoinWorker:
 
@@ -431,14 +433,14 @@ class JoinWorker:
 
                 # Read from the titles queue
                 print("Voy a leer titles")
-                self.middleware.subscribe(self.input_name, titles_queue, callback_with_params_titles)
+                self.middleware.subscribe(self.input_name, titles_queue, callback_with_params_titles, PREFETCH_COUNT)
                 self.middleware.consume()
 
                 self.eof_counter = 0 
 
                 # Read from the reviews queue
                 print("Voy a leer reviews")
-                self.middleware.subscribe(self.input_name, reviews_queue,  callback_with_params_reviews)
+                self.middleware.subscribe(self.input_name, reviews_queue,  callback_with_params_reviews, PREFETCH_COUNT)
                 self.middleware.consume()
 
 
@@ -575,8 +577,8 @@ class GlobalDecadeWorker:
         
         while not self.stop_worker:
             try:
-                # Declare the output queue
-                self.middleware.receive_messages(self.input_name, callback_with_params)
+                # Declare the source queue
+                self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
                 self.middleware.consume()
 
                 # Collect the results
@@ -653,7 +655,7 @@ class PercentileWorker:
         while not self.stop_worker:
             try:
                 # Read the titles with their sentiment
-                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
                 self.middleware.consume()
 
                 titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
@@ -761,6 +763,7 @@ class TopNWorker:
                     print("Gracefully exited")
                 else:
                     print("An errror ocurred: ", e)
+                    return
                 
 
 class ReviewSentimentWorker:
@@ -862,6 +865,7 @@ class ReviewSentimentWorker:
                     print("Gracefully exited")
                 else:
                     print("An errror ocurred: ", e)
+                    return
         
 class FilterReviewsWorker:
     
@@ -918,8 +922,7 @@ class FilterReviewsWorker:
         while not self.stop_worker:
             try:
 
-                # Declare and subscribe to the titles exchange
-                self.middleware.receive_messages(self.input_name, callback_with_params)
+                self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
                 self.middleware.consume()
 
                 # Send the results to the query 4 and the QueryCoordinator
