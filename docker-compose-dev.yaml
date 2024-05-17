@@ -41,7 +41,7 @@ services:
       - HOST=server
       - PORT=12345
       - TITLES_FILEPATH=./datasets/books_data.csv
-      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
+      - REVIEWS_FILEPATH=./datasets/Books_rating.csv
     volumes:
       - ./datasets:/datasets
 

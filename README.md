@@ -35,4 +35,6 @@ De esta manera en **fraccion_del_dataset** tiene que in un float indicando que f
 
 ## Video de ejecución con dataset original
 A continuación se adjunta el link al video donde se corre el programa con la totalidad de datos del dataset original y se muestran los resultados obtenidos por consola.  
-[Video de ejecución con dataset original](https://drive.google.com/file/d/1vrVZZPmQ2HEF5zaexbdIbN3flbJRuJyP/view?usp=drive_link)
+[Video de ejecución con dataset original- 1hr](https://drive.google.com/file/d/1vrVZZPmQ2HEF5zaexbdIbN3flbJRuJyP/view?usp=drive_link)
+
+[Video de ejecución con dataset original rentrega- 30min](https://drive.google.com/file/d/1cLzd8jshpITcWLIYXEoK9KaU7w636lLD/view?usp=drive_link)
