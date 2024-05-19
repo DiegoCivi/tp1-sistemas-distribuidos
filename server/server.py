@@ -4,22 +4,49 @@ from middleware import Middleware
 import os
 import signal
 import queue
+from multiprocessing import Process
 
 
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
 RECEIVE_COORDINATOR_QUEUE = 'server' 
 
 
-class Server:
+class Server: # TODO: Implement SIGTERM handling
 
     def __init__(self, host, port, listen_backlog):
-        signal.signal(signal.SIGTERM, self.handle_signal)
-        
-        self._client_socket = None
+        self.clients = {}
         self._stop_server= False
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog) 
+
+    def run(self):
+        # Create a process that will be to send the results back to the client
+        
+
+        # Receive new clients and create a process that will handle them
+        while not self._stop_server:
+            conn, addr = self._server_socket.accept()
+            
+            p = Process(target=self.initiate_abstract_client, args=(conn,))
+            p.start()
+
+    
+    def initiate_abstract_client(self, socket):
+        abstract_client = AbstractClient(socket)
+        abstract_client.handle_client()
+
+
+class AbstractClient:
+
+    def __init__(self, socket):
+        signal.signal(signal.SIGTERM, self.handle_signal)
+        
+        self._client_socket = socket
+        self._stop_server= False
+        # self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self._server_socket.bind((host, port))
+        # self._server_socket.listen(listen_backlog) 
         
         self.middleware = None
         self.queue = queue.Queue()
@@ -33,22 +60,6 @@ class Server:
         self.results = Message("")
 
 
-
-    def run(self):
-
-        while not self._stop_server:
-            try:
-                conn, addr = self._server_socket.accept()
-                self._client_socket = conn
-                print(f'New connection from address {addr}')
-                self.handle_client()
-            except Exception as e:
-                if self._stop_server:
-                    print("Server shutdown. With exception: ", e)
-                    self._server_socket.close()
-                else:
-                    print(f"Hubo un error en la lectura del socket del cliente. El error fue: {e}")
-
     def handle_client(self):
         """
         Reads the client data and fordwards it to the corresponding parts of the system
@@ -59,12 +70,7 @@ class Server:
         # Then read the reviews dataset
         self._receive_and_forward_data() 
         print("Ya mande todo el archivo reviews")
-
-        # Finally read the results and send it to the client
-        self._receive_and_forward_results()  
-        
-        self._client_socket.close()
-        
+                
     def _receive_and_forward_data(self):
         msg = Message("")
         while msg.decode() != "EOF":
