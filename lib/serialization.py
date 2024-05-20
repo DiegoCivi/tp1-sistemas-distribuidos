@@ -12,6 +12,7 @@ FIELD_SEPARATOR = "@|@"
 ROW_SEPARATOR = "$|$"
 KEY_VAL_SEPARATOR = "#|#"
 VALUES_SEPARATOR = ","
+ID_FIELD = "ID"
 
 def serialize_item(item):
     """
@@ -78,3 +79,36 @@ def deserialize_into_titles_dict(row):
 
     return title_dict
 
+class Message:
+
+    def __init__(self, client_id, msg = ""):
+        self.client_id = client_id
+        self.msg = ID_FIELD + KEY_VAL_SEPARATOR + str(client_id) + FIELD_SEPARATOR + msg
+        self.end_flag = False
+
+    def push(self, msg):
+        if self.end_flag:
+            raise Exception("Message already ended")
+        self.msg += msg
+
+    def set_end_flag(self):
+        self.end_flag = True
+    
+    def is_ended(self):
+        return self.end_flag
+
+    def get_message(self):
+        return self.msg
+    
+    def encode(self):
+        return self.msg.encode('utf-8')
+    
+    def decode(self):
+        try:
+            msg = self.msg.decode('utf-8')
+        except:
+            msg = self.msg
+        return msg
+
+    def __str__(self):
+        return self.msg
