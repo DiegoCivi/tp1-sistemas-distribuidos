@@ -13,6 +13,9 @@ ROW_SEPARATOR = "$|$"
 KEY_VAL_SEPARATOR = "#|#"
 VALUES_SEPARATOR = ","
 ID_FIELD = "ID"
+RESULT_SLICE_FIELD = "RESULT_SLICE"
+LAST_EOF_INDEX = 4
+EOF_ID_INDEX = 5
 
 def serialize_item(item):
     """
@@ -81,9 +84,12 @@ def deserialize_into_titles_dict(row):
 
 class Message:
 
-    def __init__(self, client_id, msg = ""):
-        self.client_id = client_id
-        self.msg = ID_FIELD + KEY_VAL_SEPARATOR + str(client_id) + FIELD_SEPARATOR + msg
+    def __init__(self, client_id=None, msg = ""):
+        if client_id:
+            self.client_id = client_id
+            self.msg = ID_FIELD + KEY_VAL_SEPARATOR + str(client_id) + FIELD_SEPARATOR + msg
+        else:
+            self.msg = msg
         self.end_flag = False
 
     def push(self, msg):
