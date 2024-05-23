@@ -1,6 +1,6 @@
 import socket
 from communications import read_socket, write_socket
-from serialization import Message, deserialize_into_titles_dict, ID_FIELD, RESULT_SLICE_FIELD, LAST_EOF_INDEX, EOF_ID_INDEX
+from serialization import Message, is_EOF, get_EOF_id, split_message_info
 from middleware import Middleware
 import os
 import signal
@@ -26,7 +26,7 @@ class Server: # TODO: Implement SIGTERM handling
 
     def run(self):
         # Create a process that will be to send the results back to the client
-        results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue))
+        results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue,))
         results_p.start()
 
         # Receive new clients and create a process that will handle them
@@ -79,23 +79,21 @@ class ResultFordwarder:
         self.results = Message("")
 
     def run(self):
+        print("ResultFordwarder is running")
         self._receive_results()
         print("Enviando resultados de queries 1 a 5 al cliente...")
         self.send_results()
 
     def read_results(self, method, body):
 
-        if body[:LAST_EOF_INDEX] == "EOF_":
-            client_id = body[EOF_ID_INDEX].decode('utf-8')
+        if is_EOF(body):
+            client_id = get_EOF_id(body)
             self._send_result(client_id)
             self.middleware.ack_message(method)
             return
         
         # Take the id out of the message so it can be added to its corresponding client id
-        # From the QueryCoordinator, messages with format ID:[client_id]@|@result_slice:[result_slice]
-        message_dict = deserialize_into_titles_dict(body)
-        client_id = message_dict[ID_FIELD]
-        result_slice = message_dict[RESULT_SLICE_FIELD]
+        client_id, result_slice = split_message_info(body)
 
         if client_id not in self.results_dict:
             self.results_dict[client_id] = Message()
@@ -108,11 +106,6 @@ class ResultFordwarder:
         callback_with_params = lambda ch, method, properties, body: self.read_results(method, body)
         self.middleware.receive_messages(RECEIVE_COORDINATOR_QUEUE, callback_with_params)
         self.middleware.consume()
-        
-        # Para que esta este if? Que pasa si no see cumple la condicion? En que casos no se cumpliria la condicion????? 
-        # if self.results.is_ended():
-        #     write_socket(self._client_socket, self.results.get_message())
-        #     write_socket(self._client_socket, 'EOF')
 
     def _send_result(self, client_id):
         # If the id is not in our clients dictionary, it must be on the sockets_queue
@@ -134,12 +127,9 @@ class DataFordwarder:
     def __init__(self, socket, id):
         signal.signal(signal.SIGTERM, self.handle_signal)
         
-        self.id = id
+        self.id = str(id)
         self._client_socket = socket
         self._stop_server= False
-        # self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self._server_socket.bind((host, port))
-        # self._server_socket.listen(listen_backlog) 
         
         self.middleware = None
         self.queue = queue.Queue()
@@ -149,8 +139,7 @@ class DataFordwarder:
             raise e
         self.middleware = middleware
         print("Middleware established the connection")
-
-        self.results = Message("")
+        self.message_parser = Message()
 
 
     def handle_client(self):
@@ -165,20 +154,22 @@ class DataFordwarder:
         print("Ya mande todo el archivo reviews")
                 
     def _receive_and_forward_data(self):
-        msg = Message("")
-        while msg.decode() != EOF_MSG:
+        while self.message_parser.decode() != EOF_MSG:
             socket_content, e = read_socket(self._client_socket)
             if e != None:
                 raise e
+            
             if socket_content != EOF_MSG:
-                msg = Message(socket_content)
-                self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg.encode())
+                # Add the id to the message
+                _, message = split_message_info(socket_content)
+                self.message_parser.push(message)
+                self.message_parser.add_id(self.id)
+                self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
+                self.message_parser.clean()
             else:
-                msg = EOF_MSG
+                # Add the id to the EOF and send it
+                msg = EOF_MSG + '_' + self.id
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
-
-
-
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -195,11 +186,8 @@ class DataFordwarder:
 
 def main():    
     HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG')
-    try:
-        server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
-        server.run()
-    except:
-        print('SIGTERM received')
+    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
+    server.run()
 
 main()
     

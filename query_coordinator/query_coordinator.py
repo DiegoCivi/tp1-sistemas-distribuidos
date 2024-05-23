@@ -1,13 +1,20 @@
 from middleware import Middleware
-from serialization import serialize_dict, serialize_message, deserialize_titles_message, ROW_SEPARATOR
+from serialization import serialize_message, deserialize_titles_message, ROW_SEPARATOR, is_EOF, get_EOF_id, create_EOF, serialize_batch, add_id
 import signal
 import queue
+from multiprocessing import Process
 
 TITLES_MODE = 'titles'
 REVIEWS_MODE = 'reviews'
 BATCH_SIZE = 100
 SEND_SERVER_QUEUE = 'server'
 RECEIVE_SERVER_QUEUE = 'query_coordinator'
+QUERIES_QUANTITY = 5
+Q1 = '[QUERY 1] Results'
+Q2 = '[QUERY 2] Results'
+Q3 = '[QUERY 3] Results'
+Q4 = '[QUERY 4] Results'
+Q5 = '[QUERY 5] Results'
 
 class QueryCoordinator:
 
@@ -17,7 +24,6 @@ class QueryCoordinator:
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.parse_mode = TITLES_MODE
         self.eof_quantity_dict = {'1': eof_quantity_q1, '2': eof_quantity_q2, '3_titles': eof_quantity_q3_titles, '3_reviews': eof_quantity_q3_reviews,
                              '5_titles': eof_quantity_q5_titles, '5_reviews': eof_quantity_q5_reviews}
 
@@ -37,28 +43,65 @@ class QueryCoordinator:
             self.middleware.close_connection()
 
     def run(self):
-        while not self.stop_coordinator:
-            try: 
-                self.receive_and_fordward_data()
-                self.manage_results()
-            except Exception as e:
-                if self.stop_coordinator:
-                    print("Gracefully exit")
-                else:
-                    raise e
+        data_coordinator_p = Process(target=self.initiate_data_coordinator, args=())
+        data_coordinator_p.start()
+        result_coordinator_p = Process(target=self.initiate_result_coordinator, args=())
+        result_coordinator_p.start()
 
+        data_coordinator_p.join()
+        result_coordinator_p.join()
+
+    def initiate_data_coordinator(self):
+        data_coordinator = DataCoordinator(self.eof_quantity_dict)
+        data_coordinator.run()
+
+    def initiate_result_coordinator(self):
+        result_coordinator = ResultsCoordinator()
+        result_coordinator.run()
+
+class DataCoordinator:
+
+    def __init__(self, eof_quantity_dict):
+        self.eof_quantity_dict = eof_quantity_dict
+        self.clients_parse_mode = {}
+        self.stop = False
+        self.middleware = None
+        self.queue = queue.Queue()
+        try:
+            middleware = Middleware(self.queue)
+        except Exception as e:
+            raise e
+        self.middleware = middleware
+    
+    def change_parse_mode(self, mode, client_id):
+        """
+        Changes the parse mode to the one specified
+        """
+        if mode != TITLES_MODE and mode != REVIEWS_MODE:
+            raise Exception("Mode not supported.")
+        self.clients_parse_mode[client_id] = mode
+
+    def run(self):
+        while not self.stop:
+            self.receive_and_fordward_data()
 
     def handle_data(self, method, body):
-        if body == b'EOF':
-            print('Ya mande todo el archivo ', self.parse_mode)
-            self.manage_EOF()
-            self.change_parse_mode(REVIEWS_MODE)
+        if body == b'EOF_0':
+            print
+        if is_EOF(body):
+            client_id = get_EOF_id(body)
+            self.manage_EOF(client_id)
+            self.change_parse_mode(REVIEWS_MODE, client_id)
 
             self.middleware.ack_message(method)
             return
         
-        batch = deserialize_titles_message(body)
-        self.send_to_pipelines(batch)
+        print(body.decode('utf-8')[:10])
+        client_id, batch = deserialize_titles_message(body)
+        if client_id not in self.clients_parse_mode:
+            self.clients_parse_mode[client_id] = TITLES_MODE
+
+        self.send_to_pipelines(batch, client_id)
 
         self.middleware.ack_message(method)
 
@@ -68,106 +111,115 @@ class QueryCoordinator:
         # Read the data from the server, parse it and fordward it
         self.middleware.receive_messages(RECEIVE_SERVER_QUEUE, callback_with_params)
         self.middleware.consume()
-    
-    def change_parse_mode(self, mode):
-        """
-        Changes the parse mode to the one specified
-        """
-        if mode != TITLES_MODE and mode != REVIEWS_MODE:
-            raise Exception("Mode not supported.")
-        self.parse_mode = mode
-    
-    def manage_EOF(self):
-        """
-        Sends the EOF message to the middleware
-        """
-        if self.parse_mode == TITLES_MODE:
-            self.send_titles_EOF('1', 'q1_titles')
-            self.send_titles_EOF('2', 'q2_titles')
-            self.send_titles_EOF('3_titles', 'q3_titles')
-            self.send_titles_EOF('5_titles', 'q5_titles')
-        else:
-            self.send_titles_EOF('3_reviews', 'q3_reviews')
-            self.send_titles_EOF('5_reviews', 'q5_reviews')
-            self.middleware.stop_consuming()
 
-
-    def send_titles_EOF(self, eof_dict_key, queue):
-        for _ in range(self.eof_quantity_dict[eof_dict_key]):
-           self.middleware.send_message(queue, 'EOF')
-
-
-    def drop_rows_with_missing_values(self, batch, columns):
-        """
-        Drops the rows with missing values in the specified columns
-        """
-        new_batch = []
-        for row in batch:
-            if self.parse_mode == TITLES_MODE and not all([row.get(column) for column in columns]): # We drop the Nan values only for the titles dataset
-                continue    
-            new_batch.append(row)
-            
-        return new_batch
-    
-    def send_to_pipelines(self, batch):
-        batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'])
+    def send_to_pipelines(self, batch, client_id):
+        batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'], client_id)
         if len(batch) == 0:
             return
         
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
-        self.parse_and_send_q1(batch)
-        self.parse_and_send_q2(batch)
-        self.parse_and_send_q3(batch)
-        self.parse_and_send_q5(batch)
+        self.parse_and_send_q1(batch, client_id)
+        self.parse_and_send_q2(batch, client_id)
+        self.parse_and_send_q3(batch, client_id)
+        self.parse_and_send_q5(batch, client_id)
 
-    def parse_and_send(self, batch, desired_keys, queue):
+    def parse_and_send(self, batch, desired_keys, queue, client_id):
         new_batch = []
         for row in batch:
             row = {k: v for k, v in row.items() if k in desired_keys}
             new_batch.append(row)
-            
-        serialized_message = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in new_batch])
+        
+        serialized_batch = serialize_batch(new_batch)
+        serialized_message = serialize_message(serialized_batch, client_id)
         self.middleware.send_message(queue, serialized_message)
 
-    def parse_and_send_q1(self, batch):
+    def parse_and_send_q1(self, batch, client_id):
         """
         Parses the rows of the batch to return only
         required columns in the query 1
         """
-        if self.parse_mode == REVIEWS_MODE:
+        if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
         desired_keys = ['Title', 'publishedDate', 'categories', 'authors', 'publisher']
-        self.parse_and_send(batch, desired_keys, 'q1_titles')
-    
-    def parse_and_send_q2(self, batch):
-        if self.parse_mode == REVIEWS_MODE:
+        self.parse_and_send(batch, desired_keys, 'q1_titles', client_id)
+
+    def parse_and_send_q2(self, batch, client_id):
+        if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
         desired_keys = ['authors', 'publishedDate']
-        batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'])
-        self.parse_and_send(batch, desired_keys, 'q2_titles')
+        batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'], client_id)
+        self.parse_and_send(batch, desired_keys, 'q2_titles', client_id)
     
-    def parse_and_send_q3(self, batch):
-        if self.parse_mode == TITLES_MODE:
+    def parse_and_send_q3(self, batch, client_id):
+        if self.clients_parse_mode[client_id] == TITLES_MODE:
             desired_keys = ['Title', 'authors', 'publishedDate']
-            self.parse_and_send(batch, desired_keys, 'q3_titles')
+            self.parse_and_send(batch, desired_keys, 'q3_titles', client_id)
         else:
             desired_keys = ['Title', 'review/score']
-            self.parse_and_send(batch, desired_keys, 'q3_reviews')
+            self.parse_and_send(batch, desired_keys, 'q3_reviews', client_id)
     
-    def parse_and_send_q5(self, batch):
-        if self.parse_mode == 'titles':
+    def parse_and_send_q5(self, batch, client_id):
+        if self.clients_parse_mode[client_id] == TITLES_MODE:
             desired_keys = ['Title', 'categories']
-            self.parse_and_send(batch, desired_keys, 'q5_titles')
+            self.parse_and_send(batch, desired_keys, 'q5_titles', client_id)
         else:
             desired_keys = ['Title', 'review/text']
-            self.parse_and_send(batch, desired_keys, 'q5_reviews')
+            self.parse_and_send(batch, desired_keys, 'q5_reviews', client_id)
+
+    def drop_rows_with_missing_values(self, batch, columns, client_id):
+        """
+        Drops the rows with missing values in the specified columns
+        """
+        new_batch = []
+        for row in batch:
+            if self.clients_parse_mode[client_id] == TITLES_MODE and not all([row.get(column) for column in columns]): # We drop the Nan values only for the titles dataset
+                continue    
+            new_batch.append(row)
             
+        return new_batch
+
+    def manage_EOF(self, client_id):
+        """
+        Sends the EOF message to the middleware
+        """
+        if self.clients_parse_mode[client_id] == TITLES_MODE:
+            self.send_EOF('1', 'q1_titles', client_id)
+            self.send_EOF('2', 'q2_titles', client_id)
+            self.send_EOF('3_titles', 'q3_titles', client_id)
+            self.send_EOF('5_titles', 'q5_titles', client_id)
+        else:
+            self.send_EOF('3_reviews', 'q3_reviews', client_id)
+            self.send_EOF('5_reviews', 'q5_reviews', client_id)
+            self.middleware.stop_consuming()
+
+    def send_EOF(self, eof_dict_key, queue, client_id):
+        eof_msg = create_EOF(client_id)
+        for _ in range(self.eof_quantity_dict[eof_dict_key]):
+           self.middleware.send_message(queue, eof_msg)
+
+class ResultsCoordinator:
+
+    def __init__(self):
+        self.clients_results = {}
+        self.clients_results_counter = {}
+        self.stop = False
+        self.middleware = None
+        self.queue = queue.Queue()
+        try:
+            middleware = Middleware(self.queue)
+        except Exception as e:
+            raise e
+        self.middleware = middleware
+
+    def run(self):
+        self.manage_results()
+
     def deserialize_result(self, data, query):
         """
         Deserializes the data from the message
         """
-        if query == 'Q1' or query == 'Q3' or query == 'Q4':
+        if query == Q1 or query == Q3 or query == Q4:
             return deserialize_titles_message(data)
         else:
             data = data.decode('utf-8')
@@ -178,46 +230,51 @@ class QueryCoordinator:
         """
         Builds the result line for the query
         """
-        if query == 'Q1':
+        if query == Q1:
             return ' - '.join(f'{field.upper()}: {row[field]}' for row in data for field in fields_to_print)
-        elif query == 'Q3':
+        elif query == Q3:
             line = ''
             for title, counter in data[0].items():
                 line += 'TITLE: ' + title + '    ' + 'AUTHORS: ' + counter.split(',', 2)[2] + '\n' # The split is 2 until the second comma because the auuthors field can have comas
             return line
-        elif query  == 'Q4':
+        elif query  == Q4:
             line = ''
             top_position = 1
             for title, mean_rating in data[0].items():
                 line += str(top_position) +'.   TITLE: ' + title + '    ' + 'MEAN-RATING: ' +  mean_rating + '\n'
+                top_position += 1
             return line
         else:
             return " - ".join(data)
-        
-    def handle_results(self, method, body, results_string, fields_to_print, query):
-        if body == b'EOF':
+
+    def handle_results(self, method, body, fields_to_print, query):
+        if is_EOF(body):
+            client_id = get_EOF_id(body)
+            self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
+            if self.clients_results_counter[client_id] == QUERIES_QUANTITY:
+                    self.send_results(client_id)
+
             self.middleware.ack_message(method)
-            self.middleware.stop_consuming(method)
             return
 
-        data = self.deserialize_result(body, query)
-        results_string[0] += '\n' + self.build_result_line(data, fields_to_print, query)
+        client_id, result_dict = deserialize_titles_message(body) # If it fails in this line. It may be because the results aree sent in a way that "deserialize_titles_message()" cannot bee used. Then "split_message_info()" should be used
+        if client_id not in self.clients_results:
+            self.clients_results[client_id] = {}
+        
+        data = self.deserialize_result(result_dict['result'], query)
+        new_result_line = '\n' + self.build_result_line(data, fields_to_print, query)
+        self.clients_results[client_id][query] = self.clients_results[client_id].get(query, '') + new_result_line 
 
         self.middleware.ack_message(method)
-        
+
     def manage_results(self):
     
-        results_string_q1 = ['[QUERY 1] Results']
-        results_string_q2 = ['[QUERY 2] Results']
-        results_string_q3 = ['[QUERY 3] Results']
-        results_string_q4 = ['[QUERY 4] Results']
-        results_string_q5 = ['[QUERY 5] Results']
         # Use queues to receive the queries results
-        q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q1, ['Title', 'authors', 'publisher'], 'Q1')
-        q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q2, ['authors'], 'Q2')
-        q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q3, ['Title', 'authors'], 'Q3')
-        q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q4, ['Title'], 'Q4')
-        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, results_string_q5, ['Title'], 'Q5')
+        q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
+        q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
+        q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
+        q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
+        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         self.middleware.receive_messages('QUEUE_q1_results', q1_results_with_params)
         self.middleware.receive_messages('QUEUE_q2_results', q2_results_with_params)
         self.middleware.receive_messages('QUEUE_q3_results', q3_results_with_params)
@@ -225,21 +282,39 @@ class QueryCoordinator:
         self.middleware.receive_messages('QUEUE_q5_results', q5_results_with_params)
         self.middleware.consume()
 
-        # Assemble the results 
-        final_results = '\n'.join(results_string_q1 + results_string_q2 + results_string_q3 + results_string_q4 + results_string_q5)
+    def assemble_results(self, client_id):
+        client_results_dict = self.clients_results[client_id]
+        results = []
+        
+        results1 = Q1 + client_results_dict[Q1]
+        results.append(results1)
+        results2 = Q2 + client_results_dict[Q2]
+        results.append(results2)
+        results3 = Q3 + client_results_dict[Q3]
+        results.append(results3)
+        results4 = Q4 + client_results_dict[Q4]
+        results.append(results4)
+        results5 = Q5 + client_results_dict[Q5]
+        results.append(results5)
+        
+        results = '\n'.join(results)
+        return results
 
+    def send_results(self, client_id):
+        # Create the result
+        result_msg = self.assemble_results(client_id)
         # Send the results to the server
         chars_sent = 0
-        chars_to_send = len(final_results)
+        chars_to_send = len(result_msg)
         while chars_sent < chars_to_send:
             start_index = chars_sent
             end_idex = chars_sent + BATCH_SIZE
-            if end_idex >= len(final_results):
-                end_idex = len(final_results) - 1
+            if end_idex >= len(result_msg):
+                end_idex = len(result_msg) - 1
 
-            result_slice = final_results[start_index: end_idex]
-            self.middleware.send_message(SEND_SERVER_QUEUE, result_slice)
+            result_slice = result_msg[start_index: end_idex]
+            result_msg = add_id(result_slice, client_id)
+            self.middleware.send_message(SEND_SERVER_QUEUE, result_msg)
             chars_sent += BATCH_SIZE
 
         self.middleware.send_message(SEND_SERVER_QUEUE, 'EOF')
-
