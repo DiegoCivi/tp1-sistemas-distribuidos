@@ -18,6 +18,7 @@ Q5 = '[QUERY 5] Results'
 QUANTITY_INDEX = 0
 QUEUE_INDEX = 1
 Q1_KEY = '1'
+Q2_KEY = '2'
 
 class QueryCoordinator:
 
@@ -27,7 +28,7 @@ class QueryCoordinator:
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.workers = {'1': workers_q1, '2': workers_q2, '3_titles': workers_q3_titles, '3_reviews': workers_q3_reviews,
+        self.workers = {Q1_KEY: workers_q1, Q2_KEY: workers_q2, '3_titles': workers_q3_titles, '3_reviews': workers_q3_reviews,
                              '5_titles': workers_q5_titles, '5_reviews': workers_q5_reviews}
 
         self.stop_coordinator = False
@@ -121,8 +122,8 @@ class DataCoordinator:
         
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
-        self.parse_and_send_q1(batch, client_id)
-        # self.parse_and_send_q2(batch, client_id)
+        #self.parse_and_send_q1(batch, client_id)
+        self.parse_and_send_q2(batch, client_id)
         # self.parse_and_send_q3(batch, client_id)
         # self.parse_and_send_q5(batch, client_id)
 
@@ -161,14 +162,14 @@ class DataCoordinator:
         if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
         desired_keys = ['Title', 'publishedDate', 'categories', 'authors', 'publisher']
-        self.parse_and_send(batch, desired_keys, 'QUEUE_Q1|filter_category_worker', '1', client_id)
+        self.parse_and_send(batch, desired_keys, self.workers[Q1_KEY][QUEUE_INDEX], Q1_KEY, client_id)
 
     def parse_and_send_q2(self, batch, client_id):
         if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
-        desired_keys = ['authors', 'publishedDate']
+        desired_keys = ['Title','authors', 'publishedDate']
         batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'], client_id)
-        self.parse_and_send(batch, desired_keys, 'q2_titles', client_id)
+        self.parse_and_send(batch, desired_keys, self.workers[Q2_KEY][QUEUE_INDEX], Q2_KEY, client_id)
     
     def parse_and_send_q3(self, batch, client_id):
         if self.clients_parse_mode[client_id] == TITLES_MODE:
@@ -204,6 +205,7 @@ class DataCoordinator:
         """
         if self.clients_parse_mode[client_id] == TITLES_MODE:
             self.send_EOF(Q1_KEY, self.workers[Q1_KEY][QUEUE_INDEX], client_id)
+            self.send_EOF(Q2_KEY, self.workers[Q2_KEY][QUEUE_INDEX], client_id)
         # if self.clients_parse_mode[client_id] == TITLES_MODE:
         #     self.send_EOF('1', 'q1_titles', client_id)
         #     self.send_EOF('2', 'q2_titles', client_id)

@@ -58,138 +58,186 @@ services:
       - EOF_TITLES_MAX_SUBS=6
       - EOF_REVIEWS_MAX_SUBS=6
       - WORKERS_Q1=3,QUEUE_Q1|filter_category_worker
-      - WORKERS_Q2=3,NOSE_Q2
+      - WORKERS_Q2=3,QUEUE_Q2|decade_counter_worker
       - WORKERS_Q3_TITLES=3,NOSE_Q3
       - WORKERS_Q3_REVIEWS=3,NOSE_Q4
       - WORKERS_Q5_TITLES=3,NOSE_Q5
       - WORKERS_Q5_REVIEWS=4,NOSE_Q6
 
-  filter_category_computers_worker0:
-    container_name: filter_category_computers_worker0
+  # filter_category_computers_worker0:
+  #   container_name: filter_category_computers_worker0
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=0
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - WORKERS_QUANTITY=3
+  #     - CATEGORY=Computers
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_category
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_category
+  # filter_category_computers_worker1:
+  #   container_name: filter_category_computers_worker1
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=1
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - WORKERS_QUANTITY=3
+  #     - CATEGORY=Computers
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_category
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_category
+  # filter_category_computers_worker2:
+  #   container_name: filter_category_computers_worker2
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=2
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - WORKERS_QUANTITY=3
+  #     - CATEGORY=Computers
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_category
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_category
+  # filter_title_worker0:
+  #   container_name: filter_title_worker0
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=0
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - WORKERS_QUANTITY=3
+  #     - TITLE_TO_FILTER=distributed
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_title
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_title
+  # filter_title_worker1:
+  #   container_name: filter_title_worker1
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=1
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - WORKERS_QUANTITY=3
+  #     - TITLE_TO_FILTER=distributed
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_title
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_title
+  # filter_title_worker2:
+  #   container_name: filter_title_worker2
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=2
+  #     - NEXT_WORKER_QUANTITY=3
+  #     - WORKERS_QUANTITY=3
+  #     - TITLE_TO_FILTER=distributed
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
+  #     - EOF_QUEUE=QUEUE_Q1|eof_title
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_title
+  # filter_year_worker_q1-0:
+  #   container_name: filter_year_worker_q1-0
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=0
+  #     - NEXT_WORKER_QUANTITY=1
+  #     - WORKERS_QUANTITY=3
+  #     - YEAR_RANGE_TO_FILTER=2000,2023
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_q1_results
+  #     - EOF_QUEUE=QUEUE_Q1|eof_year
+  #     - END=True
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_year
+  # filter_year_worker_q1-1:
+  #   container_name: filter_year_worker_q1-1
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=1
+  #     - NEXT_WORKER_QUANTITY=1
+  #     - WORKERS_QUANTITY=3
+  #     - YEAR_RANGE_TO_FILTER=2000,2023
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_q1_results
+  #     - EOF_QUEUE=QUEUE_Q1|eof_year
+  #     - END=True
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_year
+  # filter_year_worker_q1-2:
+  #   container_name: filter_year_worker_q1-2
+  #   build:
+  #     context: .
+  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+  #   environment:
+  #     - WORKER_ID=2
+  #     - NEXT_WORKER_QUANTITY=1
+  #     - WORKERS_QUANTITY=3
+  #     - YEAR_RANGE_TO_FILTER=2000,2023
+  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
+  #     - DATA_OUTPUT_NAME=QUEUE_q1_results
+  #     - EOF_QUEUE=QUEUE_Q1|eof_year
+  #     - END=True
+  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_year
+
+
+  decade_counter_worker0:
+    container_name: decade_counter_worker0
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
     environment:
       - WORKER_ID=0
-      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
-      - CATEGORY=Computers
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_category
-  filter_category_computers_worker1:
-    container_name: filter_category_computers_worker1
+      - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+  decade_counter_worker1:
+    container_name: decade_counter_worker1
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
     environment:
       - WORKER_ID=1
-      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
-      - CATEGORY=Computers
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_category
-  filter_category_computers_worker2:
-    container_name: filter_category_computers_worker2
+      - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+  decade_counter_worker2:
+    container_name: decade_counter_worker2
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
     environment:
       - WORKER_ID=2
-      - NEXT_WORKER_QUANTITY=3
       - WORKERS_QUANTITY=3
-      - CATEGORY=Computers
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_category
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_category
-  filter_title_worker0:
-    container_name: filter_title_worker0
+      - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+  global_decade_counter_worker0:
+    container_name: global_decade_counter_worker0
     build:
       context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
+      dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
     environment:
       - WORKER_ID=0
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_title
-  filter_title_worker1:
-    container_name: filter_title_worker1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
-    environment:
-      - WORKER_ID=1
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_title
-  filter_title_worker2:
-    container_name: filter_title_worker2
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_title_worker.dockerfile
-    environment:
-      - WORKER_ID=2
-      - NEXT_WORKER_QUANTITY=3
-      - WORKERS_QUANTITY=3
-      - TITLE_TO_FILTER=distributed
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_title_worker
-      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_year_worker
-      - EOF_QUEUE=QUEUE_Q1|eof_title
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_title
-  filter_year_worker_q1-0:
-    container_name: filter_year_worker_q1-0
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    environment:
-      - WORKER_ID=0
-      - NEXT_WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=3
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=QUEUE_q1_results
-      - EOF_QUEUE=QUEUE_Q1|eof_year
-      - END=True
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_year
-  filter_year_worker_q1-1:
-    container_name: filter_year_worker_q1-1
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    environment:
-      - WORKER_ID=1
-      - NEXT_WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=3
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=QUEUE_q1_results
-      - EOF_QUEUE=QUEUE_Q1|eof_year
-      - END=True
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_year
-  filter_year_worker_q1-2:
-    container_name: filter_year_worker_q1-2
-    build:
-      context: .
-      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-    environment:
-      - WORKER_ID=2
-      - NEXT_WORKER_QUANTITY=1
-      - WORKERS_QUANTITY=3
-      - YEAR_RANGE_TO_FILTER=2000,2023
-      - DATA_SOURCE_NAME=QUEUE_Q1|filter_year_worker
-      - DATA_OUTPUT_NAME=QUEUE_q1_results
-      - EOF_QUEUE=QUEUE_Q1|eof_year
-      - END=True
-      - ITERATION_QUEUE=QUEUE_Q1|iteration_year
+      - WORKERS_QUANTITY=1
+      - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_q2_results
+      - EOF_QUANTITY=3
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter

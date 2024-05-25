@@ -72,7 +72,6 @@ def different_decade_counter(batch):
             continue
         authors = row_dict['authors']
         splitted_authors = re.sub(r'[^\w,\s]', '',authors).split(',')
-        #splitted_authors = re.sub(r'[^\D]', '', authors).split(',')
         year = row_dict['publishedDate'].split('-')[0]
         year = re.sub(r'\D', '', year)
         year = int(year)
