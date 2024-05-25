@@ -4,12 +4,12 @@ import os
 
 def main():
 
-    workers_q1 = int(os.getenv('WORKERS_Q1'))
-    workers_q2 = int(os.getenv('WORKERS_Q2'))
-    workers_q3_titles = int(os.getenv('WORKERS_Q3_TITLES'))
-    workers_q3_reviews = int(os.getenv('WORKERS_Q3_REVIEWS'))
-    workers_q5_titles = int(os.getenv('WORKERS_Q5_TITLES'))
-    workers_q5_reviews = int(os.getenv('WORKERS_Q5_REVIEWS'))
+    workers_q1 = os.getenv('WORKERS_Q1').split(',')    
+    workers_q2 = os.getenv('WORKERS_Q2').split(',')
+    workers_q3_titles = os.getenv('WORKERS_Q3_TITLES').split(',')
+    workers_q3_reviews = os.getenv('WORKERS_Q3_REVIEWS').split(',')
+    workers_q5_titles = os.getenv('WORKERS_Q5_TITLES').split(',')
+    workers_q5_reviews = os.getenv('WORKERS_Q5_REVIEWS').split(',')
 
     query_coordinator = QueryCoordinator(workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews)
     query_coordinator.run()

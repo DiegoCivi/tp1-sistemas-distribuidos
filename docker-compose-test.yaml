@@ -57,12 +57,12 @@ services:
     environment:
       - EOF_TITLES_MAX_SUBS=6
       - EOF_REVIEWS_MAX_SUBS=6
-      - WORKERS_Q1=3
-      - WORKERS_Q2=3
-      - WORKERS_Q3_TITLES=3
-      - WORKERS_Q3_REVIEWS=3
-      - WORKERS_Q5_TITLES=3
-      - WORKERS_Q5_REVIEWS=4
+      - WORKERS_Q1=3,QUEUE_Q1|filter_category_worker
+      - WORKERS_Q2=3,NOSE_Q2
+      - WORKERS_Q3_TITLES=3,NOSE_Q3
+      - WORKERS_Q3_REVIEWS=3,NOSE_Q4
+      - WORKERS_Q5_TITLES=3,NOSE_Q5
+      - WORKERS_Q5_REVIEWS=4,NOSE_Q6
 
   filter_category_computers_worker0:
     container_name: filter_category_computers_worker0

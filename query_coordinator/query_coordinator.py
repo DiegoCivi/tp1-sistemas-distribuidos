@@ -15,17 +15,20 @@ Q2 = '[QUERY 2] Results'
 Q3 = '[QUERY 3] Results'
 Q4 = '[QUERY 4] Results'
 Q5 = '[QUERY 5] Results'
+QUANTITY_INDEX = 0
+QUEUE_INDEX = 1
+Q1_KEY = '1'
 
 class QueryCoordinator:
 
-    def __init__(self, eof_quantity_q1, eof_quantity_q2, eof_quantity_q3_titles, eof_quantity_q3_reviews, eof_quantity_q5_titles, eof_quantity_q5_reviews):
+    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews):
         """
         Initializes the query coordinator with the title parse mode
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.workers_quantity = {'1': eof_quantity_q1, '2': eof_quantity_q2, '3_titles': eof_quantity_q3_titles, '3_reviews': eof_quantity_q3_reviews,
-                             '5_titles': eof_quantity_q5_titles, '5_reviews': eof_quantity_q5_reviews}
+        self.workers = {'1': workers_q1, '2': workers_q2, '3_titles': workers_q3_titles, '3_reviews': workers_q3_reviews,
+                             '5_titles': workers_q5_titles, '5_reviews': workers_q5_reviews}
 
         self.stop_coordinator = False
         self.middleware = None
@@ -45,14 +48,14 @@ class QueryCoordinator:
     def run(self):
         data_coordinator_p = Process(target=self.initiate_data_coordinator, args=())
         data_coordinator_p.start()
-        result_coordinator_p = Process(target=self.initiate_result_coordinator, args=())
-        result_coordinator_p.start()
+        # result_coordinator_p = Process(target=self.initiate_result_coordinator, args=())
+        # result_coordinator_p.start()
 
         data_coordinator_p.join()
-        result_coordinator_p.join()
+        # result_coordinator_p.join()
 
     def initiate_data_coordinator(self):
-        data_coordinator = DataCoordinator(self.workers_quantity)
+        data_coordinator = DataCoordinator(self.workers)
         data_coordinator.run()
 
     def initiate_result_coordinator(self):
@@ -61,8 +64,8 @@ class QueryCoordinator:
 
 class DataCoordinator:
 
-    def __init__(self, workers_quantity):
-        self.workers_quantity = workers_quantity
+    def __init__(self, workers):
+        self.workers = workers
         self.clients_parse_mode = {}
         self.stop = False
         self.middleware = None
@@ -82,8 +85,7 @@ class DataCoordinator:
         self.clients_parse_mode[client_id] = mode
 
     def run(self):
-        while not self.stop:
-            self.receive_and_fordward_data()
+        self.receive_and_fordward_data()
 
     def handle_data(self, method, body):
         if body == b'EOF_0':
@@ -92,7 +94,7 @@ class DataCoordinator:
             client_id = get_EOF_id(body)
             self.manage_EOF(client_id)
             self.change_parse_mode(REVIEWS_MODE, client_id)
-
+            
             self.middleware.ack_message(method)
             return
         
@@ -133,7 +135,7 @@ class DataCoordinator:
         
         # Second, we create the batches for each worker
         workers_batches = {}
-        workers_quantity = self.workers_quantity[query]
+        workers_quantity = int(self.workers[query][QUANTITY_INDEX])
         for row in new_batch:
             hashed_title = hash_title(row['Title'])
             choosen_worker = str(hashed_title % workers_quantity)
@@ -200,7 +202,8 @@ class DataCoordinator:
         """
         Sends the EOF message to the middleware
         """
-        self.send_EOF('1', 'QUEUE_Q1|filter_category_worker', client_id)
+        if self.clients_parse_mode[client_id] == TITLES_MODE:
+            self.send_EOF(Q1_KEY, self.workers[Q1_KEY][QUEUE_INDEX], client_id)
         # if self.clients_parse_mode[client_id] == TITLES_MODE:
         #     self.send_EOF('1', 'q1_titles', client_id)
         #     self.send_EOF('2', 'q2_titles', client_id)
@@ -211,12 +214,14 @@ class DataCoordinator:
         #     self.send_EOF('5_reviews', 'q5_reviews', client_id)
         #     self.middleware.stop_consuming()
 
-    def send_EOF(self, eof_dict_key, queue, client_id):
+    def send_EOF(self, workers_dict_key, queue, client_id):
 
         eof_msg = create_EOF(client_id)
-        for worker_id in range(self.workers_quantity[eof_dict_key]):
+        workers_quantity = int(self.workers[workers_dict_key][QUANTITY_INDEX])
+        for worker_id in range(workers_quantity):
             worker_queue = queue + '_' + str(worker_id)
             self.middleware.send_message(worker_queue, eof_msg)
+            print('Mando un EOF a la cola: ', worker_queue)
 
 class ResultsCoordinator:
 
