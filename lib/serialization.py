@@ -38,12 +38,9 @@ def serialize_message(message_items, id=NO_ID):
     return message
 
 def deserialize_titles_message(bytes):
-    # Get the id and the message separated
-    
+    # Get the id and the message separated 
     client_id, message = split_message_info(bytes)
- 
-    print(" En la deserializacion el id: ", client_id)
-    
+     
     return client_id, [deserialize_into_titles_dict(row) for row in message.split(ROW_SEPARATOR)] 
 
 def serialize_dict(dict_to_serialize):
@@ -89,6 +86,13 @@ def get_EOF_id(bytes):
 
 def create_EOF(id):
     return EOF + id
+
+def hash_title(s):                                                                                                                                
+    hash = 5381
+    for x in s:
+        hash = (( hash << 5) + hash) + ord(x)
+    return hash & 0xFFFFFFFF    
+
 
 class Message:
 

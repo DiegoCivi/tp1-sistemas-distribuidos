@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import serialize_message, deserialize_titles_message, ROW_SEPARATOR, is_EOF, get_EOF_id, create_EOF, serialize_batch, add_id
+from serialization import serialize_message, deserialize_titles_message, ROW_SEPARATOR, is_EOF, get_EOF_id, create_EOF, serialize_batch, add_id, hash_title
 import signal
 import queue
 from multiprocessing import Process
@@ -24,7 +24,7 @@ class QueryCoordinator:
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.eof_quantity_dict = {'1': eof_quantity_q1, '2': eof_quantity_q2, '3_titles': eof_quantity_q3_titles, '3_reviews': eof_quantity_q3_reviews,
+        self.workers_quantity = {'1': eof_quantity_q1, '2': eof_quantity_q2, '3_titles': eof_quantity_q3_titles, '3_reviews': eof_quantity_q3_reviews,
                              '5_titles': eof_quantity_q5_titles, '5_reviews': eof_quantity_q5_reviews}
 
         self.stop_coordinator = False
@@ -52,7 +52,7 @@ class QueryCoordinator:
         result_coordinator_p.join()
 
     def initiate_data_coordinator(self):
-        data_coordinator = DataCoordinator(self.eof_quantity_dict)
+        data_coordinator = DataCoordinator(self.workers_quantity)
         data_coordinator.run()
 
     def initiate_result_coordinator(self):
@@ -61,8 +61,8 @@ class QueryCoordinator:
 
 class DataCoordinator:
 
-    def __init__(self, eof_quantity_dict):
-        self.eof_quantity_dict = eof_quantity_dict
+    def __init__(self, workers_quantity):
+        self.workers_quantity = workers_quantity
         self.clients_parse_mode = {}
         self.stop = False
         self.middleware = None
@@ -87,7 +87,7 @@ class DataCoordinator:
 
     def handle_data(self, method, body):
         if body == b'EOF_0':
-            print
+            print(body)
         if is_EOF(body):
             client_id = get_EOF_id(body)
             self.manage_EOF(client_id)
@@ -96,7 +96,7 @@ class DataCoordinator:
             self.middleware.ack_message(method)
             return
         
-        print(body.decode('utf-8')[:10])
+        #print(body.decode('utf-8')[:10])
         client_id, batch = deserialize_titles_message(body)
         if client_id not in self.clients_parse_mode:
             self.clients_parse_mode[client_id] = TITLES_MODE
@@ -120,19 +120,36 @@ class DataCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
         self.parse_and_send_q1(batch, client_id)
-        self.parse_and_send_q2(batch, client_id)
-        self.parse_and_send_q3(batch, client_id)
-        self.parse_and_send_q5(batch, client_id)
+        # self.parse_and_send_q2(batch, client_id)
+        # self.parse_and_send_q3(batch, client_id)
+        # self.parse_and_send_q5(batch, client_id)
 
-    def parse_and_send(self, batch, desired_keys, queue, client_id):
+    def parse_and_send(self, batch, desired_keys, queue, query, client_id):
+        # First, we get only the columns the query needs
         new_batch = []
         for row in batch:
             row = {k: v for k, v in row.items() if k in desired_keys}
             new_batch.append(row)
         
-        serialized_batch = serialize_batch(new_batch)
-        serialized_message = serialize_message(serialized_batch, client_id)
-        self.middleware.send_message(queue, serialized_message)
+        # Second, we create the batches for each worker
+        workers_batches = {}
+        workers_quantity = self.workers_quantity[query]
+        for row in new_batch:
+            hashed_title = hash_title(row['Title'])
+            choosen_worker = str(hashed_title % workers_quantity)
+            
+            if choosen_worker not in workers_batches:
+                workers_batches[choosen_worker] = []
+            workers_batches[choosen_worker].append(row)
+
+        # Third, we send the batches 
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            serialized_message = serialize_message(serialized_batch, client_id)
+            worker_queue = queue + '_' + worker_id
+            self.middleware.send_message(worker_queue, serialized_message)
+
+
 
     def parse_and_send_q1(self, batch, client_id):
         """
@@ -142,7 +159,7 @@ class DataCoordinator:
         if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
         desired_keys = ['Title', 'publishedDate', 'categories', 'authors', 'publisher']
-        self.parse_and_send(batch, desired_keys, 'q1_titles', client_id)
+        self.parse_and_send(batch, desired_keys, 'QUEUE_Q1|filter_category_worker', '1', client_id)
 
     def parse_and_send_q2(self, batch, client_id):
         if self.clients_parse_mode[client_id] == REVIEWS_MODE:
@@ -183,20 +200,23 @@ class DataCoordinator:
         """
         Sends the EOF message to the middleware
         """
-        if self.clients_parse_mode[client_id] == TITLES_MODE:
-            self.send_EOF('1', 'q1_titles', client_id)
-            self.send_EOF('2', 'q2_titles', client_id)
-            self.send_EOF('3_titles', 'q3_titles', client_id)
-            self.send_EOF('5_titles', 'q5_titles', client_id)
-        else:
-            self.send_EOF('3_reviews', 'q3_reviews', client_id)
-            self.send_EOF('5_reviews', 'q5_reviews', client_id)
-            self.middleware.stop_consuming()
+        self.send_EOF('1', 'QUEUE_Q1|filter_category_worker', client_id)
+        # if self.clients_parse_mode[client_id] == TITLES_MODE:
+        #     self.send_EOF('1', 'q1_titles', client_id)
+        #     self.send_EOF('2', 'q2_titles', client_id)
+        #     self.send_EOF('3_titles', 'q3_titles', client_id)
+        #     self.send_EOF('5_titles', 'q5_titles', client_id)
+        # else:
+        #     self.send_EOF('3_reviews', 'q3_reviews', client_id)
+        #     self.send_EOF('5_reviews', 'q5_reviews', client_id)
+        #     self.middleware.stop_consuming()
 
     def send_EOF(self, eof_dict_key, queue, client_id):
+
         eof_msg = create_EOF(client_id)
-        for _ in range(self.eof_quantity_dict[eof_dict_key]):
-           self.middleware.send_message(queue, eof_msg)
+        for worker_id in range(self.workers_quantity[eof_dict_key]):
+            worker_queue = queue + '_' + str(worker_id)
+            self.middleware.send_message(worker_queue, eof_msg)
 
 class ResultsCoordinator:
 

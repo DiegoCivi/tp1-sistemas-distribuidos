@@ -138,18 +138,6 @@ def calculate_percentile(sentiment_scores, percentile):
             titles.append(title) # TODO: This is much more complex than this
     return titles
 
-def hash_djb2(s):                                                                                                                                
-    hash = 5381
-    for x in s:
-        hash = (( hash << 5) + hash) + ord(x)
-    return hash & 0xFFFFFFFF    
-
-def hash_title(batch):
-    for row_dictionary in batch:
-        title = row_dictionary['Title']
-        hashed_title = hash_djb2(title) # TODO: This returns an int. Maybe we need a string
-        row_dictionary['hashed_title'] = hashed_title  
-
 
 def get_top_n(batch, top, top_n, last):
     """

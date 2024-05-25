@@ -12,7 +12,7 @@ def main():
     next_worker_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
     iteration_queue = os.getenv('ITERATION_QUEUE')
 
-    worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity, iteration_queue)
+    worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity, iteration_queue, 1)
     worker.set_filter_type('CATEGORY', category_condition, category_to_filter)
     worker.run()
 
