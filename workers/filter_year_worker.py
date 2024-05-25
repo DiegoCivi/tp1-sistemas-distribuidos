@@ -12,8 +12,9 @@ def main():
     worker_quantity = int(os.getenv('WORKERS_QUANTITY'))
     next_worker_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
     iteration_queue = os.getenv('ITERATION_QUEUE')
+    eof_quantity = os.getenv('EOF_QUANTITY')
 
-    worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity, iteration_queue, 3)
+    worker = FilterWorker(worker_id, source_name, output_name, eof_queue, worker_quantity, next_worker_quantity, iteration_queue, int(eof_quantity))
     worker.set_filter_type('YEAR', year_range_condition, years)
     worker.run()
 
