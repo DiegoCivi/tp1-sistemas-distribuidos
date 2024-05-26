@@ -14,10 +14,11 @@ PREFETCH_COUNT = 200
 
 class FilterWorker:
 
-    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity):
+    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.id = id
+        self.last = last
         self.eof_queue = eof_queue
         self.input_name = input_name + '_' + id
         self.iteration_queue = iteration_queue
