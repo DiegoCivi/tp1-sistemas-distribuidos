@@ -60,7 +60,7 @@ with open(config_file, "r") as file:
         else:
             continue
 
-# Generate docker-compose-dev2.yaml
+# Generate docker-compose-dev.yaml
 with open("docker-compose-dev.yaml", "w") as outfile:
     outfile.write("services:\n")
     # Escribir servicios predefinidos
