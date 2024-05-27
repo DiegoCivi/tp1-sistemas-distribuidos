@@ -31,6 +31,7 @@ class Worker:
     def send_EOFs(self, client_id, output_queue, next_workers_quantity):
         eof_msg = create_EOF(client_id)
 
+        print(f'Tengo en el siguiente filtro [{next_workers_quantity}] workers y mandos los eofs por la cola [{output_queue}]')
         for worker_id in range(next_workers_quantity):
             worker_queue = output_queue + '_' + str(worker_id)
             self.middleware.send_message(worker_queue, eof_msg)
@@ -90,8 +91,6 @@ class FilterWorker(Worker):
             workers_batches[choosen_worker].append(row)
         
         return workers_batches
-    
-
 
     def handle_data(self, method, body):
         if is_EOF(body):
