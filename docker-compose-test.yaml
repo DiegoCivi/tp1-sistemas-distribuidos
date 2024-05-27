@@ -261,161 +261,161 @@ services:
       - NEXT_WORKERS_QUANTITY=1
 
 
-  # filter_year_worker_q3-0:
-  #   container_name: filter_year_worker_q3-0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - WORKER_ID=0
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - WORKERS_QUANTITY=3
-  #     - EOF_QUANTITY=1
-  #     - YEAR_RANGE_TO_FILTER=1990,1999
-  #     - DATA_SOURCE_NAME=QUEUE_Q3|filter_year_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - EXCHANGE_TYPE=fanout
-  #     - EOF_QUEUE=QUEUE_Q3|eof_year
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_year
-  # filter_year_worker_q3-1:
-  #   container_name: filter_year_worker_q3-1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - WORKER_ID=1
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - WORKERS_QUANTITY=3
-  #     - EOF_QUANTITY=1
-  #     - YEAR_RANGE_TO_FILTER=1990,1999
-  #     - DATA_SOURCE_NAME=QUEUE_Q3|filter_year_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - EXCHANGE_TYPE=fanout
-  #     - EOF_QUEUE=QUEUE_Q3|eof_year
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_year
-  # filter_year_worker_q3-2:
-  #   container_name: filter_year_worker_q3-2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - WORKER_ID=2
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - WORKERS_QUANTITY=3
-  #     - EOF_QUANTITY=1
-  #     - YEAR_RANGE_TO_FILTER=1990,1999
-  #     - DATA_SOURCE_NAME=QUEUE_Q3|filter_year_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - EXCHANGE_TYPE=fanout
-  #     - EOF_QUEUE=QUEUE_Q3|eof_year
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_year
-  # reviews_counter_worker0:
-  #   container_name: reviews_counter_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=0
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - EOF_QUANTITY_TITLES=1
-  #     - EOF_QUANTITY_REVIEWS=1
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-  # reviews_counter_worker1:
-  #   container_name: reviews_counter_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=1
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=1
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-  # reviews_counter_worker2:
-  #   container_name: reviews_counter_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=2
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=1
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-  # reviews_counter_worker3:
-  #   container_name: reviews_counter_worker3
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=3
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=1
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-  # reviews_counter_worker4:
-  #   container_name: reviews_counter_worker4
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=4
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=1
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-  # reviews_counter_worker5:
-  #   container_name: reviews_counter_worker5
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=5
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=1
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-  # filter_review_quantity_worker0:
-  #   container_name: filter_review_quantity_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_review_quantity_worker.dockerfile
-  #   environment:
-  #     - DATA_SOURCE_NAME=QUEUE_Q3|filter_review_quantity_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_q3_results,QUEUE_Q4|top10_worker
-  #     - MIN_QUANTITY=500
-  #     - EOF_QUANTITY=6
-  #     - WORKERS_QUANTITY=1
-  #     - NEXT_WORKER_QUANTITY=5
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  filter_year_worker_q3-0:
+    container_name: filter_year_worker_q3-0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKER_ID=0
+      - NEXT_WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=3
+      - EOF_QUANTITY=1
+      - YEAR_RANGE_TO_FILTER=1990,1999
+      - DATA_SOURCE_NAME=QUEUE_Q3|filter_year_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - EXCHANGE_TYPE=fanout
+      - EOF_QUEUE=QUEUE_Q3|eof_year
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_year
+  filter_year_worker_q3-1:
+    container_name: filter_year_worker_q3-1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKER_ID=1
+      - NEXT_WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=3
+      - EOF_QUANTITY=1
+      - YEAR_RANGE_TO_FILTER=1990,1999
+      - DATA_SOURCE_NAME=QUEUE_Q3|filter_year_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - EXCHANGE_TYPE=fanout
+      - EOF_QUEUE=QUEUE_Q3|eof_year
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_year
+  filter_year_worker_q3-2:
+    container_name: filter_year_worker_q3-2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_year_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKER_ID=2
+      - NEXT_WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=3
+      - EOF_QUANTITY=1
+      - YEAR_RANGE_TO_FILTER=1990,1999
+      - DATA_SOURCE_NAME=QUEUE_Q3|filter_year_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - EXCHANGE_TYPE=fanout
+      - EOF_QUEUE=QUEUE_Q3|eof_year
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_year
+  reviews_counter_worker0:
+    container_name: reviews_counter_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=0
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY_TITLES=1
+      - EOF_QUANTITY_REVIEWS=1
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  reviews_counter_worker1:
+    container_name: reviews_counter_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=1
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=1
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  reviews_counter_worker2:
+    container_name: reviews_counter_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=2
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=1
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  reviews_counter_worker3:
+    container_name: reviews_counter_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=3
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=1
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  reviews_counter_worker4:
+    container_name: reviews_counter_worker4
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=4
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=1
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  reviews_counter_worker5:
+    container_name: reviews_counter_worker5
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/reviews_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=5
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q3|reviews_counter_worker_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q3|reviews_counter_worker_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=1
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+  filter_review_quantity_worker0:
+    container_name: filter_review_quantity_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_review_quantity_worker.dockerfile
+    environment:
+      - DATA_SOURCE_NAME=QUEUE_Q3|filter_review_quantity_worker
+      - DATA_OUTPUT_NAME=QUEUE_q3_results,QUEUE_Q4|top10_worker
+      - MIN_QUANTITY=500
+      - EOF_QUANTITY=6
+      - WORKERS_QUANTITY=1
+      - NEXT_WORKER_QUANTITY=5
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
 
 
   # top10_worker0:

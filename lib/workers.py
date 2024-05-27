@@ -1,5 +1,5 @@
 from middleware import Middleware
-from filters import filter_by, eof_manage_process, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n, calculate_review_sentiment, review_quantity_value, COUNTER_FIELD
+from filters import filter_by, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n, calculate_review_sentiment, review_quantity_value, COUNTER_FIELD
 from serialization import serialize_message, serialize_dict, deserialize_titles_message, hash_title, serialize_batch, is_EOF, get_EOF_id, create_EOF
 import signal
 import queue
@@ -17,23 +17,22 @@ class Worker:
     def __init__(self):
         pass
 
-    def _create_batches(self, batch):
+    def _create_batches(self, batch, next_workers_quantity):
         pass
 
     def _send_batches(self, workers_batches, output_queue, client_id):
         pass
 
-    def create_and_send_batches(self, batch, client_id, output_queue=None):
-        workers_batches = self._create_batches(batch)
+    def create_and_send_batches(self, batch, client_id, output_queue, next_workers_quantity):
+        workers_batches = self._create_batches(batch, next_workers_quantity)
 
-        if output_queue == None:
-            output_queue = self.output_name
         self._send_batches(workers_batches, output_queue, client_id)
 
-    def send_EOFs(self, client_id):
+    def send_EOFs(self, client_id, output_queue, next_workers_quantity):
         eof_msg = create_EOF(client_id)
-        for worker_id in range(self.next_workers_quantity):
-            worker_queue = self.output_name + '_' + str(worker_id)
+
+        for worker_id in range(next_workers_quantity):
+            worker_queue = output_queue + '_' + str(worker_id)
             self.middleware.send_message(worker_queue, eof_msg)
 
 class FilterWorker(Worker):
@@ -81,11 +80,11 @@ class FilterWorker(Worker):
             worker_queue = output_queue + '_' + worker_id
             self.middleware.send_message(worker_queue, serialized_message)
 
-    def _create_batches(self, batch):
+    def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
         for row in batch:
             hashed_title = hash_title(row['Title'])
-            choosen_worker = str(hashed_title % self.next_workers_quantity)
+            choosen_worker = str(hashed_title % next_workers_quantity)
             if choosen_worker not in workers_batches:
                 workers_batches[choosen_worker] = []
             workers_batches[choosen_worker].append(row)
@@ -99,7 +98,7 @@ class FilterWorker(Worker):
             self.eof_counter += 1
             if self.eof_quantity == self.eof_counter:
                 client_id = get_EOF_id(body)
-                self.send_EOFs(client_id)
+                self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
                 self.middleware.stop_consuming()
                 
             self.middleware.ack_message(method)
@@ -114,7 +113,7 @@ class FilterWorker(Worker):
         self.filtered_results_quantity += len(desired_data)
 
         # Create batches for each worker in the next stage and send those batches
-        self.create_and_send_batches(desired_data, client_id)
+        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
         # serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
         # self.middleware.send_message(self.output_name, serialized_data)
 
@@ -255,24 +254,17 @@ class JoinWorker:
 
             batch_size += 1
             if batch_size == BATCH_SIZE:
-                serialized_message = serialize_message([serialize_dict(batch)], '?') # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients 
+                serialized_message = serialize_message([serialize_dict(batch)], '0') # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients 
                 self.middleware.send_message(self.output_name, serialized_message)
                 batch = {}
                 batch_size = 0
 
         if len(batch) != 0:
-            serialized_message = serialize_message([serialize_dict(batch)], '?') # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients 
+            serialized_message = serialize_message([serialize_dict(batch)], '0') # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients 
             self.middleware.send_message(self.output_name, serialized_message)
         
-        eof_msg = create_EOF('?')
+        eof_msg = create_EOF('0')
         self.middleware.send_message(self.output_name, eof_msg)
-
-    # def handle_ok(self, method, body):
-    #     """
-    #     If an 'OK' was received, it means we can continue to the next iteration 
-    #     """
-    #     self.middleware.ack_message(method)
-    #     self.middleware.stop_consuming()  
             
     def run(self):
 
@@ -402,21 +394,17 @@ class GlobalDecadeWorker(Worker):
             self.middleware.close_connection()
 
     def _send_batches(self, workers_batches, output_queue, client_id):
-        """
-        ESTE ES DIFEREENTE A LOS DEMAS _send_batches
-        """
         for worker_id, batch in workers_batches.items():
             worker_queue = output_queue + '_' + worker_id
             print("Voy a mandar el batch a la cola: ", worker_queue)
             self.middleware.send_message(worker_queue, batch)
     
-    def _create_batches(self, batch):
+    def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
-        for worker_id in range(self.next_workers_quantity):
+        for worker_id in range(next_workers_quantity):
             workers_batches[str(worker_id)] = batch
         
         return workers_batches
-
 
     def handle_data(self, method, body):
         if is_EOF(body):
@@ -450,9 +438,9 @@ class GlobalDecadeWorker(Worker):
             serialized_message = serialize_message(serialized_dict, '0')
             print(serialized_message)
             
-            self.create_and_send_batches(serialized_message, '0')
+            self.create_and_send_batches(serialized_message, '0', self.output_name, self.next_workers_quantity)
             #self.middleware.send_message(self.output_name, serialized_message)
-            self.send_EOFs('0')
+            self.send_EOFs('0', self.output_name, self.next_workers_quantity)
 
             # Notify the workers in the previous stage they can continue
             # with the next iteration
@@ -768,7 +756,7 @@ class ReviewSentimentWorker:
             else:
                 raise e
         
-class FilterReviewsWorker:
+class FilterReviewsWorker(Worker):
     
     def __init__(self, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
@@ -818,32 +806,19 @@ class FilterReviewsWorker:
     
         self.middleware.ack_message(method)
 
-    def create_and_send_batches(self, batch, client_id, output_queue=None):
+    def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
-        for row in batch:
-            hashed_title = hash_title(row['Title'])
-            choosen_worker = str(hashed_title % self.next_workers_quantity)
-            if choosen_worker not in workers_batches:
-                workers_batches[choosen_worker] = []
-            workers_batches[choosen_worker].append(row)
-
-
-        if output_queue == None:
-            output_queue = self.output_name
-
+        for worker_id in range(next_workers_quantity):
+            workers_batches[str(worker_id)] = batch
+        
+        return workers_batches
+    
+    def _send_batches(self, workers_batches, output_queue, client_id):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
             serialized_message = serialize_message(serialized_batch, client_id)
             worker_queue = output_queue + '_' + worker_id
             self.middleware.send_message(worker_queue, serialized_message)
-
-    def send_EOFs(self, client_id, output_queue=None):
-        eof_msg = create_EOF(client_id)
-        if output_queue == None:
-            output_queue = self.output_name
-        for worker_id in range(self.next_workers_quantity):
-            worker_queue = output_queue + '_' + str(worker_id)
-            self.middleware.send_message(worker_queue, eof_msg)
 
     def run(self):
         # Define a callback wrapper
@@ -854,25 +829,18 @@ class FilterReviewsWorker:
             self.middleware.consume()
 
             # Send the results to the query 4 and the QueryCoordinator
-            #serialized_data = serialize_message([serialize_dict(self.filtered_titles)])
-            #print(serialized_data)
             if len(self.filtered_titles) != 0:
                 # First to the Query Coordinator
-                #self.middleware.send_message(self.output_name1) # TODO: The way it is being sent to the QueryCoordinator has changed, so it has to be changed in that side to!
+                print("MANDO LOS RESULTADOS AL QC")
+                self.create_and_send_batches(self.filtered_titles, '0', self.output_name1, 1) # next_workers_quantity parameter is set to 1 because there is only 1 QueryCoordinator
                 # Then to the query 4
-                self.create_and_send_batches(self.filtered_titles, '?', self.output_name2) # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients 
+                self.create_and_send_batches(self.filtered_titles, '0', self.output_name2, self.next_workers_quantity)
+            
+            # Send the EOF to the QueryCoordinator
+            self.send_EOFs('0', self.output_name1, 1) # next_workers_quantity parameter is set to 1 because there is only 1 QueryCoordinator
 
             # Send the EOFs to the workers on the query 4
-            self.send_EOFs('?', self.output_name2)                                                     # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients
-            # for _ in range(self.next_workers_quantity):
-            #     self.middleware.send_message(self.output_name2, 'EOF')
-
-            # Send the EOF to the QueryCoordinator
-            # self.middleware.send_message(self.output_name1, 'EOF')
-
-            # # Send the OKs to the workers in the previous stage
-            # for _ in range(self.eof_quantity): # The eof_quantity represents the quantity of workers in the previous stage 
-            #     self.middleware.send_message(self.iteration_queue, 'OK')
+            self.send_EOFs('0', self.output_name2, self.next_workers_quantity)
 
         except Exception as e:
             if self.stop_worker:
