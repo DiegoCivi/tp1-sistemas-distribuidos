@@ -451,13 +451,14 @@ class GlobalDecadeWorker(Worker):
             else:
                 raise e
         
-class PercentileWorker:
+class PercentileWorker(Worker):
 
-    def __init__(self, input_name, output_name, percentile, eof_quantity, iteration_queue):
+    def __init__(self, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
         
         self.input_name = input_name
+        self.next_workers_quantity = next_workers_quantity
         self.output_name = output_name
         self.iteration_queue = iteration_queue
         self.percentile = percentile
@@ -494,6 +495,20 @@ class PercentileWorker:
 
         self.middleware.ack_message(method)
 
+    def _send_batches(self, workers_batches, output_queue, client_id):
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            serialized_message = serialize_message(serialized_batch, client_id)
+            worker_queue = output_queue + '_' + worker_id
+            self.middleware.send_message(worker_queue, serialized_message)
+
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for worker_id in range(next_workers_quantity):
+            workers_batches[str(worker_id)] = batch
+        
+        return workers_batches
+
     def run(self):
         # Define a callback wrapper
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
@@ -504,15 +519,15 @@ class PercentileWorker:
             self.middleware.consume()
 
             titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
+            titles = [{'results': titles}] # This needs to be done so it can be serialized correctly
+            self.create_and_send_batches(titles, '0', self.output_name, self.next_workers_quantity)
+            #serialized_data = serialize_message(titles)
+            #self.middleware.send_message(self.output_name, serialized_data)
 
-            serialized_data = serialize_message(titles)
-            self.middleware.send_message(self.output_name, serialized_data)
-            self.middleware.send_message(self.output_name, "EOF")
+            self.send_EOFs('0', self.output_name, self.next_workers_quantity)
+            #self.middleware.send_message(self.output_name, "EOF")
 
-            print(len(titles))
-            # # Send the OKs to the workers in the previous stage
-            # for _ in range(self.eof_quantity): # The eof_quantity represents the quantity of workers in the previous stage 
-            #     self.middleware.send_message(self.iteration_queue, 'OK')
+            print(len(titles[0]['results']))
 
         except Exception as e:
             if self.stop_worker:

@@ -132,7 +132,7 @@ class DataCoordinator:
         self.parse_and_send_q1(batch, client_id)
         self.parse_and_send_q2(batch, client_id)
         self.parse_and_send_q3(batch, client_id)
-        #self.parse_and_send_q5(batch, client_id)
+        self.parse_and_send_q5(batch, client_id)
 
     def parse_and_send(self, batch, desired_keys, queue, query, client_id):
         # First, we get only the columns the query needs
@@ -246,17 +246,6 @@ class ResultsCoordinator:
     def run(self):
         logging.info('ResultsCoordinatoor running')
         self.manage_results()
-
-    def deserialize_result(self, data, query):
-        """
-        Deserializes the data from the message
-        """
-        if query == Q1 or query == Q2 or query == Q3 or query == Q4:
-            return data 
-        else:
-            data = data.decode('utf-8')
-            data = data.split(ROW_SEPARATOR)
-            return data
         
     def build_result_line(self, data, fields_to_print, query):
         """
@@ -284,11 +273,11 @@ class ResultsCoordinator:
             return data[0]['results']
 
     def handle_results(self, method, body, fields_to_print, query):
-        print(f'De la query {query} me llego {body}')
+        #print(f'De la query {query} me llego {body}')
         if is_EOF(body):
             client_id = get_EOF_id(body)
             self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-            if self.clients_results_counter[client_id] == 6: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIEENDO
+            if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIEENDO
                 self.send_results(client_id)
                 self.middleware.stop_consuming()
 
@@ -300,9 +289,8 @@ class ResultsCoordinator:
         if client_id not in self.clients_results:
             self.clients_results[client_id] = {}
         
-        data = self.deserialize_result(result_dict, query)
         #print(data)
-        new_result_line = '\n' + self.build_result_line(data, fields_to_print, query)
+        new_result_line = '\n' + self.build_result_line(result_dict, fields_to_print, query)
         self.clients_results[client_id][query] = self.clients_results[client_id].get(query, '') + new_result_line 
 
         self.middleware.ack_message(method)
@@ -314,12 +302,12 @@ class ResultsCoordinator:
         q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
         q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
         q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
-        # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
+        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
         self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
         self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
         self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
         self.middleware.consume()
 
     def assemble_results(self, client_id):
@@ -335,8 +323,8 @@ class ResultsCoordinator:
         results.append(results3)
         results4 = Q4 + client_results_dict[Q4]
         results.append(results4)
-        # results5 = Q5 + client_results_dict[Q5]
-        # results.append(results5)
+        results5 = Q5 + client_results_dict[Q5]
+        results.append(results5)
         
         results = '\n'.join(results)
         return results
