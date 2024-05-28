@@ -45,8 +45,8 @@ services:
     volumes:
       - ./datasets:/datasets
 
-  query_coordinator_worker0:
-    container_name: query_coordinator_worker0
+  query_coordinator_worker:
+    container_name: query_coordinator_worker
     build:
       context: .
       dockerfile: ./query_coordinator/query_coordinator_worker.dockerfile
@@ -55,7 +55,6 @@ services:
     links:
       - rabbitmq
     environment:
-      - WORKERS_QUANTITY=1
       - WORKERS_Q1=3,QUEUE_Q1|filter_category_worker
       - WORKERS_Q2=3,QUEUE_Q2|decade_counter_worker
       - WORKERS_Q3_TITLES=3,QUEUE_Q3|filter_year_worker
@@ -80,7 +79,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_category
       - EOF_QUANTITY=1
       - LAST=0
-
   filter_category_computers_worker1:
     container_name: filter_category_computers_worker1
     build:
@@ -97,7 +95,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_category
       - EOF_QUANTITY=1
       - LAST=0
-
   filter_category_computers_worker2:
     container_name: filter_category_computers_worker2
     build:
@@ -114,7 +111,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_category
       - EOF_QUANTITY=1
       - LAST=0
-
   filter_title_worker0:
     container_name: filter_title_worker0
     build:
@@ -131,7 +127,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_title
       - EOF_QUANTITY=3
       - LAST=0
-
   filter_title_worker1:
     container_name: filter_title_worker1
     build:
@@ -148,7 +143,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_title
       - EOF_QUANTITY=3
       - LAST=0
-
   filter_title_worker2:
     container_name: filter_title_worker2
     build:
@@ -165,7 +159,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_title
       - EOF_QUANTITY=3
       - LAST=0
-
   filter_year_worker_q1-0:
     container_name: filter_year_worker_q1-0
     build:
@@ -183,7 +176,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_year
       - EOF_QUANTITY=3
       - LAST=1
-
   filter_year_worker_q1-1:
     container_name: filter_year_worker_q1-1
     build:
@@ -201,7 +193,6 @@ services:
       - ITERATION_QUEUE=QUEUE_Q1|iteration_year
       - EOF_QUANTITY=3
       - LAST=1
-
   filter_year_worker_q1-2:
     container_name: filter_year_worker_q1-2
     build:
@@ -220,6 +211,7 @@ services:
       - EOF_QUANTITY=3
       - LAST=1
 
+
   decade_counter_worker0:
     container_name: decade_counter_worker0
     build:
@@ -231,7 +223,6 @@ services:
       - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
       - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-
   decade_counter_worker1:
     container_name: decade_counter_worker1
     build:
@@ -243,7 +234,6 @@ services:
       - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
       - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-
   decade_counter_worker2:
     container_name: decade_counter_worker2
     build:
@@ -255,7 +245,6 @@ services:
       - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
       - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
       - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-
   global_decade_counter_worker0:
     container_name: global_decade_counter_worker0
     build:
@@ -264,13 +253,13 @@ services:
     environment:
       - WORKER_ID=0
       - WORKERS_QUANTITY=1
-      - NEXT_WORKERS_QUANTITY=1
       - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
       - DATA_OUTPUT_NAME=QUEUE_q2_results
       - EOF_QUANTITY=3
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-      - END=True
+      - NEXT_WORKERS_QUANTITY=1
+
 
   filter_year_worker_q3-0:
     container_name: filter_year_worker_q3-0
@@ -289,7 +278,6 @@ services:
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
       - ITERATION_QUEUE=QUEUE_Q3|iteration_year
-
   filter_year_worker_q3-1:
     container_name: filter_year_worker_q3-1
     build:
@@ -307,7 +295,6 @@ services:
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
       - ITERATION_QUEUE=QUEUE_Q3|iteration_year
-
   filter_year_worker_q3-2:
     container_name: filter_year_worker_q3-2
     build:
@@ -325,7 +312,6 @@ services:
       - EXCHANGE_TYPE=fanout
       - EOF_QUEUE=QUEUE_Q3|eof_year
       - ITERATION_QUEUE=QUEUE_Q3|iteration_year
-
   reviews_counter_worker0:
     container_name: reviews_counter_worker0
     build:
@@ -341,8 +327,6 @@ services:
       - EOF_QUANTITY_REVIEWS=1
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - EOF_QUANTITY=3
-
   reviews_counter_worker1:
     container_name: reviews_counter_worker1
     build:
@@ -358,8 +342,6 @@ services:
       - EOF_QUANTITY_REVIEWS=1
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - EOF_QUANTITY=3
-
   reviews_counter_worker2:
     container_name: reviews_counter_worker2
     build:
@@ -375,8 +357,6 @@ services:
       - EOF_QUANTITY_REVIEWS=1
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - EOF_QUANTITY=3
-
   reviews_counter_worker3:
     container_name: reviews_counter_worker3
     build:
@@ -392,8 +372,6 @@ services:
       - EOF_QUANTITY_REVIEWS=1
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - EOF_QUANTITY=3
-
   reviews_counter_worker4:
     container_name: reviews_counter_worker4
     build:
@@ -409,8 +387,6 @@ services:
       - EOF_QUANTITY_REVIEWS=1
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - EOF_QUANTITY=3
-
   reviews_counter_worker5:
     container_name: reviews_counter_worker5
     build:
@@ -426,8 +402,6 @@ services:
       - EOF_QUANTITY_REVIEWS=1
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - EOF_QUANTITY=3
-
   filter_review_quantity_worker0:
     container_name: filter_review_quantity_worker0
     build:
@@ -442,7 +416,7 @@ services:
       - NEXT_WORKER_QUANTITY=5
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
-      - END=True
+
 
   top10_worker0:
     container_name: top10_worker0
@@ -459,7 +433,6 @@ services:
       - EOF_QUANTITY=1
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
       - NEXT_WORKERS_QUANTITY=1
-
   top10_worker1:
     container_name: top10_worker1
     build:
@@ -475,7 +448,6 @@ services:
       - EOF_QUANTITY=1
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
       - NEXT_WORKERS_QUANTITY=1
-
   top10_worker2:
     container_name: top10_worker2
     build:
@@ -491,7 +463,6 @@ services:
       - EOF_QUANTITY=1
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
       - NEXT_WORKERS_QUANTITY=1
-
   top10_worker3:
     container_name: top10_worker3
     build:
@@ -507,7 +478,6 @@ services:
       - EOF_QUANTITY=1
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
       - NEXT_WORKERS_QUANTITY=1
-
   top10_worker4:
     container_name: top10_worker4
     build:
@@ -523,7 +493,6 @@ services:
       - EOF_QUANTITY=1
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
       - NEXT_WORKERS_QUANTITY=1
-
   top_10_worker_last0:
     container_name: top_10_worker_last0
     build:
@@ -539,8 +508,8 @@ services:
       - EOF_QUANTITY=5
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-      - END=True
       - NEXT_WORKERS_QUANTITY=1
+
 
   review_sentiment_worker0:
     container_name: review_sentiment_worker0
@@ -555,7 +524,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKER_QUANTITY=6
       - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-
   review_sentiment_worker1:
     container_name: review_sentiment_worker1
     build:
@@ -569,7 +537,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKER_QUANTITY=6
       - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-
   review_sentiment_worker2:
     container_name: review_sentiment_worker2
     build:
@@ -583,7 +550,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKER_QUANTITY=6
       - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-
   review_sentiment_worker3:
     container_name: review_sentiment_worker3
     build:
@@ -597,7 +563,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
       - NEXT_WORKER_QUANTITY=6
       - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-
   filter_category_worker0:
     container_name: filter_category_worker0
     build:
@@ -614,7 +579,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_category
       - ITERATION_QUEUE=QUEUE_Q5|iteration_category
       - EOF_QUANTITY=1
-
   filter_category_worker1:
     container_name: filter_category_worker1
     build:
@@ -631,7 +595,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_category
       - ITERATION_QUEUE=QUEUE_Q5|iteration_category
       - EOF_QUANTITY=1
-
   filter_category_worker2:
     container_name: filter_category_worker2
     build:
@@ -648,7 +611,6 @@ services:
       - EOF_QUEUE=QUEUE_Q5|eof_category
       - ITERATION_QUEUE=QUEUE_Q5|iteration_category
       - EOF_QUANTITY=1
-
   mean_review_sentiment_worker0:
     container_name: mean_review_sentiment_worker0
     build:
@@ -659,13 +621,11 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
       - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY_TITLES=3
       - EOF_QUANTITY_REVIEWS=4
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - EOF_QUANTITY=3
-
   mean_review_sentiment_worker1:
     container_name: mean_review_sentiment_worker1
     build:
@@ -676,13 +636,11 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
       - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY_TITLES=3
       - EOF_QUANTITY_REVIEWS=4
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - EOF_QUANTITY=3
-
   mean_review_sentiment_worker2:
     container_name: mean_review_sentiment_worker2
     build:
@@ -693,13 +651,11 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
       - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY_TITLES=3
       - EOF_QUANTITY_REVIEWS=4
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - EOF_QUANTITY=3
-
   mean_review_sentiment_worker3:
     container_name: mean_review_sentiment_worker3
     build:
@@ -710,13 +666,11 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
       - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY_TITLES=3
       - EOF_QUANTITY_REVIEWS=4
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - EOF_QUANTITY=3
-
   mean_review_sentiment_worker4:
     container_name: mean_review_sentiment_worker4
     build:
@@ -727,13 +681,11 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
       - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY_TITLES=3
       - EOF_QUANTITY_REVIEWS=4
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - EOF_QUANTITY=3
-
   mean_review_sentiment_worker5:
     container_name: mean_review_sentiment_worker5
     build:
@@ -744,13 +696,11 @@ services:
       - WORKERS_QUANTITY=6
       - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
       - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - EOF_QUANTITY_TITLES=3
       - EOF_QUANTITY_REVIEWS=4
-      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - EOF_QUANTITY=3
-
   percentile_worker0:
     container_name: percentile_worker0
     build:
@@ -766,6 +716,4 @@ services:
       - EOF_QUANTITY=6
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-      - END=True
       - NEXT_WORKERS_QUANTITY=1
-

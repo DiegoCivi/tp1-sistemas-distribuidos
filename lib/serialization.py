@@ -8,40 +8,40 @@ To deserialize, first thhee rows have to be splitted by the ROW_SEPARATOR = "$|$
 Then each row has to be splitted by the FIELD_SEPARATOR = "@|@" 
 """
 
+ID_SEPARATOR = "~|~"
 FIELD_SEPARATOR = "@|@"
 ROW_SEPARATOR = "$|$"
 KEY_VAL_SEPARATOR = "#|#"
 VALUES_SEPARATOR = ","
+EOF = 'EOF_'
+RESULT_SLICE_FIELD = "RESULT_SLICE"
+LAST_EOF_INDEX = 4
+NO_ID = ''
 
-def serialize_item(item):
-    """
-    Serialize a file item by adding a separator 
-    and deleting the newline character
-    """
-    return item.rstrip('\n') + '|'
+def add_id(message, id):
+    return id + ID_SEPARATOR + message
 
-def serialize_message(message_items):
+def split_message_info(message):
+    message = Message(message).decode()
+    return message.split(ID_SEPARATOR)
+
+def serialize_batch(batch):
+    return [serialize_dict(filtered_dictionary) for filtered_dictionary in batch]
+
+def serialize_message(message_items, id=NO_ID):
     """
     Serialize a message (list of items) by adding a separator
     on each item and deleting the newline character
     """
-    return ROW_SEPARATOR.join(message_items)
-
-def deserialize_item(item):
-    """
-    Deserialize a file item by splitting 
-    it using the separator
-    """
-    return item.split(FIELD_SEPARATOR)
+    message = ROW_SEPARATOR.join(message_items)
+    message = add_id(message, id)
+    return message
 
 def deserialize_titles_message(bytes):
-    """
-    Deserialize a message (list of items) by splitting
-    it using the separator
-    """
-    message = bytes.decode('utf-8')
-    
-    return [deserialize_into_titles_dict(row) for row in message.split(ROW_SEPARATOR)] 
+    # Get the id and the message separated 
+    client_id, message = split_message_info(bytes)
+     
+    return client_id, [deserialize_into_titles_dict(row) for row in message.split(ROW_SEPARATOR)] 
 
 def serialize_dict(dict_to_serialize):
     msg = ''
@@ -78,3 +78,57 @@ def deserialize_into_titles_dict(row):
 
     return title_dict
 
+def is_EOF(msg_bytes):
+    return msg_bytes[:LAST_EOF_INDEX] == bytes(EOF, 'utf-8')
+
+def get_EOF_id(bytes):
+    return str(bytes.decode('utf-8')[LAST_EOF_INDEX])
+
+def create_EOF(id):
+    return EOF + id
+
+def hash_title(s):                                                                                                                                
+    hash = 5381
+    for x in s:
+        hash = (( hash << 5) + hash) + ord(x)
+    return hash & 0xFFFFFFFF    
+
+
+class Message:
+
+    def __init__(self, msg = ""):
+        self.msg = msg
+        self.end_flag = False
+
+    def push(self, msg):
+        if self.end_flag:
+            raise Exception("Message already ended")
+        self.msg += msg
+
+    def set_end_flag(self):
+        self.end_flag = True
+    
+    def is_ended(self):
+        return self.end_flag
+
+    def get_message(self):
+        return self.msg
+    
+    def encode(self):
+        return self.msg.encode('utf-8')
+    
+    def decode(self):
+        try:
+            msg = self.msg.decode('utf-8')
+        except:
+            msg = self.msg
+        return msg
+
+    def __str__(self):
+        return self.msg
+    
+    def clean(self):
+        self.msg= ""
+
+    def add_id(self, id):
+        self.msg = add_id(self.msg, id)
