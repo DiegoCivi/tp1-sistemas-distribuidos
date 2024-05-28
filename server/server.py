@@ -37,7 +37,7 @@ class Server: # TODO: Implement SIGTERM handling
             
             # Send the new socket with its id through the Queue
             client_id = self.clients_accepted
-            self.sockets_queue.put((conn, client_id))
+            self.sockets_queue.put((conn, str(client_id)))
             # Start the process responsible for receiving the data from the client
             p = Process(target=initiate_data_fordwarder, args=(conn, client_id,))
             p.start()
@@ -81,22 +81,26 @@ class ResultFordwarder:
     def run(self):
         print("ResultFordwarder is running")
         self._receive_results()
-        print("Enviando resultados de queries 1 a 5 al cliente...")
-        self.send_results()
+        #print("Enviando resultados de queries 1 a 5 al cliente...")
+        #self.send_results()
 
     def read_results(self, method, body):
-
+        #print(body)
         if is_EOF(body):
+            print('LLego el EOF')
             client_id = get_EOF_id(body)
             self._send_result(client_id)
             self.middleware.ack_message(method)
+            self.middleware.stop_consuming()
             return
         
-        # Take the id out of the message so it can be added to its corresponding client id
+        # Take the id out of the message so it can be added to its corresponding client id 
         client_id, result_slice = split_message_info(body)
+        
 
         if client_id not in self.results_dict:
-            self.results_dict[client_id] = Message()
+            self.results_dict[client_id] = Message(result_slice)
+
         else:
             self.results_dict[client_id].push(result_slice)
                 
@@ -108,17 +112,21 @@ class ResultFordwarder:
         self.middleware.consume()
 
     def _send_result(self, client_id):
-        # If the id is not in our clients dictionary, it must be on the sockets_queue
+        # If the id is not in our clients dictionary, it MUST be on the sockets_queue
         while not self.sockets_queue.empty():
             new_client_socket, new_client_id = self.sockets_queue.get()
             self.clients[new_client_id] = new_client_socket
 
         client_socket = self.clients[client_id]
         client_results = self.results_dict[client_id]
-        write_socket(client_socket, client_results)
+        #print(client_results)
+        e = write_socket(client_socket, client_results.msg)
+        if e != None:
+            raise e
         write_socket(client_socket, 'EOF')
         client_socket.close()
         del self.results_dict[client_id]
+        print("YA LE MANDE AL CLIENT")
 
 
 

@@ -433,16 +433,15 @@ class GlobalDecadeWorker(Worker):
             # Send the results to the output queue
             serialized_dict = serialize_batch([results])
             serialized_message = serialize_message(serialized_dict, '0')
-            print(serialized_message)
             
             self.create_and_send_batches(serialized_message, '0', self.output_name, self.next_workers_quantity)
             #self.middleware.send_message(self.output_name, serialized_message)
             self.send_EOFs('0', self.output_name, self.next_workers_quantity)
 
-            # Notify the workers in the previous stage they can continue
-            # with the next iteration
-            for _ in range(self.eof_quantity): # The eof quantity represents the quantity of workers in the previous stage
-                self.middleware.send_message(self.iteration_queue, 'OK')
+            # # Notify the workers in the previous stage they can continue
+            # # with the next iteration
+            # for _ in range(self.eof_quantity): # The eof quantity represents the quantity of workers in the previous stage
+            #     self.middleware.send_message(self.iteration_queue, 'OK')
 
 
         except Exception as e:
@@ -569,7 +568,6 @@ class TopNWorker(Worker):
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            print("ME LLEGO EL EOF: ", body)
             self.eof_counter += 1
             if self.last and self.eof_counter == self.eof_quantity:
                 print('Dejo de consumir siendo el lider')
@@ -580,7 +578,6 @@ class TopNWorker(Worker):
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
-        print("Mi data es: ", data)
         self.top = get_top_n(data, self.top, self.top_n, self.last)
         self.middleware.ack_message(method) 
 
