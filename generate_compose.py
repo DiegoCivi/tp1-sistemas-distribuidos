@@ -51,8 +51,8 @@ with open(config_file, "r") as file:
                         index = 4
                 current_eof_quantity[index] = env_vars[service_name]["WORKERS_QUANTITY"]
 
-            if last_service_name and "NEXT_WORKER_QUANTITY" in env_vars[last_service_name] and service_name != "mean_review_sentiment_worker":
-                if not "END" in env_vars[last_service_name]:
+            if last_service_name and "NEXT_WORKER_QUANTITY" in env_vars[last_service_name] and service_name !="mean_review_sentiment_worker":
+                if not "END" in env_vars[last_service_name] and last_service_name != "review_sentiment_worker":
                     env_vars[last_service_name]["NEXT_WORKER_QUANTITY"] = env_vars[service_name]["WORKERS_QUANTITY"]
             if "ACCUMULATOR" in env_vars[service_name] and env_vars[service_name]["ACCUMULATOR"] == "True":
                 env_vars[service_name]["EOF_QUANTITY"] = env_vars[last_service_name]["WORKERS_QUANTITY"]
@@ -122,9 +122,15 @@ with open("docker-compose-dev.yaml", "w") as outfile:
                     outfile.write(f"    build:\n")
                     outfile.write(f"      context: .\n")
                     outfile.write(f"      dockerfile: {dockerfile_path}\n")
+                    if service_name == "query_coordinator_worker":
+                        outfile.write(f'    depends_on:\n')
+                        outfile.write(f'      - rabbitmq\n')
+                        outfile.write(f'    links:\n')
+                        outfile.write(f'      - rabbitmq\n')
                     outfile.write(f"    environment:\n")
                     for key, value in env_vars[service_name].items():
                         if key == "WORKER_ID":
                             outfile.write(f"      - {key}={i}\n")
                         else:
                             outfile.write(f"      - {key}={value}\n")
+                    outfile.write("\n")
