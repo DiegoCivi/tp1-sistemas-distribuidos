@@ -21,7 +21,7 @@ class Server: # TODO: Implement SIGTERM handling
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog)
-        self.clients_accepted = 0
+        self.clients_accepted = 1
         self.sockets_queue = Queue()
 
     def run(self):
@@ -91,7 +91,6 @@ class ResultFordwarder:
             client_id = get_EOF_id(body)
             self._send_result(client_id)
             self.middleware.ack_message(method)
-            self.middleware.stop_consuming()
             return
         
         # Take the id out of the message so it can be added to its corresponding client id 
@@ -123,9 +122,10 @@ class ResultFordwarder:
         e = write_socket(client_socket, client_results.msg)
         if e != None:
             raise e
-        write_socket(client_socket, 'EOF')
+        write_socket(client_socket, EOF_MSG)
         client_socket.close()
         del self.results_dict[client_id]
+        del self.clients[client_id]
         print("YA LE MANDE AL CLIENT")
 
 
@@ -178,6 +178,8 @@ class DataFordwarder:
                 # Add the id to the EOF and send it
                 msg = EOF_MSG + '_' + self.id
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
+        
+        print(f'CLIENT_{self.id} HAS FINISHED')
 
     def handle_signal(self, *args):
         print("Gracefully exit")

@@ -23,6 +23,7 @@ Q3_TITLES_KEY = '3_titles'
 Q3_REVIEWS_KEY = '3_reviews'
 Q5_TITLES_KEY = '5_titles'
 Q5_REVIEWS_KEY = '5_reviews'
+ID = '0' # WARNING: If this is changed, results will never get back to the QueryCoordinator 
 
 class QueryCoordinator:
 
@@ -32,7 +33,7 @@ class QueryCoordinator:
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.id = '0'
+        self.id = ID
         self.workers = {Q1_KEY: workers_q1, Q2_KEY: workers_q2, Q3_TITLES_KEY: workers_q3_titles, Q3_REVIEWS_KEY: workers_q3_reviews,
                              Q5_TITLES_KEY: workers_q5_titles, Q5_REVIEWS_KEY: workers_q5_reviews}
         self.eof_quantity = eof_quantity
@@ -109,6 +110,7 @@ class DataCoordinator:
         #print(body.decode('utf-8')[:10])
         client_id, batch = deserialize_titles_message(body)
         if client_id not in self.clients_parse_mode:
+            # Since titles are always first, every new client needs to be initialized with the TITLES_MODE
             self.clients_parse_mode[client_id] = TITLES_MODE
 
         self.send_to_pipelines(batch, client_id)
@@ -130,9 +132,9 @@ class DataCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
         self.parse_and_send_q1(batch, client_id)
-        self.parse_and_send_q2(batch, client_id)
-        self.parse_and_send_q3(batch, client_id)
-        self.parse_and_send_q5(batch, client_id)
+        # self.parse_and_send_q2(batch, client_id)
+        # self.parse_and_send_q3(batch, client_id)
+        # self.parse_and_send_q5(batch, client_id)
 
     def parse_and_send(self, batch, desired_keys, queue, query, client_id):
         # First, we get only the columns the query needs
@@ -277,9 +279,9 @@ class ResultsCoordinator:
         if is_EOF(body):
             client_id = get_EOF_id(body)
             self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-            if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIEENDO
+            if self.clients_results_counter[client_id] == 3: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIEENDO
                 self.send_results(client_id)
-                self.middleware.stop_consuming()
+                # self.middleware.stop_consuming()
 
             self.middleware.ack_message(method)
             return
@@ -299,15 +301,15 @@ class ResultsCoordinator:
     
         # # Use queues to receive the queries results
         q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
-        q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
-        q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
-        q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
-        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
+        # q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
+        # q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
+        # q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
+        # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
-        self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
-        self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
-        self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+        # self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
+        # self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
+        # self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
+        # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
         self.middleware.consume()
 
     def assemble_results(self, client_id):
@@ -317,14 +319,14 @@ class ResultsCoordinator:
         
         results1 = Q1 + client_results_dict[Q1]
         results.append(results1)
-        results2 = Q2 + client_results_dict[Q2]
-        results.append(results2)
-        results3 = Q3 + client_results_dict[Q3]
-        results.append(results3)
-        results4 = Q4 + client_results_dict[Q4]
-        results.append(results4)
-        results5 = Q5 + client_results_dict[Q5]
-        results.append(results5)
+        # results2 = Q2 + client_results_dict[Q2]
+        # results.append(results2)
+        # results3 = Q3 + client_results_dict[Q3]
+        # results.append(results3)
+        # results4 = Q4 + client_results_dict[Q4]
+        # results.append(results4)
+        # results5 = Q5 + client_results_dict[Q5]
+        # results.append(results5)
         
         results = '\n'.join(results)
         return results

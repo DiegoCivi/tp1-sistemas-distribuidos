@@ -44,7 +44,7 @@ class FilterWorker(Worker):
         self.eof_queue = eof_queue
         self.input_name = input_name + '_' + id
         self.iteration_queue = iteration_queue
-        self.eof_counter = 0
+        self.eof_counter = {}
         self.eof_quantity = eof_quantity
         self.output_name = output_name
         self.workers_quantity = workers_quantity
@@ -92,11 +92,12 @@ class FilterWorker(Worker):
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.eof_counter += 1
-            if self.eof_quantity == self.eof_counter:
-                client_id = get_EOF_id(body)
+            client_id = get_EOF_id(body)
+            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+            if self.eof_quantity == self.eof_counter[client_id]:
                 self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-                self.middleware.stop_consuming()
+                del self.eof_counter[client_id]
+                #self.middleware.stop_consuming()
                 
             self.middleware.ack_message(method)
             return
@@ -111,8 +112,6 @@ class FilterWorker(Worker):
 
         # Create batches for each worker in the next stage and send those batches
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
-        # serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
-        # self.middleware.send_message(self.output_name, serialized_data)
 
         self.middleware.ack_message(method)
 
@@ -129,9 +128,6 @@ class FilterWorker(Worker):
 
             print(f'El worker se quedo con {self.filtered_results_quantity} cantidad de titulos')
             self.filtered_results_quantity = 0
-            # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
-            # after receiving WORKER_QUANTITY EOF messages.
-            # self.eof_manage_process()
 
         except Exception as e:
             if self.stop_worker:
