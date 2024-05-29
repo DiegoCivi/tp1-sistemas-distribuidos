@@ -626,8 +626,8 @@ class TopNWorker(Worker):
         self.last = last
         self.eof_quantity = eof_quantity
         self.iteration_queue = iteration_queue
-        self.eof_counter = 0
-        self.top = []
+        self.eof_counter = {}
+        self.tops = {}
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -644,20 +644,42 @@ class TopNWorker(Worker):
             self.middleware.close_connection()
         print(self.eof_counter)
 
+    def send_results(self, client_id):
+        if not self.last:
+            if client_id in self.tops:
+                self.parse_top(client_id)
+                # If the top isnt empty, then we send it
+                self.create_and_send_batches(self.tops[client_id], client_id, self.output_name, self.next_workers_quantity)
+            
+            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+
+        else:
+            if client_id in self.tops:
+                # Send the results to the query_coordinator
+                self.create_and_send_batches(self.tops[client_id], client_id, self.output_name, self.next_workers_quantity)
+            
+            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.eof_counter += 1
-            if self.last and self.eof_counter == self.eof_quantity:
-                print('Dejo de consumir siendo el lider')
-                self.middleware.stop_consuming()
-            elif not self.last:
-                print('Dejo de consumir')
-                self.middleware.stop_consuming()
+            client_id = get_EOF_id(body)
+            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+            if self.eof_counter[client_id] == self.eof_quantity:
+                self.send_results(client_id)
+            #if self.last and self.eof_counter == self.eof_quantity:
+            #    print('Dejo de consumir siendo el lider')
+            #    self.middleware.stop_consuming()
+            #elif not self.last:
+            #    print('Dejo de consumir')
+            #    self.middleware.stop_consuming()
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
-        self.top = get_top_n(data, self.top, self.top_n, self.last)
+
+        if client_id not in self.tops:
+            self.tops[client_id] = []
+
+        self.tops[client_id] = get_top_n(data, self.tops[client_id], self.top_n, self.last)
         self.middleware.ack_message(method) 
 
     def _send_batches(self, workers_batches, output_queue, client_id):
@@ -678,8 +700,8 @@ class TopNWorker(Worker):
         
         return workers_batches
 
-    def parse_top(self):
-        for title_dict in self.top:
+    def parse_top(self, client_id):
+        for title_dict in self.tops[client_id]:
             title_dict[COUNTER_FIELD] = str(title_dict[COUNTER_FIELD])
 
     def run(self):
@@ -690,32 +712,21 @@ class TopNWorker(Worker):
             self.middleware.receive_messages(self.input_name, callback_with_params)
             self.middleware.consume()
 
-            #dict_to_send = {title:str(mean_rating) for title,mean_rating in self.top}
-            #serialized_data = serialize_message([serialize_dict(dict_to_send)])
-            self.parse_top()
-            #serialized_batch = serialize_batch(self.top)
-            #serialized_data = serialize_message(serialized_batch, '0')
-            if not self.last:
-                if len(self.top) != 0:
-                    self.create_and_send_batches(self.top, '0', self.output_name, self.next_workers_quantity)
-                    #self.middleware.send_message(self.output_name, serialized_data)
+            # self.parse_top()
+            # if not self.last:
+            #     if len(self.top) != 0:
+            #         self.create_and_send_batches(self.top, '0', self.output_name, self.next_workers_quantity)
                 
-                self.send_EOFs('0', self.output_name, self.next_workers_quantity)
-                # eof_msg = create_EOF('0')
-                # print("Mando el EOF a: ", self.output_name)
-                # self.middleware.send_message(self.output_name, eof_msg)
+            #     self.send_EOFs('0', self.output_name, self.next_workers_quantity)
 
-            else:
-                # Send the results to the query_coordinator
-                self.create_and_send_batches(self.top, '0', self.output_name, self.next_workers_quantity)
-                #print(serialized_data)
-                #self.middleware.send_message(self.output_name, serialized_data)
+            # else:
+            #     # Send the results to the query_coordinator
+            #     self.create_and_send_batches(self.top, '0', self.output_name, self.next_workers_quantity)
                 
-                self.send_EOFs('0', self.output_name, self.next_workers_quantity)
-                #self.middleware.send_message(self.output_name, eof_msg)
+            #     self.send_EOFs('0', self.output_name, self.next_workers_quantity)
 
-            # As the iteration finished, it means a new client will arrive. So the top is emptied
-            self.top = []
+            # # As the iteration finished, it means a new client will arrive. So the top is emptied
+            # self.top = []
         except Exception as e:
             if self.stop_worker:
                 print("Gracefully exited")
