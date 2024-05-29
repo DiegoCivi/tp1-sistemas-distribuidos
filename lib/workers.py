@@ -541,7 +541,7 @@ class PercentileWorker(Worker):
         self.iteration_queue = iteration_queue
         self.percentile = percentile
         self.eof_quantity = eof_quantity
-        self.eof_counter = 0
+        self.eof_counter = {}
         self.titles_with_sentiment = {}
         self.middleware = None
         self.queue = queue.Queue()
@@ -560,18 +560,31 @@ class PercentileWorker(Worker):
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
+            client_id = get_EOF_id(body)
+            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+            if self.eof_counter[client_id] == self.eof_quantity:
+                self.send_results(client_id)
             self.middleware.ack_message(method)
             return
         
         client_id, data = deserialize_titles_message(body)
+
+        if client_id not in self.titles_with_sentiment:
+            self.titles_with_sentiment[client_id] = {}
         
-        for key, value in data[0].items():
-            self.titles_with_sentiment[key] = float(value)
+        for title, sentiment_value in data[0].items():
+            self.titles_with_sentiment[client_id][title] = float(sentiment_value)
 
         self.middleware.ack_message(method)
+
+    def send_results(self, client_id):
+        titles = titles_in_the_n_percentile(self.titles_with_sentiment[client_id], self.percentile)
+        titles = [{'results': titles}] # This needs to be done so it can be serialized correctly
+        self.create_and_send_batches(titles, client_id, self.output_name, self.next_workers_quantity)
+
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+
+        print(len(titles[0]['results']))
 
     def _send_batches(self, workers_batches, output_queue, client_id):
         for worker_id, batch in workers_batches.items():
@@ -595,17 +608,6 @@ class PercentileWorker(Worker):
             # Read the titles with their sentiment
             self.middleware.receive_messages(self.input_name, callback_with_params)
             self.middleware.consume()
-
-            titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
-            titles = [{'results': titles}] # This needs to be done so it can be serialized correctly
-            self.create_and_send_batches(titles, '0', self.output_name, self.next_workers_quantity)
-            #serialized_data = serialize_message(titles)
-            #self.middleware.send_message(self.output_name, serialized_data)
-
-            self.send_EOFs('0', self.output_name, self.next_workers_quantity)
-            #self.middleware.send_message(self.output_name, "EOF")
-
-            print(len(titles[0]['results']))
 
         except Exception as e:
             if self.stop_worker:
@@ -666,12 +668,6 @@ class TopNWorker(Worker):
             self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
             if self.eof_counter[client_id] == self.eof_quantity:
                 self.send_results(client_id)
-            #if self.last and self.eof_counter == self.eof_quantity:
-            #    print('Dejo de consumir siendo el lider')
-            #    self.middleware.stop_consuming()
-            #elif not self.last:
-            #    print('Dejo de consumir')
-            #    self.middleware.stop_consuming()
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
@@ -711,22 +707,6 @@ class TopNWorker(Worker):
         try:
             self.middleware.receive_messages(self.input_name, callback_with_params)
             self.middleware.consume()
-
-            # self.parse_top()
-            # if not self.last:
-            #     if len(self.top) != 0:
-            #         self.create_and_send_batches(self.top, '0', self.output_name, self.next_workers_quantity)
-                
-            #     self.send_EOFs('0', self.output_name, self.next_workers_quantity)
-
-            # else:
-            #     # Send the results to the query_coordinator
-            #     self.create_and_send_batches(self.top, '0', self.output_name, self.next_workers_quantity)
-                
-            #     self.send_EOFs('0', self.output_name, self.next_workers_quantity)
-
-            # # As the iteration finished, it means a new client will arrive. So the top is emptied
-            # self.top = []
         except Exception as e:
             if self.stop_worker:
                 print("Gracefully exited")
@@ -787,8 +767,8 @@ class ReviewSentimentWorker:
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.middleware.stop_consuming()
-            self.send_EOFs('?')                      # TODO: THE ? IS HARD CODED. Change it when supproting parallel clients 
+            client_id = get_EOF_id(body)
+            self.send_EOFs(client_id)                    
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
@@ -796,51 +776,9 @@ class ReviewSentimentWorker:
         desired_data = calculate_review_sentiment(data)
 
         self.create_and_send_batches(desired_data, client_id)
-        # serialized_data = serialize_message([serialize_dict(filtered_dict) for filtered_dict in desired_data])
-        # self.middleware.send_message(self.output_name, serialized_data)
         
         self.middleware.ack_message(method)
 
-    # def handle_eof(self, method, body):
-    #     if is_EOF(body):
-    #         print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
-        
-    #     self.eof_counter += 1
-    #     if self.eof_counter == self.workers_quantity - 1:
-    #         # Send the EOFs to the next filter stage
-    #         for _ in range(self.next_workers_quantity):
-    #             self.middleware.send_message(self.output_name, 'EOF')
-    #         self.middleware.stop_consuming()
-
-    #         # Notify the workers in my filter stage that they can start another loop
-    #         for _ in range(self.workers_quantity - 1):
-    #             self.middleware.send_message(self.iteration_queue, 'OK')
-            
-    #         self.eof_counter = 0
-
-    #     self.middleware.ack_message(method)
-
-    # def handle_ok(self, method, body):
-    #     """
-    #     If an 'OK' was received, it means we can continue to the next iteration 
-    #     """
-    #     self.middleware.ack_message(method)
-    #     self.middleware.stop_consuming()
-
-    # def eof_manage_process(self):
-    #     if self.id == '0':
-    #         if self.workers_quantity == 1:
-    #             for _ in range(self.next_workers_quantity):
-    #                 self.middleware.send_message(self.output_name, 'EOF')
-    #             return
-    #         eof_callback = lambda ch, method, properties, body: self.handle_eof(method, body)
-    #         self.middleware.receive_messages(self.eof_queue, eof_callback)
-    #         self.middleware.consume()
-    #     else:
-    #         self.middleware.send_message(self.eof_queue, 'EOF')
-    #         callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-    #         self.middleware.receive_messages(self.iteration_queue, callback)
-    #         self.middleware.consume()
 
     def run(self):
         # Define a callback wrapper
@@ -849,8 +787,6 @@ class ReviewSentimentWorker:
             # Declare and subscribe to the titles exchange
             self.middleware.receive_messages(self.input_name, callback_with_params)
             self.middleware.consume()
-
-            # self.eof_manage_process()
 
         except Exception as e:
             if self.stop_worker:

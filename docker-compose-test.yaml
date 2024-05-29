@@ -529,209 +529,209 @@ services:
       - NEXT_WORKERS_QUANTITY=1
 
 
-  # review_sentiment_worker0:
-  #   container_name: review_sentiment_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=0
-  #     - WORKERS_QUANTITY=4
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-  # review_sentiment_worker1:
-  #   container_name: review_sentiment_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=1
-  #     - WORKERS_QUANTITY=4
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-  # review_sentiment_worker2:
-  #   container_name: review_sentiment_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=2
-  #     - WORKERS_QUANTITY=4
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-  # review_sentiment_worker3:
-  #   container_name: review_sentiment_worker3
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=3
-  #     - WORKERS_QUANTITY=4
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
-  # filter_category_worker0:
-  #   container_name: filter_category_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - WORKER_ID=0
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - WORKERS_QUANTITY=3
-  #     - CATEGORY=Fiction
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|filter_category_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - EOF_QUEUE=QUEUE_Q5|eof_category
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_category
-  #     - EOF_QUANTITY=1
-  # filter_category_worker1:
-  #   container_name: filter_category_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - WORKER_ID=1
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - WORKERS_QUANTITY=3
-  #     - CATEGORY=Fiction
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|filter_category_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - EOF_QUEUE=QUEUE_Q5|eof_category
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_category
-  #     - EOF_QUANTITY=1
-  # filter_category_worker2:
-  #   container_name: filter_category_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - WORKER_ID=2
-  #     - NEXT_WORKER_QUANTITY=6
-  #     - WORKERS_QUANTITY=3
-  #     - CATEGORY=Fiction
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|filter_category_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - EOF_QUEUE=QUEUE_Q5|eof_category
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_category
-  #     - EOF_QUANTITY=1
-  # mean_review_sentiment_worker0:
-  #   container_name: mean_review_sentiment_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=0
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=4
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  # mean_review_sentiment_worker1:
-  #   container_name: mean_review_sentiment_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=1
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=4
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  # mean_review_sentiment_worker2:
-  #   container_name: mean_review_sentiment_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=2
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=4
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  # mean_review_sentiment_worker3:
-  #   container_name: mean_review_sentiment_worker3
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=3
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=4
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  # mean_review_sentiment_worker4:
-  #   container_name: mean_review_sentiment_worker4
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=4
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=4
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  # mean_review_sentiment_worker5:
-  #   container_name: mean_review_sentiment_worker5
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=5
-  #     - WORKERS_QUANTITY=6
-  #     - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
-  #     - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
-  #     - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
-  #     - EOF_QUANTITY_TITLES=3
-  #     - EOF_QUANTITY_REVIEWS=4
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  # percentile_worker0:
-  #   container_name: percentile_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/percentile_worker.dockerfile
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - DATA_SOURCE_NAME=QUEUE_Q5|percentile_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_q5_results
-  #     - PERCENTILE=90
-  #     - WORKER_ID=0
-  #     - WORKERS_QUANTITY=1
-  #     - EOF_QUANTITY=6
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
-  #     - NEXT_WORKERS_QUANTITY=1
+  review_sentiment_worker0:
+    container_name: review_sentiment_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=0
+      - WORKERS_QUANTITY=4
+      - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+      - NEXT_WORKER_QUANTITY=6
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
+  review_sentiment_worker1:
+    container_name: review_sentiment_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=1
+      - WORKERS_QUANTITY=4
+      - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+      - NEXT_WORKER_QUANTITY=6
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
+  review_sentiment_worker2:
+    container_name: review_sentiment_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=2
+      - WORKERS_QUANTITY=4
+      - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+      - NEXT_WORKER_QUANTITY=6
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
+  review_sentiment_worker3:
+    container_name: review_sentiment_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=3
+      - WORKERS_QUANTITY=4
+      - DATA_SOURCE_NAME=QUEUE_Q5|review_sentiment_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - EOF_QUEUE=QUEUE_Q5|eof_review_sentiment
+      - NEXT_WORKER_QUANTITY=6
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_review_sentiment
+  filter_category_worker0:
+    container_name: filter_category_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKER_ID=0
+      - NEXT_WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=3
+      - CATEGORY=Fiction
+      - DATA_SOURCE_NAME=QUEUE_Q5|filter_category_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_category
+      - EOF_QUANTITY=1
+  filter_category_worker1:
+    container_name: filter_category_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKER_ID=1
+      - NEXT_WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=3
+      - CATEGORY=Fiction
+      - DATA_SOURCE_NAME=QUEUE_Q5|filter_category_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_category
+      - EOF_QUANTITY=1
+  filter_category_worker2:
+    container_name: filter_category_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKER_ID=2
+      - NEXT_WORKER_QUANTITY=6
+      - WORKERS_QUANTITY=3
+      - CATEGORY=Fiction
+      - DATA_SOURCE_NAME=QUEUE_Q5|filter_category_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - EOF_QUEUE=QUEUE_Q5|eof_category
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_category
+      - EOF_QUANTITY=1
+  mean_review_sentiment_worker0:
+    container_name: mean_review_sentiment_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=0
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=4
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+  mean_review_sentiment_worker1:
+    container_name: mean_review_sentiment_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=1
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=4
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+  mean_review_sentiment_worker2:
+    container_name: mean_review_sentiment_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=2
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=4
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+  mean_review_sentiment_worker3:
+    container_name: mean_review_sentiment_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=3
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=4
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+  mean_review_sentiment_worker4:
+    container_name: mean_review_sentiment_worker4
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=4
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=4
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+  mean_review_sentiment_worker5:
+    container_name: mean_review_sentiment_worker5
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/mean_review_sentiment_worker.dockerfile
+    environment:
+      - WORKER_ID=5
+      - WORKERS_QUANTITY=6
+      - DATA_SOURCE_TITLES_NAME=QUEUE_Q5|mean_review_sentiment_titles
+      - DATA_SOURCE_REVIEWS_NAME=QUEUE_Q5|mean_review_sentiment_reviews
+      - DATA_OUTPUT_NAME=QUEUE_Q5|percentile_worker
+      - EOF_QUANTITY_TITLES=3
+      - EOF_QUANTITY_REVIEWS=4
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+  percentile_worker0:
+    container_name: percentile_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/percentile_worker.dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATA_SOURCE_NAME=QUEUE_Q5|percentile_worker
+      - DATA_OUTPUT_NAME=QUEUE_q5_results
+      - PERCENTILE=90
+      - WORKER_ID=0
+      - WORKERS_QUANTITY=1
+      - EOF_QUANTITY=6
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
+      - NEXT_WORKERS_QUANTITY=1
