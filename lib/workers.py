@@ -18,10 +18,10 @@ class Worker:
         pass
 
     def _create_batches(self, batch, next_workers_quantity):
-        pass
+        raise Exception('Function needs to be implemented')
 
     def _send_batches(self, workers_batches, output_queue, client_id):
-        pass
+        raise Exception('Function needs to be implemented')
 
     def create_and_send_batches(self, batch, client_id, output_queue, next_workers_quantity):
         workers_batches = self._create_batches(batch, next_workers_quantity)
@@ -313,7 +313,7 @@ class DecadeWorker:
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.middleware.stop_consuming()
+            #self.middleware.stop_consuming()
             client_id = get_EOF_id(body)
             eof_msg = create_EOF(client_id)
             self.middleware.send_message(self.output_name, eof_msg)
@@ -369,8 +369,8 @@ class GlobalDecadeWorker(Worker):
         self.eof_quantity = eof_quantity
         self.iteration_queue = iteration_queue
         self.next_workers_quantity = next_workers_quantity
-        self.eof_counter = 0
-        self.counter_dict = {}
+        self.eof_counter = {}
+        self.counter_dicts = {}
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -398,17 +398,36 @@ class GlobalDecadeWorker(Worker):
             workers_batches[str(worker_id)] = batch
         
         return workers_batches
+    
+    def send_client_results(self, client_id):
+        # Collect the results
+        results = {'results': []}
+        for key, value in self.counter_dicts[client_id].items():
+            if len(value) >= 10:
+                results['results'].append(key)
+        # Send the results to the output queue
+        serialized_dict = serialize_batch([results])
+        serialized_message = serialize_message(serialized_dict, client_id)
+        
+        self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
+            client_id = get_EOF_id(body)
+            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+            if self.eof_counter[client_id] == self.eof_quantity:
+                self.send_client_results(client_id)
+                #self.middleware.stop_consuming()
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
 
-        accumulate_authors_decades(data, self.counter_dict)
+        if client_id not in self.counter_dicts:
+            self.counter_dicts[client_id] = {}
+
+        accumulate_authors_decades(data, self.counter_dicts[client_id])
 
         self.middleware.ack_message(method)
 
@@ -421,18 +440,18 @@ class GlobalDecadeWorker(Worker):
             self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
             self.middleware.consume()
 
-            # Collect the results
-            results = {'results': []}
-            for key, value in self.counter_dict.items():
-                if len(value) >= 10:
-                    results['results'].append(key)
-            # Send the results to the output queue
-            serialized_dict = serialize_batch([results])
-            serialized_message = serialize_message(serialized_dict, '0')
+            # # Collect the results
+            # results = {'results': []}
+            # for key, value in self.counter_dict.items():
+            #     if len(value) >= 10:
+            #         results['results'].append(key)
+            # # Send the results to the output queue
+            # serialized_dict = serialize_batch([results])
+            # serialized_message = serialize_message(serialized_dict, '0')
             
-            self.create_and_send_batches(serialized_message, '0', self.output_name, self.next_workers_quantity)
-            #self.middleware.send_message(self.output_name, serialized_message)
-            self.send_EOFs('0', self.output_name, self.next_workers_quantity)
+            # self.create_and_send_batches(serialized_message, '0', self.output_name, self.next_workers_quantity)
+            # #self.middleware.send_message(self.output_name, serialized_message)
+            # self.send_EOFs('0', self.output_name, self.next_workers_quantity)
 
             # # Notify the workers in the previous stage they can continue
             # # with the next iteration

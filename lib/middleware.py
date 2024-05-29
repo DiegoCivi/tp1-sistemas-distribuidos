@@ -2,7 +2,7 @@ import pika
 import time
 
 ALLOWED_TYPES = ('fanout', 'direct', 'topic', 'headers')
-PREFETCH_COUNT = 1
+PREFETCH_COUNT = 200
 AUTO_ACK_MODE = False
 CONNECTION_TRIES = 10
 LOOP_LAPSE_START = 2

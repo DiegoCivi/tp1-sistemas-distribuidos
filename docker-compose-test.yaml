@@ -230,53 +230,53 @@ services:
       - LAST=1
 
 
-  # decade_counter_worker0:
-  #   container_name: decade_counter_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=0
-  #     - WORKERS_QUANTITY=3
-  #     - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
-  #     - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-  # decade_counter_worker1:
-  #   container_name: decade_counter_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=1
-  #     - WORKERS_QUANTITY=3
-  #     - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
-  #     - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-  # decade_counter_worker2:
-  #   container_name: decade_counter_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=2
-  #     - WORKERS_QUANTITY=3
-  #     - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
-  #     - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-  # global_decade_counter_worker0:
-  #   container_name: global_decade_counter_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=0
-  #     - WORKERS_QUANTITY=1
-  #     - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_q2_results
-  #     - EOF_QUANTITY=3
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
-  #     - NEXT_WORKERS_QUANTITY=1
+  decade_counter_worker0:
+    container_name: decade_counter_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=0
+      - WORKERS_QUANTITY=3
+      - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+  decade_counter_worker1:
+    container_name: decade_counter_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=1
+      - WORKERS_QUANTITY=3
+      - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+  decade_counter_worker2:
+    container_name: decade_counter_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/decade_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=2
+      - WORKERS_QUANTITY=3
+      - DATA_SOURCE_NAME=QUEUE_Q2|decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q2|global_decade_counter_worker
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+  global_decade_counter_worker0:
+    container_name: global_decade_counter_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/global_decade_counter_worker.dockerfile
+    environment:
+      - WORKER_ID=0
+      - WORKERS_QUANTITY=1
+      - DATA_SOURCE_NAME=QUEUE_Q2|global_decade_counter_worker
+      - DATA_OUTPUT_NAME=QUEUE_q2_results
+      - EOF_QUANTITY=3
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q2|iteration_decade_counter
+      - NEXT_WORKERS_QUANTITY=1
 
 
   # filter_year_worker_q3-0:
