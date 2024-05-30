@@ -23,6 +23,7 @@ Q3_TITLES_KEY = '3_titles'
 Q3_REVIEWS_KEY = '3_reviews'
 Q5_TITLES_KEY = '5_titles'
 Q5_REVIEWS_KEY = '5_reviews'
+ID = '0' # WARNING: If this is changed, results will never get back to the QueryCoordinator 
 
 class QueryCoordinator:
 
@@ -32,7 +33,7 @@ class QueryCoordinator:
         """
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.id = '0'
+        self.id = ID
         self.workers = {Q1_KEY: workers_q1, Q2_KEY: workers_q2, Q3_TITLES_KEY: workers_q3_titles, Q3_REVIEWS_KEY: workers_q3_reviews,
                              Q5_TITLES_KEY: workers_q5_titles, Q5_REVIEWS_KEY: workers_q5_reviews}
         self.eof_quantity = eof_quantity
@@ -109,6 +110,7 @@ class DataCoordinator:
         #print(body.decode('utf-8')[:10])
         client_id, batch = deserialize_titles_message(body)
         if client_id not in self.clients_parse_mode:
+            # Since titles are always first, every new client needs to be initialized with the TITLES_MODE
             self.clients_parse_mode[client_id] = TITLES_MODE
 
         self.send_to_pipelines(batch, client_id)
@@ -275,11 +277,12 @@ class ResultsCoordinator:
     def handle_results(self, method, body, fields_to_print, query):
         #print(f'De la query {query} me llego {body}')
         if is_EOF(body):
+            print("Me llefo un eof: ", body)
             client_id = get_EOF_id(body)
             self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-            if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIEENDO
+            if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
                 self.send_results(client_id)
-                self.middleware.stop_consuming()
+                # self.middleware.stop_consuming()
 
             self.middleware.ack_message(method)
             return
@@ -332,7 +335,6 @@ class ResultsCoordinator:
     def send_results(self, client_id):
         # Create the result
         result_msg = self.assemble_results(client_id)
-        #print("El resultado es: ", result_msg)
         # Send the results to the server
         chars_sent = 0
         chars_to_send = len(result_msg)
@@ -344,7 +346,6 @@ class ResultsCoordinator:
 
             result_slice = result_msg[start_index: end_idex]
             result_slice = add_id(result_slice, client_id)
-            #print("El result_slice es: ", result_slice)
             self.middleware.send_message(SEND_SERVER_QUEUE, result_slice)
             chars_sent += BATCH_SIZE
 
