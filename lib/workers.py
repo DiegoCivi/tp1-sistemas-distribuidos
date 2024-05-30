@@ -313,8 +313,9 @@ class JoinWorker:
 
 class DecadeWorker(Worker):
 
-    def __init__(self, input_name, output_name, iteration_queue, worker_id):
+    def __init__(self, input_name, output_name, iteration_queue, worker_id, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
+        self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id) # input_name + '_' + worker_id
         self.output_name = output_name
@@ -334,12 +335,28 @@ class DecadeWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for worker_id in range(next_workers_quantity):
+            workers_batches[str(worker_id)] = batch
+
+        return workers_batches
+    
+    def _send_batches(self, workers_batches, output_queue, client_id):
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            serialized_message = serialize_message(serialized_batch, client_id)
+            worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
+            self.middleware.send_message(worker_queue, serialized_message)
+        
+    
     def handle_data(self, method, body):
         if is_EOF(body):
             client_id = get_EOF_id(body)
-            eof_msg = create_EOF(client_id)
-            self.middleware.send_message(self.output_name, eof_msg)
-            self.middleware.ack_message(method)
+            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+            # eof_msg = create_EOF(client_id)
+            # self.middleware.send_message(self.output_name, eof_msg)
+            # self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
 
@@ -348,8 +365,9 @@ class DecadeWorker(Worker):
             self.middleware.ack_message(method)
             return
 
-        serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data], client_id)
-        self.middleware.send_message(self.output_name, serialized_data)
+        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
+        # serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data], client_id)
+        # self.middleware.send_message(self.output_name, serialized_data)
 
         self.middleware.ack_message(method)
 
@@ -363,10 +381,10 @@ class DecadeWorker(Worker):
 
 class GlobalDecadeWorker(Worker):
 
-    def __init__(self, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity):
+    def __init__(self, worker_id, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
-        self.input_name = input_name
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
         self.eof_quantity = eof_quantity
         self.iteration_queue = iteration_queue

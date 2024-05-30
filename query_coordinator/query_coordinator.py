@@ -335,7 +335,6 @@ class ResultsCoordinator:
     def send_results(self, client_id):
         # Create the result
         result_msg = self.assemble_results(client_id)
-        #print("El resultado es: ", result_msg)
         # Send the results to the server
         chars_sent = 0
         chars_to_send = len(result_msg)
@@ -347,7 +346,6 @@ class ResultsCoordinator:
 
             result_slice = result_msg[start_index: end_idex]
             result_slice = add_id(result_slice, client_id)
-            #print("El result_slice es: ", result_slice)
             self.middleware.send_message(SEND_SERVER_QUEUE, result_slice)
             chars_sent += BATCH_SIZE
 
