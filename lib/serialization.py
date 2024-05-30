@@ -8,7 +8,8 @@ To deserialize, first thhee rows have to be splitted by the ROW_SEPARATOR = "$|$
 Then each row has to be splitted by the FIELD_SEPARATOR = "@|@" 
 """
 
-ID_SEPARATOR = "~|~"
+ID_MSG_SEPARATOR = "~|~"
+ID_QUEUE_SEPARATOR = '_'
 FIELD_SEPARATOR = "@|@"
 ROW_SEPARATOR = "$|$"
 KEY_VAL_SEPARATOR = "#|#"
@@ -19,11 +20,11 @@ LAST_EOF_INDEX = 4
 NO_ID = ''
 
 def add_id(message, id):
-    return id + ID_SEPARATOR + message
+    return id + ID_MSG_SEPARATOR + message
 
 def split_message_info(message):
     message = Message(message).decode()
-    return message.split(ID_SEPARATOR)
+    return message.split(ID_MSG_SEPARATOR)
 
 def serialize_batch(batch):
     return [serialize_dict(filtered_dictionary) for filtered_dictionary in batch]
@@ -91,7 +92,10 @@ def hash_title(s):
     hash = 5381
     for x in s:
         hash = (( hash << 5) + hash) + ord(x)
-    return hash & 0xFFFFFFFF    
+    return hash & 0xFFFFFFFF
+
+def create_queue_name(queue, client_id):
+    return queue + ID_QUEUE_SEPARATOR + client_id
 
 
 class Message:
