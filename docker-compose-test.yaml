@@ -45,23 +45,23 @@ services:
     volumes:
       - ./datasets:/datasets
 
-  client_2:
-    container_name: client_2
-    build:
-      context: .
-      dockerfile: ./client/client.dockerfile
-    depends_on:
-      - server
-    links:
-      - server
-    environment:
-      - PYTHONUNBUFFERED=1
-      - HOST=server
-      - PORT=12345
-      - TITLES_FILEPATH=./datasets/books_data.csv
-      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
-    volumes:
-      - ./datasets:/datasets
+  # client_2:
+  #   container_name: client_2
+  #   build:
+  #     context: .
+  #     dockerfile: ./client/client.dockerfile
+  #   depends_on:
+  #     - server
+  #   links:
+  #     - server
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #     - HOST=server
+  #     - PORT=12345
+  #     - TITLES_FILEPATH=./datasets/books_data.csv
+  #     - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
+  #   volumes:
+  #     - ./datasets:/datasets
 
   query_coordinator_worker:
     container_name: query_coordinator_worker
