@@ -21,7 +21,7 @@ class Server: # TODO: Implement SIGTERM handling
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog)
-        self.clients_accepted = 1
+        self.clients_accepted = 0
         self.sockets_queue = Queue()
 
     def run(self):
