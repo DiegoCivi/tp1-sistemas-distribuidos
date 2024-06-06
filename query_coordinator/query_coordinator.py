@@ -223,7 +223,7 @@ class DataCoordinator:
 
     def send_EOF(self, workers_dict_key, queue, client_id):
 
-        eof_msg = create_EOF(client_id)
+        eof_msg = create_EOF(client_id, self.id)
         workers_quantity = int(self.workers[workers_dict_key][QUANTITY_INDEX])
         for worker_id in range(workers_quantity):
             worker_queue = queue + '_' + str(worker_id)
@@ -349,5 +349,5 @@ class ResultsCoordinator:
             self.middleware.send_message(SEND_SERVER_QUEUE, result_slice)
             chars_sent += BATCH_SIZE
 
-        eof_msg = create_EOF(client_id)
+        eof_msg = create_EOF(client_id, self.id)
         self.middleware.send_message(SEND_SERVER_QUEUE, eof_msg)

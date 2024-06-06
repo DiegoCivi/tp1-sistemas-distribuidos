@@ -29,9 +29,9 @@ class Worker:
         self._send_batches(workers_batches, output_queue, client_id)
 
     def send_EOFs(self, client_id, output_queue, next_workers_quantity):
-        eof_msg = create_EOF(client_id)
+        eof_msg = create_EOF(client_id, self.worker_id)
         for worker_id in range(next_workers_quantity):
-            worker_queue = create_queue_name(output_queue, str(worker_id)) # output_queue + '_' + str(worker_id)
+            worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, eof_msg)
 
     def handle_data(self, method, body):
@@ -49,15 +49,16 @@ class Worker:
             else:
                 raise e
 
+
 class FilterWorker(Worker):
 
     def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.id = id
+        self.worker_id = id
         self.last = last
         self.eof_queue = eof_queue
-        self.input_name = create_queue_name(input_name, id) # input_name + '_' + id
+        self.input_name = create_queue_name(input_name, id) 
         self.iteration_queue = iteration_queue
         self.eof_counter = {}
         self.eof_quantity = eof_quantity
@@ -140,7 +141,7 @@ class JoinWorker:
         if query != QUERY_5 and query != QUERY_3:
             raise Exception('Query not supported')
 
-        self.id = id
+        self.worker_id = id
         self.input_titles_name = create_queue_name(input_titles_name, id) #input_titles_name + '_' + id
         self.input_reviews_name = create_queue_name(input_reviews_name, id) # input_reviews_name + '_' + id
         self.output_name = output_name
@@ -288,7 +289,7 @@ class JoinWorker:
             serialized_message = serialize_message([serialize_dict(batch)], client_id)
             self.middleware.send_message(self.output_name, serialized_message)
 
-        eof_msg = create_EOF(client_id)
+        eof_msg = create_EOF(client_id, self.worker_id)
         self.middleware.send_message(self.output_name, eof_msg)
 
     def run(self):
@@ -311,10 +312,13 @@ class JoinWorker:
             else:
                 raise e
 
+
 class DecadeWorker(Worker):
 
     def __init__(self, input_name, output_name, iteration_queue, worker_id, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
+        
+        self.worker_id = worker_id
         self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id) # input_name + '_' + worker_id
@@ -354,9 +358,7 @@ class DecadeWorker(Worker):
         if is_EOF(body):
             client_id = get_EOF_id(body)
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-            # eof_msg = create_EOF(client_id)
-            # self.middleware.send_message(self.output_name, eof_msg)
-            # self.middleware.ack_message(method)
+            self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
 
@@ -366,8 +368,6 @@ class DecadeWorker(Worker):
             return
 
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
-        # serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data], client_id)
-        # self.middleware.send_message(self.output_name, serialized_data)
 
         self.middleware.ack_message(method)
 
@@ -383,6 +383,8 @@ class GlobalDecadeWorker(Worker):
 
     def __init__(self, worker_id, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
+
+        self.worker_id = worker_id
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
@@ -453,10 +455,11 @@ class GlobalDecadeWorker(Worker):
 
 class PercentileWorker(Worker):
 
-    def __init__(self, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity):
+    def __init__(self, worker_id, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
+        
+        self.worker_id = worker_id
         self.stop_worker = False
-
         self.input_name = input_name
         self.next_workers_quantity = next_workers_quantity
         self.output_name = output_name
@@ -527,9 +530,10 @@ class TopNWorker(Worker):
 
     def __init__(self, id, input_name, output_name, eof_quantity, n, last, iteration_queue, next_workers_quantity):
         signal.signal(signal.SIGTERM, self.handle_signal)
+        
+        self.worker_id = id
         self.stop_worker = False
-        self.input_name = create_queue_name(input_name, id) # input_name + '_' + id
-
+        self.input_name = create_queue_name(input_name, id)
         self.output_name = output_name
         self.next_workers_quantity = next_workers_quantity
         self.top_n = n
@@ -615,9 +619,9 @@ class ReviewSentimentWorker(Worker):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
 
-        self.input_name = create_queue_name(input_name, worker_id) # input_name + '_' + worker_id
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
-        self.id = worker_id
+        self.worker_id = worker_id
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
         self.eof_queue = eof_queue
@@ -652,7 +656,7 @@ class ReviewSentimentWorker(Worker):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
             serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
+            worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
     def handle_data(self, method, body):
@@ -672,9 +676,10 @@ class ReviewSentimentWorker(Worker):
 
 class FilterReviewsWorker(Worker):
 
-    def __init__(self, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue):
+    def __init__(self, worker_id, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
+        self.worker_id = worker_id
         self.input_name = input_name
         self.output_name1 = output_name1
         self.iteration_queue = iteration_queue

@@ -9,14 +9,14 @@ Then each row has to be splitted by the FIELD_SEPARATOR = "@|@"
 """
 
 ID_MSG_SEPARATOR = "~|~"
-ID_QUEUE_SEPARATOR = '_'
+ID_SEPARATOR = '_'
 FIELD_SEPARATOR = "@|@"
 ROW_SEPARATOR = "$|$"
 KEY_VAL_SEPARATOR = "#|#"
 VALUES_SEPARATOR = ","
 EOF = 'EOF_'
 RESULT_SLICE_FIELD = "RESULT_SLICE"
-LAST_EOF_INDEX = 4
+EOF_CLIENT_ID_INDEX = 4
 NO_ID = ''
 
 def add_id(message, id):
@@ -80,13 +80,13 @@ def deserialize_into_titles_dict(row):
     return title_dict
 
 def is_EOF(msg_bytes):
-    return msg_bytes[:LAST_EOF_INDEX] == bytes(EOF, 'utf-8')
+    return msg_bytes[:EOF_CLIENT_ID_INDEX] == bytes(EOF, 'utf-8')
 
 def get_EOF_id(bytes):
-    return str(bytes.decode('utf-8')[LAST_EOF_INDEX])
+    return str(bytes.decode('utf-8')[EOF_CLIENT_ID_INDEX])
 
-def create_EOF(id):
-    return EOF + id
+def create_EOF(client_id, worker_id):
+    return EOF + client_id + ID_SEPARATOR + worker_id
 
 def hash_title(s):                                                                                                                                
     hash = 5381
@@ -95,7 +95,7 @@ def hash_title(s):
     return hash & 0xFFFFFFFF
 
 def create_queue_name(queue, client_id):
-    return queue + ID_QUEUE_SEPARATOR + client_id
+    return queue + ID_SEPARATOR + client_id
 
 
 class Message:

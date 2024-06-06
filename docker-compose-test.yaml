@@ -437,6 +437,7 @@ services:
       - NEXT_WORKER_QUANTITY=5
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
+      - WORKER_ID=0
 
 
   top10_worker0:

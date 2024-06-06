@@ -10,8 +10,9 @@ def main():
     workers_quantity = int(os.getenv('EOF_QUANTITY'))
     next_workers_quantity = int(os.getenv('NEXT_WORKER_QUANTITY'))
     iteration_queue = os.getenv('ITERATION_QUEUE')
+    worker_id = os.getenv('WORKER_ID')
 
-    worker = FilterReviewsWorker(data_source_name, data_output1_name, data_output2_name, minimum_quantity, workers_quantity, next_workers_quantity, iteration_queue)
+    worker = FilterReviewsWorker(worker_id, data_source_name, data_output1_name, data_output2_name, minimum_quantity, workers_quantity, next_workers_quantity, iteration_queue)
     worker.run()
 
 main()
