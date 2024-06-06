@@ -36,15 +36,23 @@ class Worker:
     
     def manage_message(self, client_id, data, method):
         raise Exception('Function needs to be implemented')
+    
+    def add_EOF_worker_id(self, client_id, worker_id):
+        client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())
+        client_eof_workers_ids.add(worker_id)
+        self.eof_workers_ids[client_id] = client_eof_workers_ids
 
     def handle_data(self, method, body):
         if is_EOF(body):
             worker_id = get_EOF_worker_id(body)                                     # The id of the worker that sent the EOF
             client_id = get_EOF_client_id(body)                                     # The id of the active client
             client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())     # A set with the ids of the workers that already sent their EOF fot this client
+            
+            # Check if the EOF was already received from that worker (This is done to handle duplicated EOFs). 
+            # If already received, the EOF is inmediately acked.
+            # If not, the workers id is saved and the handling of the EOF is done.
             if worker_id not in client_eof_workers_ids:
-                client_eof_workers_ids.add(worker_id)
-                self.eof_workers_ids[client_id] = client_eof_workers_ids
+                self.add_EOF_worker_id(client_id, worker_id)
                 self.manage_EOF(body, method, client_id)
 
             self.middleware.ack_message(method)
@@ -112,7 +120,7 @@ class FilterWorker(Worker):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
             serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
+            worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
     def _create_batches(self, batch, next_workers_quantity):
@@ -154,13 +162,14 @@ class JoinWorker:
             raise Exception('Query not supported')
 
         self.worker_id = id
-        self.input_titles_name = create_queue_name(input_titles_name, id) #input_titles_name + '_' + id
-        self.input_reviews_name = create_queue_name(input_reviews_name, id) # input_reviews_name + '_' + id
+        self.input_titles_name = create_queue_name(input_titles_name, id)
+        self.input_reviews_name = create_queue_name(input_reviews_name, id) 
         self.output_name = output_name
         self.iteration_queue = iteration_queue
         self.eof_counter_titles = {}
         self.eof_counter_reviews = {}
-        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.eof_workers_ids_titles = {} # This dict stores for each active client, the workers ids of the eofs received in the titles queue
+        self.eof_workers_ids_reviews = {} # This dict stores for each active client, the workers ids of the eofs received in the reviews queue
         self.eof_quantity_titles = eof_quantity_titles
         self.eof_quantity_reviews = eof_quantity_reviews
         self.counter_dicts = {}
@@ -177,8 +186,6 @@ class JoinWorker:
     def handle_signal(self, *args):
         print("Gracefully exit")
         self.queue.put('SIGTERM')
-        print('EOF TITLES: ', self.eof_counter_titles)
-        print('EOF REVIEWS: ', self.eof_counter_reviews)
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
@@ -186,12 +193,18 @@ class JoinWorker:
     def handle_titles_data(self, method, body):
         if is_EOF(body):
             print("Me llego un EOF en titles")
+            worker_id = get_EOF_worker_id(body)
             client_id = get_EOF_client_id(body)
-            self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0) + 1
-            self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0)
-            if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
-                self.send_results(client_id)
-                # self.middleware.stop_consuming(method)
+            client_eof_workers_ids = self.eof_workers_ids_titles.get(client_id, set())
+            if worker_id not in client_eof_workers_ids:
+                client_eof_workers_ids.add(worker_id)
+                self.eof_workers_ids_titles[client_id] = client_eof_workers_ids
+
+                self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0) + 1
+                self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0)
+                if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
+                    self.send_results(client_id)
+
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
@@ -211,11 +224,18 @@ class JoinWorker:
     def handle_reviews_data(self, method, body):
         if is_EOF(body):
             print("Me llego un EFO en reviews")
+            worker_id = get_EOF_worker_id(body)
             client_id = get_EOF_client_id(body)
-            self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0) + 1
-            self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0)
-            if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
-                self.send_results(client_id)
+            client_eof_workers_ids = self.eof_workers_ids_reviews.get(client_id, set())
+            if worker_id not in client_eof_workers_ids:
+                client_eof_workers_ids.add(worker_id)
+                self.eof_workers_ids_reviews[client_id] = client_eof_workers_ids
+
+                self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0) + 1
+                self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0)
+                if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
+                    self.send_results(client_id)
+
             self.middleware.ack_message(method)
             return
         client_id, data = deserialize_titles_message(body)
