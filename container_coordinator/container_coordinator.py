@@ -13,7 +13,57 @@ RECONNECTION_SLEEP = 5
 QUEUE_SIZE = 10
 END_MSG = 'END'
 
-class Connector:
+class ProcessCreator:
+    """
+    Classes that create other process need some simple and common functionality.
+    They will inherit this from ProcessCreator which will have the fundamentals
+    for the handling of new process.
+    For example, joining the processes, handling their messages, or adding their
+    connection info.
+    """
+
+    def __init__(self):
+        self.processes = []
+
+    def add_connection(self, connections, conn_identifier, conn):
+        """
+        Adds a connection to a process shared dict. This dict will have the 
+        necessary info for processes to communicate with any socket they need.
+        """
+        connections[conn_identifier] = conn
+    
+    def initiate_connection(self, id, socket, connections):
+        """
+        Handler of messages of a connection. This connection can be another ContainerCoordinator
+        or a worker from the system.
+        """
+        pass
+        # while True: # TODO: Check this condition
+            # self._socket.settimeout(1)
+        #     msg = read_socket(socket)
+        #     if msg.startswith('ELECTION'):
+        #         # Get the id
+        #         # Get the socket from connections with the id
+        #         # Send the new ELECTION message to the next through that socket
+        #         pass
+    
+    def join_processes(self):
+        """
+        Every class that manages processes needs to join them and close them.
+        """
+        for p in self.processes:
+            p.join()
+            p.close()
+
+class Connector(ProcessCreator):
+    """
+    Responsible for connecting to the other ContainerCoordinators.
+    Every ContainerCoodinator needs to be connected to every other ContainerCoodinator.
+    This means that some of them will wait for connections, and others will be responsible for connecting.
+    
+    Reconnection to the network is necessary if a ContainerCoordinator wants to get back to the network.
+    If this is the case, he will need to connect back to every other ContainerCoordinator.
+    """
 
     def __init__(self, id, connections, coordinators_list):
         self.id = id
@@ -23,6 +73,14 @@ class Connector:
         self.processes = []
 
     def connect_to_coordinators(self, reconnection):
+        """
+        Connect to the other ContainerCoordinators.
+        
+        If reconnection = False, he will need to connect to every ContainerCoordinator
+        that has a bigger id. (This is how the connection is configured)
+
+        If reconnection = True, he will need to connect back to all the ContainerCoordinators.
+        """
         if reconnection:
             time.sleep(RECONNECTION_SLEEP)
             print(f"INICIO RECONECCION, connections: {len(self.connections)}  list: {len(self.coordinators_list) - 1}")
@@ -59,23 +117,15 @@ class Connector:
                         time.sleep(LOOP_CONNECTION_PERIOD)
                         continue
 
-        for p in self.processes:
-            p.join()
-            p.close()
+        self.join_processes()
     
-    def add_connection(self, connections, conn_identifier, conn):
-        connections[conn_identifier] = conn
 
-    def initiate_connection(self, id, socket, connections):
-        while True: # TODO: Check this condition
-            msg = read_socket(socket)
-            if msg.startswith('ELECTION'):
-                # Get the id
-                # Get the socket from connections with the id
-                # Send the new ELECTION message to the next through that socket
-                pass
-
-class ContainerCoordinator:
+class ContainerCoordinator(ProcessCreator):
+    """
+    Responsible for handling connections from other ContainerCoordinators or
+    workers from the system. It has a leader in his network. If he is the leader,
+    and one of his connection shutdowns, it needs to get that container back and running.
+    """
 
     def __init__(self, id, address, listen_backlog, coordinators_list):
 
@@ -103,39 +153,36 @@ class ContainerCoordinator:
         connector.connect_to_coordinators(reconnection)
     
     def initiate_reconnection(self):
+        """
+        For a reconnection, a new process needs to run Connector instance with
+        reconnection parameter set to True.
+        """
         self.initiate_connector(True)
 
     def initiate_connector(self, reconnection):
+        """
+        Creates, starts and saves a process that runs a Connector instance.
+        """
         p = Process(target=self.create_connector, args=(self.id, self.connections, self.coordinators_list, reconnection))
         p.start()
         self.processes.append(p)
 
-
-    # def initiate_processes_joiner(self, queue):
-    #     queue_msg = None
-    #     processes = []
-    #     while queue_msg != END_MSG:
-    #         queue_msg = queue.get()
-    #         if isinstance(queue_msg, str):
-    #             # Here we need to implement the cases where strings are received.
-    #             # For example, when de msg 'END' is received
-    #             pass
-    #         processes.append(queue_msg)
-
-    #     for p in processes:
-    #         p.join()
-
     def run(self):
+        """
+        Here everything starts. 
+        -   A reconnection process is crated for later and will be used if the container was restarted
+            and needs to connect back to everybody.
+        -   Connections are also accepted. If a new ContainerCordinator or worker wants to connect, he will
+            be accepted here.
+        -   When everything finishes, all process are joined and closed 
+        """
         # Process that will reconnect to the network if it crashed before
         self.initiate_reconnection()
-        # reconnection_p = Process(target=self.initiate_reconnection, args=(self.connections, self.coordinators_list,))
-        # reconnection_p.start()
+
         if not self.im_last_coord():
             # Create the process that will send the id to the other
             # This will be done by all coordinators, except for the last one
             self.initiate_connector(False)
-            # id_sender_p = Process(target=self.initiate_id_sender, args=(self.connections,))
-            # id_sender_p.start()
 
         # Receive new connections and create a process that will handle them
         print("Voy a entrar al while")
@@ -147,6 +194,8 @@ class ContainerCoordinator:
                 print("Nueva conexion")
                 # Once the connection is done. We need to hear for the id or name of the connected one.
                 identifier, err = read_socket(conn)
+                if err:
+                    raise err
                 print(f"Soy {self.id} y se me conecto: ", identifier)
                 # Start the process responsible for receiving the data from the new connection
                 p = Process(target=self.initiate_connection, args=(self.id, conn, self.connections,))
@@ -156,66 +205,12 @@ class ContainerCoordinator:
 
                 p.start()
                 self.processes.append(p)
-            except:
+            except Exception as e:
+                print("Error: ", e)
                 pass
 
-        
-        # reconnection_p.join()
-
-        # if not self.im_last_coord():
-        #     id_sender_p.join()
-
-        # for conn_socket in self.connections.items():
-        #     conn_socket.close()
-        for p in self.processes:
-            p.join()
-            p.close()
         print('TERMINE')
-
-
-    def initiate_connection(self, coordinator_id, socket, connections):
-        while True: # TODO: Check this condition
-            msg = read_socket(socket)
-            if msg.startswith('ELECTION'):
-                # Get the id
-                # Get the socket from connections with the id
-                # Send the new ELECTION message to the next through that socket
-                pass
-
-    # def initiate_id_sender(self, connections):
-    #     """
-    #     Tries to connect to the other ContainerCoordinators.
-    #     If the connect() fails, it may be because the other ContainerCoordinator isn't up yet.
-    #     So it tries a few times. 
-    #     """
-    #     for host, port, id in self.coordinators_list[self.id + 1:]:
-    #         for _ in range(CONNECTION_TRIES):            
-    #             try:
-    #                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #                 s.connect((host, port))
-    #                 print(f'Soy {self.id} y me conecte a: ', id)
-    #                 # We send our id and create a process to handle the connection
-    #                 err = write_socket(s, str(self.id))
-    #                 if err != None:
-    #                     print('Error')
-    #                     raise err
-
-    #                 print("Lanzo un proceso")
-    #                 p = Process(target=self.initiate_connection, args=(self.id, s, connections,))
-                    
-    #                 self.add_connection(connections, id, s)
-
-    #                 p.start()
-    #                 #processes_queue.put(p)
-    #                 break
-    #             except Exception as e:
-    #                 print(f"No se pudo conectar al coordinator {id}. Error: ", e)
-    #                 time.sleep(LOOP_CONNECTION_PERIOD)
-    #                 continue
-
-
-    def add_connection(self, connections, conn_identifier, conn):
-        connections[conn_identifier] = conn
+        self.join_processes()
 
 
 # HOW TO START A CONTAINER AGAIN:
