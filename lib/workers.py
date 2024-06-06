@@ -34,8 +34,23 @@ class Worker:
             worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, eof_msg)
 
+    def manage_EOF(self, body, method):
+        raise Exception('Function needs to be implemented')
+    
+    def manage_message(self, client_id, data, method):
+        raise Exception('Function needs to be implemented')
+
     def handle_data(self, method, body):
-        raise Exception('Function needs to be implemented') 
+        if is_EOF(body):
+            self.manage_EOF(body, method)
+            self.middleware.ack_message(method)
+            return
+        
+        client_id, data = deserialize_titles_message(body)
+
+        self.manage_message(client_id, data, method)
+
+        self.middleware.ack_message(method)
             
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
@@ -106,30 +121,22 @@ class FilterWorker(Worker):
 
         return workers_batches
 
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
-            if self.eof_quantity == self.eof_counter[client_id]:
-                self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-                del self.eof_counter[client_id]
-                #self.middleware.stop_consuming()
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+        if self.eof_quantity == self.eof_counter[client_id]:
+            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+            del self.eof_counter[client_id]
 
-            self.middleware.ack_message(method)
-            return
-        client_id, data = deserialize_titles_message(body)
-
+    def manage_message(self, client_id, data, method):
         desired_data = filter_by(data, self.filtering_function, self.filter_value)
         if not desired_data:
-            self.middleware.ack_message(method)
             return
 
         self.filtered_results_quantity += len(desired_data)
 
         # Create batches for each worker in the next stage and send those batches
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
-
-        self.middleware.ack_message(method)
 
 
 class JoinWorker:
@@ -321,7 +328,7 @@ class DecadeWorker(Worker):
         self.worker_id = worker_id
         self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
-        self.input_name = create_queue_name(input_name, worker_id) # input_name + '_' + worker_id
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
         self.iteration_queue = iteration_queue
         self.middleware = None
@@ -352,24 +359,17 @@ class DecadeWorker(Worker):
             serialized_message = serialize_message(serialized_batch, client_id)
             worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
             self.middleware.send_message(worker_queue, serialized_message)
-        
     
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-            self.middleware.ack_message(method)
-            return
-        client_id, data = deserialize_titles_message(body)
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
+    def manage_message(self, client_id, data, method):
         desired_data = different_decade_counter(data)
         if not desired_data:
-            self.middleware.ack_message(method)
             return
 
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
-
-        self.middleware.ack_message(method)
 
     def handle_ok(self, method, body):
         """
@@ -433,24 +433,18 @@ class GlobalDecadeWorker(Worker):
 
         self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+    
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+        if self.eof_counter[client_id] == self.eof_quantity:
+            self.send_client_results(client_id)
 
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
-            if self.eof_counter[client_id] == self.eof_quantity:
-                self.send_client_results(client_id)
-                #self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        client_id, data = deserialize_titles_message(body)
-
+    def manage_message(self, client_id, data, method):
         if client_id not in self.counter_dicts:
             self.counter_dicts[client_id] = {}
 
         accumulate_authors_decades(data, self.counter_dicts[client_id])
-
-        self.middleware.ack_message(method)
 
 
 class PercentileWorker(Worker):
@@ -483,24 +477,18 @@ class PercentileWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
-            if self.eof_counter[client_id] == self.eof_quantity:
-                self.send_results(client_id)
-            self.middleware.ack_message(method)
-            return
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+        if self.eof_counter[client_id] == self.eof_quantity:
+            self.send_results(client_id)
 
-        client_id, data = deserialize_titles_message(body)
-
+    def manage_message(self, client_id, data, method):
         if client_id not in self.titles_with_sentiment:
             self.titles_with_sentiment[client_id] = {}
 
         for title, sentiment_value in data[0].items():
             self.titles_with_sentiment[client_id][title] = float(sentiment_value)
-
-        self.middleware.ack_message(method)
 
     def send_results(self, client_id):
         titles = titles_in_the_n_percentile(self.titles_with_sentiment[client_id], self.percentile)
@@ -574,21 +562,17 @@ class TopNWorker(Worker):
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
-            if self.eof_counter[client_id] == self.eof_quantity:
-                self.send_results(client_id)
-            self.middleware.ack_message(method)
-            return
-        client_id, data = deserialize_titles_message(body)
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+        if self.eof_counter[client_id] == self.eof_quantity:
+            self.send_results(client_id)
 
+    def manage_message(self, client_id, data, method):
         if client_id not in self.tops:
             self.tops[client_id] = []
 
         self.tops[client_id] = get_top_n(data, self.tops[client_id], self.top_n, self.last)
-        self.middleware.ack_message(method)
 
     def _send_batches(self, workers_batches, output_queue, client_id):
         for worker_id, batch in workers_batches.items():
@@ -659,19 +643,13 @@ class ReviewSentimentWorker(Worker):
             worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-            self.middleware.ack_message(method)
-            return
-        client_id, data = deserialize_titles_message(body)
-
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+    
+    def manage_message(self, client_id, data, method):
         desired_data = calculate_review_sentiment(data)
-
         self.create_and_send_batches(desired_data, client_id)
-
-        self.middleware.ack_message(method)
 
 
 class FilterReviewsWorker(Worker):
@@ -722,26 +700,19 @@ class FilterReviewsWorker(Worker):
         # Send the EOFs to the workers on the query 4
         self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
 
-    def handle_data(self, method, body):
-        if is_EOF(body):
-            client_id = get_EOF_id(body)
-            self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
-            if self.eof_counter[client_id] == self.eof_quantity:
-                self.send_results(client_id)
-                #self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
+    def manage_EOF(self, body, method):
+        client_id = get_EOF_id(body)
+        self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
+        if self.eof_counter[client_id] == self.eof_quantity:
+            self.send_results(client_id)
 
-        client_id, data = deserialize_titles_message(body)
-
+    def manage_message(self, client_id, data, method):
         if client_id not in self.filtered_client_titles:
             self.filtered_client_titles[client_id] = []
 
         desired_data = review_quantity_value(data, self.minimum_quantity)
         for title, counter in desired_data[0].items():
             self.filtered_client_titles[client_id].append({'Title': title, 'counter': counter})
-
-        self.middleware.ack_message(method)
 
     def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}

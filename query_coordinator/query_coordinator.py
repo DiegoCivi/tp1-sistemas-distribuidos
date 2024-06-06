@@ -287,7 +287,7 @@ class ResultsCoordinator:
             self.middleware.ack_message(method)
             return
 
-        client_id, result_dict = deserialize_titles_message(body) # If it fails in this line. It may be because the results are sent in a way that "deserialize_titles_message()" cannot bee used. Then "split_message_info()" should be used
+        client_id, result_dict = deserialize_titles_message(body)
         #print(result_dict)
         if client_id not in self.clients_results:
             self.clients_results[client_id] = {}
