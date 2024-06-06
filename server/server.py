@@ -1,6 +1,6 @@
 import socket
 from communications import read_socket, write_socket
-from serialization import Message, is_EOF, get_EOF_id, split_message_info
+from serialization import Message, is_EOF, get_EOF_client_id, split_message_info
 from middleware import Middleware
 import os
 import signal
@@ -88,7 +88,7 @@ class ResultFordwarder:
         #print(body)
         if is_EOF(body):
             print('LLego el EOF')
-            client_id = get_EOF_id(body)
+            client_id = get_EOF_client_id(body)
             self._send_result(client_id)
             self.middleware.ack_message(method)
             return

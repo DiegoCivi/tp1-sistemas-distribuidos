@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import serialize_message, deserialize_titles_message, ROW_SEPARATOR, is_EOF, get_EOF_id, create_EOF, serialize_batch, add_id, hash_title
+from serialization import serialize_message, deserialize_titles_message, ROW_SEPARATOR, is_EOF, get_EOF_client_id, create_EOF, serialize_batch, add_id, hash_title
 import signal
 import queue
 from multiprocessing import Process
@@ -100,7 +100,7 @@ class DataCoordinator:
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            client_id = get_EOF_id(body)
+            client_id = get_EOF_client_id(body)
             self.manage_EOF(client_id)
             self.change_parse_mode(REVIEWS_MODE, client_id)
             
@@ -278,7 +278,7 @@ class ResultsCoordinator:
         #print(f'De la query {query} me llego {body}')
         if is_EOF(body):
             print("Me llefo un eof: ", body)
-            client_id = get_EOF_id(body)
+            client_id = get_EOF_client_id(body)
             self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
             if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
                 self.send_results(client_id)

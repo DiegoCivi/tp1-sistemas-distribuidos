@@ -14,9 +14,6 @@ QUERY_COORDINATOR_QUANTITY = 1
 
 class Worker:
 
-    def __init__(self):
-        pass
-
     def _create_batches(self, batch, next_workers_quantity):
         raise Exception('Function needs to be implemented')
 
@@ -42,7 +39,14 @@ class Worker:
 
     def handle_data(self, method, body):
         if is_EOF(body):
-            self.manage_EOF(body, method)
+            worker_id = get_EOF_worker_id(body)                                     # The id of the worker that sent the EOF
+            client_id = get_EOF_client_id(body)                                     # The id of the active client
+            client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())     # A set with the ids of the workers that already sent their EOF fot this client
+            if worker_id not in client_eof_workers_ids:
+                client_eof_workers_ids.add(worker_id)
+                self.eof_workers_ids[client_id] = client_eof_workers_ids
+                self.manage_EOF(body, method, client_id)
+
             self.middleware.ack_message(method)
             return
         
@@ -76,6 +80,7 @@ class FilterWorker(Worker):
         self.input_name = create_queue_name(input_name, id) 
         self.iteration_queue = iteration_queue
         self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.eof_quantity = eof_quantity
         self.output_name = output_name
         self.workers_quantity = workers_quantity
@@ -121,8 +126,8 @@ class FilterWorker(Worker):
 
         return workers_batches
 
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        #client_id = get_EOF_client_id(body)
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_quantity == self.eof_counter[client_id]:
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
@@ -155,6 +160,7 @@ class JoinWorker:
         self.iteration_queue = iteration_queue
         self.eof_counter_titles = {}
         self.eof_counter_reviews = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.eof_quantity_titles = eof_quantity_titles
         self.eof_quantity_reviews = eof_quantity_reviews
         self.counter_dicts = {}
@@ -180,7 +186,7 @@ class JoinWorker:
     def handle_titles_data(self, method, body):
         if is_EOF(body):
             print("Me llego un EOF en titles")
-            client_id = get_EOF_id(body)
+            client_id = get_EOF_client_id(body)
             self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0) + 1
             self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0)
             if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
@@ -205,7 +211,7 @@ class JoinWorker:
     def handle_reviews_data(self, method, body):
         if is_EOF(body):
             print("Me llego un EFO en reviews")
-            client_id = get_EOF_id(body)
+            client_id = get_EOF_client_id(body)
             self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0) + 1
             self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0)
             if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
@@ -339,6 +345,8 @@ class DecadeWorker(Worker):
             raise e
         self.middleware = middleware
 
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+
     def handle_signal(self, *args):
         print("Gracefully exit")
         self.queue.put('SIGTERM')
@@ -360,8 +368,8 @@ class DecadeWorker(Worker):
             worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
             self.middleware.send_message(worker_queue, serialized_message)
     
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        #client_id = get_EOF_client_id(body)
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
     def manage_message(self, client_id, data, method):
@@ -392,6 +400,7 @@ class GlobalDecadeWorker(Worker):
         self.iteration_queue = iteration_queue
         self.next_workers_quantity = next_workers_quantity
         self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.counter_dicts = {}
         self.middleware = None
         self.queue = queue.Queue()
@@ -434,8 +443,8 @@ class GlobalDecadeWorker(Worker):
         self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
     
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        #client_id = get_EOF_client_id(body)
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_counter[client_id] == self.eof_quantity:
             self.send_client_results(client_id)
@@ -461,6 +470,7 @@ class PercentileWorker(Worker):
         self.percentile = percentile
         self.eof_quantity = eof_quantity
         self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.titles_with_sentiment = {}
         self.middleware = None
         self.queue = queue.Queue()
@@ -477,8 +487,8 @@ class PercentileWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        # client_id = get_EOF_client_id(body)
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_counter[client_id] == self.eof_quantity:
             self.send_results(client_id)
@@ -529,6 +539,7 @@ class TopNWorker(Worker):
         self.eof_quantity = eof_quantity
         self.iteration_queue = iteration_queue
         self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.tops = {}
         self.middleware = None
         self.queue = queue.Queue()
@@ -562,8 +573,8 @@ class TopNWorker(Worker):
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        # client_id = get_EOF_client_id(body)
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_counter[client_id] == self.eof_quantity:
             self.send_results(client_id)
@@ -618,6 +629,7 @@ class ReviewSentimentWorker(Worker):
         except Exception as e:
             raise e
         self.middleware = middleware
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -643,8 +655,8 @@ class ReviewSentimentWorker(Worker):
             worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        # client_id = get_EOF_client_id(body)
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
     
     def manage_message(self, client_id, data, method):
@@ -666,6 +678,7 @@ class FilterReviewsWorker(Worker):
         self.minimum_quantity = minimum_quantity
         self.next_workers_quantity = next_workers_quantity
         self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.filtered_client_titles = {}
         self.middleware = None
         self.queue = queue.Queue()
@@ -700,8 +713,8 @@ class FilterReviewsWorker(Worker):
         # Send the EOFs to the workers on the query 4
         self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
 
-    def manage_EOF(self, body, method):
-        client_id = get_EOF_id(body)
+    def manage_EOF(self, body, method, client_id):
+        # client_id = get_EOF_client_id(body)
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_counter[client_id] == self.eof_quantity:
             self.send_results(client_id)

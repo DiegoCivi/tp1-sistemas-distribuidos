@@ -17,6 +17,7 @@ VALUES_SEPARATOR = ","
 EOF = 'EOF_'
 RESULT_SLICE_FIELD = "RESULT_SLICE"
 EOF_CLIENT_ID_INDEX = 4
+EOF_WORKER_ID_INDEX = 6
 NO_ID = ''
 
 def add_id(message, id):
@@ -82,8 +83,11 @@ def deserialize_into_titles_dict(row):
 def is_EOF(msg_bytes):
     return msg_bytes[:EOF_CLIENT_ID_INDEX] == bytes(EOF, 'utf-8')
 
-def get_EOF_id(bytes):
+def get_EOF_client_id(bytes):
     return str(bytes.decode('utf-8')[EOF_CLIENT_ID_INDEX])
+
+def get_EOF_worker_id(bytes):
+    return str(bytes.decode('utf-8')[EOF_WORKER_ID_INDEX])
 
 def create_EOF(client_id, worker_id):
     return EOF + client_id + ID_SEPARATOR + worker_id
