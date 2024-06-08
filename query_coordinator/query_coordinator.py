@@ -1,5 +1,5 @@
 from middleware import Middleware
-from serialization import serialize_message, deserialize_titles_message, ROW_SEPARATOR, is_EOF, get_EOF_client_id, create_EOF, serialize_batch, add_id, hash_title
+from serialization import serialize_message, deserialize_titles_message, is_EOF, get_EOF_client_id, create_EOF, serialize_batch, add_id, hash_title, get_EOF_worker_id
 import signal
 import queue
 from multiprocessing import Process
@@ -23,6 +23,11 @@ Q3_TITLES_KEY = '3_titles'
 Q3_REVIEWS_KEY = '3_reviews'
 Q5_TITLES_KEY = '5_titles'
 Q5_REVIEWS_KEY = '5_reviews'
+Q1_EOF_QUANTITY_INDEX = 0
+Q2_EOF_QUANTITY_INDEX = 1
+Q3_EOF_QUANTITY_INDEX = 2
+Q4_EOF_QUANTITY_INDEX = 3
+Q5_EOF_QUANTITY_INDEX = 4
 ID = '0' # WARNING: If this is changed, results will never get back to the QueryCoordinator 
 
 class QueryCoordinator:
@@ -78,6 +83,7 @@ class DataCoordinator:
         self.id = id
         self.workers = workers
         self.clients_parse_mode = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.stop = False
         self.middleware = None
         self.queue = queue.Queue()
@@ -101,13 +107,16 @@ class DataCoordinator:
     def handle_data(self, method, body):
         if is_EOF(body):
             client_id = get_EOF_client_id(body)
-            self.manage_EOF(client_id)
-            self.change_parse_mode(REVIEWS_MODE, client_id)
+            file_identifier = get_EOF_worker_id(body)
+            client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())
+
+            if file_identifier not in client_eof_workers_ids:
+                self.manage_EOF(client_id)
+                self.change_parse_mode(REVIEWS_MODE, client_id)
             
             self.middleware.ack_message(method)
             return
         
-        #print(body.decode('utf-8')[:10])
         client_id, batch = deserialize_titles_message(body)
         if client_id not in self.clients_parse_mode:
             # Since titles are always first, every new client needs to be initialized with the TITLES_MODE
@@ -231,11 +240,15 @@ class DataCoordinator:
 
 class ResultsCoordinator:
 
-    def __init__(self, id, eof_quantity):
+    def __init__(self, id, eof_quantities):
         self.id = id
-        self.eof_quantity = eof_quantity
+        self.eof_quantity = sum(eof_quantities)
+        # self.eof_quantities = {Q1: self.eof_quantities[Q1_EOF_QUANTITY_INDEX], Q2: self.eof_quantities[Q2_EOF_QUANTITY_INDEX], 
+        #                        Q3: self.eof_quantities[Q3_EOF_QUANTITY_INDEX], Q4: self.eof_quantities[Q4_EOF_QUANTITY_INDEX], Q5: self.eof_quantities[Q5_EOF_QUANTITY_INDEX]}
         self.clients_results = {}
         self.clients_results_counter = {}
+        #self.eof_queries = {}               # This dict stores for each active client, the remaining EOFs for each query
+        self.eof_worker_ids = {}            # This dict stores for each active client, the worker ids that sent an EOF in each query
         self.stop = False
         self.middleware = None
         self.queue = queue.Queue()
@@ -273,26 +286,47 @@ class ResultsCoordinator:
             return line
         else:
             return data[0]['results']
+        
+    def repeated_EOF(self, eof_msg, client_id, worker_id, query):
+        """
+        Each pipeline sends its results through its own queue, and each pipeline has a different
+        quantity of workers at the end stage. This means that if pipeline X has at his end stage
+        4 workers, we will have to receive through the results queue of pipeline X 4 different EOFs.
+        Since this workers can fail, there may be cases where they send an EOF more than one time.
+
+        Here we check if the worker id is already in the dict that saves for each client, the ids of the
+        workers that already sent their EOF for each query.
+        """
+        if client_id not in self.eof_worker_ids:
+            self.eof_worker_ids[client_id] = {}
+
+        if query not in self.eof_worker_ids[client_id]:
+            self.eof_worker_ids[client_id][query] = set()
+
+        if worker_id not in self.eof_worker_ids[client_id][query]:
+            self.eof_worker_ids[client_id][query].add(worker_id)
+            return False
+        
+        return True
 
     def handle_results(self, method, body, fields_to_print, query):
-        #print(f'De la query {query} me llego {body}')
         if is_EOF(body):
-            print("Me llefo un eof: ", body)
             client_id = get_EOF_client_id(body)
-            self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-            if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
-                self.send_results(client_id)
-                # self.middleware.stop_consuming()
+            worker_id = get_EOF_worker_id(body)
+
+            if not self.repeated_EOF(body, client_id, worker_id, query):
+
+                self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
+                if self.clients_results_counter[client_id] == self.eof_quantity: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
+                    self.send_results(client_id)
 
             self.middleware.ack_message(method)
             return
 
         client_id, result_dict = deserialize_titles_message(body)
-        #print(result_dict)
         if client_id not in self.clients_results:
             self.clients_results[client_id] = {}
         
-        #print(data)
         new_result_line = '\n' + self.build_result_line(result_dict, fields_to_print, query)
         self.clients_results[client_id][query] = self.clients_results[client_id].get(query, '') + new_result_line 
 
@@ -314,7 +348,6 @@ class ResultsCoordinator:
         self.middleware.consume()
 
     def assemble_results(self, client_id):
-        # print(self.clients_results)
         client_results_dict = self.clients_results[client_id]
         results = []
         
@@ -351,3 +384,7 @@ class ResultsCoordinator:
 
         eof_msg = create_EOF(client_id, self.id)
         self.middleware.send_message(SEND_SERVER_QUEUE, eof_msg)
+
+        del self.clients_results[client_id]
+        del self.eof_worker_ids[client_id]
+        del self.clients_results_counter[client_id]

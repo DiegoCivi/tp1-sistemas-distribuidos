@@ -11,6 +11,8 @@ from multiprocessing import Process, Queue
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
 RECEIVE_COORDINATOR_QUEUE = 'server' 
 EOF_MSG = "EOF"
+TITLES_FILE_IDENTIFIER = 't'
+REVIEWS_FILE_IDENTIFIER = 'r'
 
 
 class Server: # TODO: Implement SIGTERM handling
@@ -129,7 +131,6 @@ class ResultFordwarder:
         print("YA LE MANDE AL CLIENT")
 
 
-
 class DataFordwarder:
 
     def __init__(self, socket, id):
@@ -155,13 +156,13 @@ class DataFordwarder:
         Reads the client data and fordwards it to the corresponding parts of the system
         """
         # First read the titles dataset
-        self._receive_and_forward_data()
+        self._receive_and_forward_data(TITLES_FILE_IDENTIFIER)
         print("Ya mande todo el archvio titles")
         # Then read the reviews dataset
-        self._receive_and_forward_data() 
+        self._receive_and_forward_data(REVIEWS_FILE_IDENTIFIER) 
         print("Ya mande todo el archivo reviews")
                 
-    def _receive_and_forward_data(self):
+    def _receive_and_forward_data(self, file_identifier):
         while self.message_parser.decode() != EOF_MSG:
             socket_content, e = read_socket(self._client_socket)
             if e != None:
@@ -175,8 +176,8 @@ class DataFordwarder:
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
                 self.message_parser.clean()
             else:
-                # Add the id to the EOF and send it
-                msg = EOF_MSG + '_' + self.id
+                # Add the file identifier to the EOF and send it
+                msg = EOF_MSG + '_' + self.id + '_' + file_identifier
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
         
         print(f'CLIENT_{self.id} HAS FINISHED')

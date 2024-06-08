@@ -42,11 +42,11 @@ class Worker:
         client_eof_workers_ids.add(worker_id)
         self.eof_workers_ids[client_id] = client_eof_workers_ids
 
-    def handle_data(self, method, body):
+    def handle_data(self, method, body):            
         if is_EOF(body):
-            worker_id = get_EOF_worker_id(body)                                     # The id of the worker that sent the EOF
-            client_id = get_EOF_client_id(body)                                     # The id of the active client
-            client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())     # A set with the ids of the workers that already sent their EOF fot this client
+            worker_id = get_EOF_worker_id(body)                                 # The id of the worker that sent the EOF
+            client_id = get_EOF_client_id(body)                                 # The id of the active client
+            client_eof_workers_ids = self.eof_workers_ids.get(client_id, set()) # A set with the ids of the workers that already sent their EOF for this client
             
             # Check if the EOF was already received from that worker (This is done to handle duplicated EOFs). 
             # If already received, the EOF is inmediately acked.
@@ -223,7 +223,6 @@ class JoinWorker:
 
     def handle_reviews_data(self, method, body):
         if is_EOF(body):
-            print("Me llego un EFO en reviews")
             worker_id = get_EOF_worker_id(body)
             client_id = get_EOF_client_id(body)
             client_eof_workers_ids = self.eof_workers_ids_reviews.get(client_id, set())
@@ -299,6 +298,7 @@ class JoinWorker:
     def send_results(self, client_id):
         # Check if there are leftover reviews that need to be added to the counter_dict
         self.check_leftover_reviews(client_id)
+
         # Send batch
         batch_size = 0
         batch = {}
@@ -306,11 +306,14 @@ class JoinWorker:
             # Ignore titles with no reviews
             if counter[0] == 0:
                 continue
+
+            # Serialization of the message depends on which query is using the JoinWorker
             if self.query == QUERY_5:
                 batch[title] = str(counter[1] / counter[0])
             else:
                 batch[title] = counter
 
+            # Once the batch reached the BATCH_SIZE. It can be sent.
             batch_size += 1
             if batch_size == BATCH_SIZE:
                 serialized_message = serialize_message([serialize_dict(batch)], client_id)
@@ -318,10 +321,12 @@ class JoinWorker:
                 batch = {}
                 batch_size = 0
 
+        # If the for loop ended with a batch that was never sent, send it
         if len(batch) != 0:
             serialized_message = serialize_message([serialize_dict(batch)], client_id)
             self.middleware.send_message(self.output_name, serialized_message)
 
+        # Finally, send the EOF
         eof_msg = create_EOF(client_id, self.worker_id)
         self.middleware.send_message(self.output_name, eof_msg)
 
