@@ -15,7 +15,7 @@ QUERY_COORDINATOR_QUANTITY = 1
 class Worker:
 
     def __init__(self):
-        pass
+        pass # TODO: Add the healtch check handler here
 
     def _create_batches(self, batch, next_workers_quantity):
         raise Exception('Function needs to be implemented')
@@ -756,3 +756,12 @@ class FilterReviewsWorker(Worker):
             serialized_message = serialize_message(serialized_batch, client_id)
             worker_queue = create_queue_name(output_queue, worker_id)#output_queue + '_' + worker_id
             self.middleware.send_message(worker_queue, serialized_message)
+
+class HealthCheckHandler():
+
+    def __init__(self, address, port):
+        self.address = address
+        self.port = port
+
+    def handle_health_check(self):
+        pass # TODO: Check how to use UDP to ACK the health check

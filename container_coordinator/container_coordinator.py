@@ -38,7 +38,8 @@ class ProcessCreator:
         Handler of messages of a connection. This connection can be another ContainerCoordinator
         or a worker from the system.
         """
-        pass
+        while True:
+            self.health_checker.check_connection(id, socket)
         # while True: # TODO: Check this condition
             # self._socket.settimeout(1)
         #     msg = read_socket(socket)
@@ -142,6 +143,7 @@ class ContainerCoordinator(ProcessCreator):
         self.coordinators_list = coordinators_list
         # List to have all the created processes to join them later
         self.processes = []
+        self.health_checker = HealthChecker(self.connections)
 
     def im_last_coord(self):
         """
@@ -167,26 +169,14 @@ class ContainerCoordinator(ProcessCreator):
         p = Process(target=self.create_connector, args=(self.id, self.connections, self.coordinators_list, reconnection))
         p.start()
         self.processes.append(p)
-
-    def perform_health_check(self):
+    
+    def close_resources(self):
         """
-        Perform a health check to all the connections. If one of them is down, it will be
-        restarted.
+        Close the socket and the processes
         """
-        for id, conn in self.connections.items(): # TODO: This should be done in a separate process or thread for each connection
-            try:
-                write_socket(conn, 'HEALTH_CHECK') # TODO: Should we wait for a timeout? Otherwise restart_container could
-                                            # send a SIGTERM so we can successfully close the connection on the other side
-            except Exception as e: # We restart the container if the connection is down
-                print(f"Container {id} is down. Restarting it.")
-                self.restart_and_reconnect(id)
-        
-    def restart_and_reconnect(self, id):
-        """
-        Restart the container with the id and reconnect to it.
-        """
-        restart_container(id)
-        self.initiate_reconnection()
+        self._socket.close()
+        self.join_processes()
+        self.health_checker.join_processes()
 
     def run(self):
         """
@@ -231,7 +221,36 @@ class ContainerCoordinator(ProcessCreator):
                 pass
 
         print('TERMINE')
-        self.join_processes()
+        self.close_resources()
+
+class HealthChecker(ProcessCreator):
+    """
+    Responsible for checking the health of a certain connection. If the connection
+    is not healthy, it will restart the container. To determine if the connection is
+    healthy, a simple message will be sent to the other side with a timeout of fixed
+    time. If an ACK is not received, the container will be restarted.
+
+    """
+    
+    def check_connection(self, id, conn):
+        """
+        Check the health of the connection with the id.
+        """
+        try:
+            conn.write_socket("HEALTH_CHECK")
+            conn.settimeout(5) # TODO: Use an environment variable for this or a constant
+            msg = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
+            if msg != "ACK":
+                self.restart_container(id)
+        except Exception as e:
+            print(f"Error: {e}")
+            self.restart_container(id)
+    
+    def restart_container(self, id):
+        """
+        Restart the container with the id.
+        """
+        os.system(f"docker restart {id}")
 
 
 # HOW TO START A CONTAINER AGAIN:

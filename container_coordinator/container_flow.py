@@ -21,12 +21,3 @@ class ContainerFlow:
 
     def remove_container(self, container_id):
         self.container_list.remove(container_id)
-
-    def restart_container(self, container_id):
-        os.system(f"docker restart {container_id}")
-
-    def stop_container(self, container_id):
-        os.system(f"docker stop {container_id}")
-    
-    def start_container(self, container_id):
-        os.system(f"docker start {container_id}")
