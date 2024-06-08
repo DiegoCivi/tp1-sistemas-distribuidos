@@ -81,17 +81,19 @@ class ResultFordwarder:
         self.results = Message("")
 
     def run(self):
-        print("ResultFordwarder is running")
         self._receive_results()
-        #print("Enviando resultados de queries 1 a 5 al cliente...")
-        #self.send_results()
 
     def read_results(self, method, body):
-        #print(body)
         if is_EOF(body):
-            print('LLego el EOF')
             client_id = get_EOF_client_id(body)
-            self._send_result(client_id)
+
+            # If the client_id is not in the results_dict. It means
+            # his results have already been sent and that the received EOF
+            # is a duplicated one, so we hacee to ignore it.
+            if client_id in self.results_dict:
+                client_id = get_EOF_client_id(body)
+                self._send_result(client_id)
+
             self.middleware.ack_message(method)
             return
         
@@ -120,16 +122,15 @@ class ResultFordwarder:
 
         client_socket = self.clients[client_id]
         client_results = self.results_dict[client_id]
-        #print(client_results)
+
         e = write_socket(client_socket, client_results.msg)
         if e != None:
             raise e
+        
         write_socket(client_socket, EOF_MSG)
         client_socket.close()
         del self.results_dict[client_id]
         del self.clients[client_id]
-        print("YA LE MANDE AL CLIENT")
-
 
 class DataFordwarder:
 
