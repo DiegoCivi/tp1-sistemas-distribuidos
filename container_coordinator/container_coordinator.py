@@ -1,6 +1,7 @@
 import socket
 from multiprocessing import Process, Manager, Queue
 from communications import read_socket, write_socket
+from container_flow import restart_container
 import os
 import time
 import signal
@@ -166,6 +167,26 @@ class ContainerCoordinator(ProcessCreator):
         p = Process(target=self.create_connector, args=(self.id, self.connections, self.coordinators_list, reconnection))
         p.start()
         self.processes.append(p)
+
+    def perform_health_check(self):
+        """
+        Perform a health check to all the connections. If one of them is down, it will be
+        restarted.
+        """
+        for id, conn in self.connections.items(): # TODO: This should be done in a separate process or thread for each connection
+            try:
+                write_socket(conn, 'HEALTH_CHECK') # TODO: Should we wait for a timeout? Otherwise restart_container could
+                                            # send a SIGTERM so we can successfully close the connection on the other side
+            except Exception as e: # We restart the container if the connection is down
+                print(f"Container {id} is down. Restarting it.")
+                self.restart_and_reconnect(id)
+        
+    def restart_and_reconnect(self, id):
+        """
+        Restart the container with the id and reconnect to it.
+        """
+        restart_container(id)
+        self.initiate_reconnection()
 
     def run(self):
         """
