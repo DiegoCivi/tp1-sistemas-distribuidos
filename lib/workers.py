@@ -3,6 +3,10 @@ from filters import filter_by, accumulate_authors_decades, different_decade_coun
 from serialization import *
 import signal
 import queue
+import socket
+import os
+from multiprocessing import Process
+from communications import read_socket, write_socket
 
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
@@ -15,7 +19,13 @@ QUERY_COORDINATOR_QUANTITY = 1
 class Worker:
 
     def __init__(self):
-        pass # TODO: Add the healtch check handler here
+        signal.signal(signal.SIGTERM, self.handle_signal)
+        self.address = os.getenv("ADDRESS")
+        self.port = os.getenv("PORT")
+        self.health_check = HealthCheckHandler(self.address, self.port)
+        self.health_check = Process(target=self.health_check.handle_health_check)
+        self.health_check.start()
+        
 
     def _create_batches(self, batch, next_workers_quantity):
         raise Exception('Function needs to be implemented')
@@ -81,6 +91,7 @@ class FilterWorker(Worker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def set_filter_type(self, type, filtering_function, value):
         self.filtering_function = filtering_function
@@ -154,6 +165,12 @@ class JoinWorker:
         self.query = query
         self.middleware = None
         self.queue = queue.Queue()
+        self.address = os.getenv("ADDRESS")
+        self.port = os.getenv("PORT")
+        self.health_check = HealthCheckHandler(self.address, self.port)
+        self.health_check = Process(target=self.health_check.handle_health_check)
+        self.health_check.start()
+
         try:
             middleware = Middleware(self.queue)
         except Exception as e:
@@ -168,6 +185,7 @@ class JoinWorker:
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def handle_titles_data(self, method, body):
         if is_EOF(body):
@@ -334,6 +352,7 @@ class DecadeWorker(Worker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
@@ -405,6 +424,7 @@ class GlobalDecadeWorker(Worker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def _send_batches(self, workers_batches, output_queue, client_id):
         for worker_id, batch in workers_batches.items():
@@ -479,6 +499,7 @@ class PercentileWorker(Worker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def handle_data(self, method, body):
         if is_EOF(body):
@@ -553,6 +574,7 @@ class TopNWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
         print(self.eof_counter)
+        self.health_check.join()
 
     def send_results(self, client_id):
         if not self.last:
@@ -637,6 +659,7 @@ class ReviewSentimentWorker(Worker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def create_and_send_batches(self, batch, client_id, output_queue=None):
         workers_batches = {}
@@ -701,6 +724,7 @@ class FilterReviewsWorker(Worker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def send_results(self, client_id):
         # Send the results to the query 4 and the QueryCoordinator
@@ -764,4 +788,10 @@ class HealthCheckHandler():
         self.port = port
 
     def handle_health_check(self):
-        pass # TODO: Check how to use UDP to ACK the health check
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind((self.address, self.port))
+        while True:
+            msg = read_socket(sock)
+            print("Received message: ", msg)
+            if msg.decode() == "HEALTH_CHECK":
+                write_socket(sock, "ACK".encode())

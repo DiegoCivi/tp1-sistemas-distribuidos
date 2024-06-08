@@ -135,6 +135,7 @@ class ContainerCoordinator(ProcessCreator):
         self._socket.bind(address)
         self._socket.listen(listen_backlog)
         self.container_coordinators = {}
+        self.containers = {}
         self.stop = False
         self.manager = Manager()
         self.connections = self.manager.dict() # { identifier: TCPsocket }
@@ -228,7 +229,8 @@ class HealthChecker(ProcessCreator):
     Responsible for checking the health of a certain connection. If the connection
     is not healthy, it will restart the container. To determine if the connection is
     healthy, a simple message will be sent to the other side with a timeout of fixed
-    time. If an ACK is not received, the container will be restarted.
+    time. If an ACK is not received, the container will be restarted after waiting 
+    for a little bit.
 
     """
     
@@ -244,7 +246,11 @@ class HealthChecker(ProcessCreator):
                 self.restart_container(id)
         except Exception as e:
             print(f"Error: {e}")
-            self.restart_container(id)
+            # The container could be having a problem so we wait a little bit and read again with the same timeout
+            time.sleep(5)
+            msg = read_socket(conn)
+            if msg != "ACK":
+                self.restart_container(id)
     
     def restart_container(self, id):
         """
