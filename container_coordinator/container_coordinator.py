@@ -13,6 +13,7 @@ PORT_INDEX = 1
 RECONNECTION_SLEEP = 5
 QUEUE_SIZE = 10
 END_MSG = 'END'
+CONTAINERS_LIST = "containers_list.config"
 
 class ProcessCreator:
     """
@@ -129,7 +130,7 @@ class ContainerCoordinator(ProcessCreator):
     and one of his connection shutdowns, it needs to get that container back and running.
     """
 
-    def __init__(self, id, address, listen_backlog, coordinators_list):
+    def __init__(self, id, address, listen_backlog, coordinators_list, containers_list):
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.bind(address)
@@ -140,6 +141,8 @@ class ContainerCoordinator(ProcessCreator):
         self.manager = Manager()
         self.connections = self.manager.dict() # { identifier: TCPsocket }
         self.id = id
+        # List of containers that the coordinator is responsible for
+        self.containers_list = containers_list
         # This list of tuples has the address of the other coordinators with their id [(host1, port1, id1), (host2, port2, id2), ...]
         self.coordinators_list = coordinators_list
         # List to have all the created processes to join them later
@@ -273,16 +276,21 @@ def parse_string_to_list(input_string):
     
     return result
 
+def read_workers_file(file_path):
+    with open(file_path, 'r') as file:
+        return [line.strip() for line in file.readlines()]
+
 def main():
     coordinators_list = os.getenv('COORDINATORS_LIST')                      # host1, port1, id1, host2, port2, id2, ...
     coordinators_list = parse_string_to_list(coordinators_list)             # [(host1, port1, id1), (host2, port2, id2), ...]
     coord_id = int(os.getenv('ID'))
     listen_backlog = int(os.getenv('LISTEN_BACKLOG'))
+    containers_list = read_workers_file(CONTAINERS_LIST)
 
     coord_info = coordinators_list[coord_id]                                # (host, port, id)
     coord_addr = (coord_info[HOST_INDEX], coord_info[PORT_INDEX])
     print("Mi addr es: ", coord_addr)
-    container_coord = ContainerCoordinator(coord_id, coord_addr, listen_backlog, coordinators_list)
+    container_coord = ContainerCoordinator(coord_id, coord_addr, listen_backlog, coordinators_list, containers_list)
     container_coord.run()
 
 

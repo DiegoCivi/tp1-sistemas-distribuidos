@@ -31,51 +31,51 @@ services:
       - LISTEN_BACKLOG=10
 
 
-  # rabbitmq:
-  #   container_name: rabbit
-  #   build:
-  #     context: ./rabbitmq
-  #     dockerfile: rabbitmq.dockerfile
-  #   ports:
-  #     - 15672:15672
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:15672"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 10
+  rabbitmq:
+    container_name: rabbit
+    build:
+      context: ./rabbitmq
+      dockerfile: rabbitmq.dockerfile
+    ports:
+      - 15672:15672
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:15672"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  # server:
-  #   container_name: server
-  #   build:
-  #     context: .
-  #     dockerfile: ./server/server.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links:
-  #     - rabbitmq
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - HOST=server
-  #     - PORT=12345
-  #     - LISTEN_BACKLOG=1
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: ./server/server.dockerfile
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=server
+      - PORT=12345
+      - LISTEN_BACKLOG=1
 
-  # client_1:
-  #   container_name: client_1
-  #   build:
-  #     context: .
-  #     dockerfile: ./client/client.dockerfile
-  #   depends_on:
-  #     - server
-  #   links:
-  #     - server
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #     - HOST=server
-  #     - PORT=12345
-  #     - TITLES_FILEPATH=./datasets/books_data.csv
-  #     - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
-  #   volumes:
-  #     - ./datasets:/datasets
+  client_1:
+    container_name: client_1
+    build:
+      context: .
+      dockerfile: ./client/client.dockerfile
+    depends_on:
+      - server
+    links:
+      - server
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=server
+      - PORT=12345
+      - TITLES_FILEPATH=./datasets/books_data.csv
+      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
+    volumes:
+      - ./datasets:/datasets
 
   # client_2:
   #   container_name: client_2
@@ -95,72 +95,72 @@ services:
   #   volumes:
   #     - ./datasets:/datasets
 
-  # query_coordinator_worker:
-  #   container_name: query_coordinator_worker
-  #   build:
-  #     context: .
-  #     dockerfile: ./query_coordinator/query_coordinator_worker.dockerfile
-  #   depends_on:
-  #     - rabbitmq
-  #   links:
-  #     - rabbitmq
-  #   environment:
-  #     - WORKERS_Q1=3,QUEUE_Q1|filter_category_worker
-  #     - WORKERS_Q2=3,QUEUE_Q2|decade_counter_worker
-  #     - WORKERS_Q3_TITLES=3,QUEUE_Q3|filter_year_worker
-  #     - WORKERS_Q3_REVIEWS=6,QUEUE_Q3|reviews_counter_worker_reviews
-  #     - WORKERS_Q5_TITLES=3,QUEUE_Q5|filter_category_worker
-  #     - WORKERS_Q5_REVIEWS=4,QUEUE_Q5|review_sentiment_worker
-  #     - EOF_QUANTITY=3,1,1,1,1
+  query_coordinator_worker:
+    container_name: query_coordinator_worker
+    build:
+      context: .
+      dockerfile: ./query_coordinator/query_coordinator_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+    environment:
+      - WORKERS_Q1=3,QUEUE_Q1|filter_category_worker
+      - WORKERS_Q2=3,QUEUE_Q2|decade_counter_worker
+      - WORKERS_Q3_TITLES=3,QUEUE_Q3|filter_year_worker
+      - WORKERS_Q3_REVIEWS=6,QUEUE_Q3|reviews_counter_worker_reviews
+      - WORKERS_Q5_TITLES=3,QUEUE_Q5|filter_category_worker
+      - WORKERS_Q5_REVIEWS=4,QUEUE_Q5|review_sentiment_worker
+      - EOF_QUANTITY=3,1,1,1,1
 
-  # filter_category_computers_worker0:
-  #   container_name: filter_category_computers_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=0
-  #     - NEXT_WORKER_QUANTITY=3
-  #     - WORKERS_QUANTITY=3
-  #     - CATEGORY=Computers
-  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-  #     - EOF_QUEUE=QUEUE_Q1|eof_category
-  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_category
-  #     - EOF_QUANTITY=1
-  #     - LAST=0
-  # filter_category_computers_worker1:
-  #   container_name: filter_category_computers_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=1
-  #     - NEXT_WORKER_QUANTITY=3
-  #     - WORKERS_QUANTITY=3
-  #     - CATEGORY=Computers
-  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-  #     - EOF_QUEUE=QUEUE_Q1|eof_category
-  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_category
-  #     - EOF_QUANTITY=1
-  #     - LAST=0
-  # filter_category_computers_worker2:
-  #   container_name: filter_category_computers_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
-  #   environment:
-  #     - WORKER_ID=2
-  #     - NEXT_WORKER_QUANTITY=3
-  #     - WORKERS_QUANTITY=3
-  #     - CATEGORY=Computers
-  #     - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
-  #     - EOF_QUEUE=QUEUE_Q1|eof_category
-  #     - ITERATION_QUEUE=QUEUE_Q1|iteration_category
-  #     - EOF_QUANTITY=1
-  #     - LAST=0
+  filter_category_computers_worker0:
+    container_name: filter_category_computers_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    environment:
+      - WORKER_ID=0
+      - NEXT_WORKER_QUANTITY=3
+      - WORKERS_QUANTITY=3
+      - CATEGORY=Computers
+      - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+      - EOF_QUEUE=QUEUE_Q1|eof_category
+      - ITERATION_QUEUE=QUEUE_Q1|iteration_category
+      - EOF_QUANTITY=1
+      - LAST=0
+  filter_category_computers_worker1:
+    container_name: filter_category_computers_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    environment:
+      - WORKER_ID=1
+      - NEXT_WORKER_QUANTITY=3
+      - WORKERS_QUANTITY=3
+      - CATEGORY=Computers
+      - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+      - EOF_QUEUE=QUEUE_Q1|eof_category
+      - ITERATION_QUEUE=QUEUE_Q1|iteration_category
+      - EOF_QUANTITY=1
+      - LAST=0
+  filter_category_computers_worker2:
+    container_name: filter_category_computers_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/filter_category_worker.dockerfile
+    environment:
+      - WORKER_ID=2
+      - NEXT_WORKER_QUANTITY=3
+      - WORKERS_QUANTITY=3
+      - CATEGORY=Computers
+      - DATA_SOURCE_NAME=QUEUE_Q1|filter_category_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q1|filter_title_worker
+      - EOF_QUEUE=QUEUE_Q1|eof_category
+      - ITERATION_QUEUE=QUEUE_Q1|iteration_category
+      - EOF_QUANTITY=1
+      - LAST=0
   # filter_title_worker0:
   #   container_name: filter_title_worker0
   #   build:

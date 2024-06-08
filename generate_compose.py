@@ -61,7 +61,7 @@ with open(config_file, "r") as file:
             continue
 
 # Generate docker-compose-dev.yaml
-with open("docker-compose-dev.yaml", "w") as outfile:
+with open("docker-compose-dev.yaml", "w") as outfile, open("containers_list.config", "w") as containers_list_file:
     outfile.write("services:\n")
     # Escribir servicios predefinidos
     outfile.write("  rabbitmq:\n")
@@ -111,6 +111,8 @@ with open("docker-compose-dev.yaml", "w") as outfile:
     outfile.write("      - ./datasets:/datasets\n")
     outfile.write("\n")
     for service_name, dockerfile_path in services:
+        if "container_coordinator" not in service_name:
+            containers_list_file.write(f"{service_name}\n") 
         if service_name in env_vars:
             # Write as many workers as specified in WORKERS_QUANTITY
             if "WORKERS_QUANTITY" in env_vars[service_name]:
@@ -129,7 +131,7 @@ with open("docker-compose-dev.yaml", "w") as outfile:
                         outfile.write(f'      - rabbitmq\n')
                     outfile.write(f"    environment:\n")
                     for key, value in env_vars[service_name].items():
-                        if key == "WORKER_ID":
+                        if key == "WORKER_ID" or key == "ID":
                             outfile.write(f"      - {key}={i}\n")
                         else:
                             outfile.write(f"      - {key}={value}\n")
