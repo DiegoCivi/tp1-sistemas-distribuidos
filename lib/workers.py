@@ -71,10 +71,13 @@ class Worker:
     def client_is_active(self, client_id):
         raise Exception('Function needs to be implemented')
     
+    def send_results(self, client_id):
+        raise Exception('Function needs to be implemented')
+    
     def manage_EOF(self, body, method, client_id):
         if self.acum:
             self.send_results(client_id)
-            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)    
+            #self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)    
         else:
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
         self.ack_EOFs(client_id)
@@ -558,7 +561,7 @@ class GlobalDecadeWorker(Worker):
         serialized_message = serialize_message(serialized_dict, client_id)
 
         self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
-        #self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
     
     # def manage_EOF(self, body, method, client_id):
     #     self.send_client_results(client_id)
@@ -619,7 +622,7 @@ class PercentileWorker(Worker):
             self.titles_with_sentiment[client_id][title] = float(sentiment_value)
 
     def client_is_active(self, client_id):
-        return True # TODO: Implement this func
+        return client_id in self.titles_with_sentiment
 
     def send_results(self, client_id):
         titles = titles_in_the_n_percentile(self.titles_with_sentiment[client_id], self.percentile)
@@ -644,8 +647,8 @@ class PercentileWorker(Worker):
 
         return workers_batches
 
-    def remove_active_client(self, client_id): # TODO: Implement or remove this
-        pass
+    def remove_active_client(self, client_id):
+        del self.titles_with_sentiment[client_id]
 
 
 class TopNWorker(Worker):
@@ -683,8 +686,15 @@ class TopNWorker(Worker):
             self.middleware.close_connection()
         print(self.eof_counter)
 
-    def remove_active_client(self, client_id): # TODO: Implement or remove this
-        pass
+    def remove_active_client(self, client_id):
+        if not self.last and client_id not in self.tops:
+            # This is a special case. Workers may not receive any message
+            # of a client, only its EOF. 
+            return
+        
+        del self.tops[client_id]
+
+        # TODO: Write on disk the new acum!!!!!!!!
 
     def send_results(self, client_id):
         if not self.last:
@@ -702,11 +712,11 @@ class TopNWorker(Worker):
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-    def manage_EOF(self, body, method, client_id):
-        self.send_results(client_id)
+    # def manage_EOF(self, body, method, client_id):
+    #     self.send_results(client_id)
 
     def client_is_active(self, client_id):
-        return True # TODO: Implement this func
+        return client_id in self.tops
 
     def manage_message(self, client_id, data, method):
         if client_id not in self.tops:
@@ -718,7 +728,7 @@ class TopNWorker(Worker):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
             serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id) #output_queue + '_' + worker_id
+            worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
     def _create_batches(self, batch, next_workers_quantity):
@@ -760,6 +770,7 @@ class ReviewSentimentWorker(Worker):
             raise e
         self.middleware = middleware
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.active_clients = set()
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -769,10 +780,10 @@ class ReviewSentimentWorker(Worker):
             self.middleware.close_connection()
 
     def client_is_active(self, client_id):
-        return True # TODO: Implement this func
+        return client_id in self.active_clients
 
-    def remove_active_client(self, client_id): # TODO: Implement or remove this
-        pass
+    # def remove_active_client(self, client_id): # TODO: Implement or remove this
+    #     pass
 
     def create_and_send_batches(self, batch, client_id, output_queue=None):
         workers_batches = {}
@@ -793,8 +804,16 @@ class ReviewSentimentWorker(Worker):
 
     # def manage_EOF(self, body, method, client_id):
     #     self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+
+    def add_new_active_client(self, client_id):
+        self.active_clients.add(client_id)
+        
+        # TODO: Write on disk the new active clients!!!!!!!!
     
     def manage_message(self, client_id, data, method):
+        if not self.client_is_active(client_id):
+            self.add_new_active_client(client_id)
+
         desired_data = calculate_review_sentiment(data)
         self.create_and_send_batches(desired_data, client_id)
 
@@ -851,13 +870,15 @@ class FilterReviewsWorker(Worker):
         self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
 
     def client_is_active(self, client_id):
-        return True # TODO: Implement this func
+        return client_id in self.filtered_client_titles
     
-    def remove_active_client(self, client_id): # TODO: Implement or remove this
-        pass
+    def remove_active_client(self, client_id):
+        del self.filtered_client_titles[client_id]
 
-    def manage_EOF(self, body, method, client_id):
-        self.send_results(client_id)
+        # TODO: Write on disk the new acum!!!!!!!!
+
+    # def manage_EOF(self, body, method, client_id):
+    #     self.send_results(client_id)
 
     def manage_message(self, client_id, data, method):
         if client_id not in self.filtered_client_titles:
