@@ -3,6 +3,7 @@ from filters import filter_by, accumulate_authors_decades, different_decade_coun
 from serialization import *
 import signal
 import queue
+from logger import Logguer
 
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
@@ -35,6 +36,8 @@ class Worker:
         self.active_clients.remove(client_id)
 
         # TODO: Write on disk the new active clients!!!!!!!!
+        self.log.persist(self.active_clients)
+        
     
     def manage_message(self, client_id, data, method):
         raise Exception('Function needs to be implemented')
@@ -137,14 +140,15 @@ class Worker:
 
 class FilterWorker(Worker):
 
-    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last):
+    def __init__(self, worker_id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last, log):
         self.acum = False
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.worker_id = id
+        self.worker_id = worker_id
+        self.log = Logguer(create_log_file_name(log, worker_id))
         self.last = last
         self.eof_queue = eof_queue
-        self.input_name = create_queue_name(input_name, id) 
+        self.input_name = create_queue_name(input_name, worker_id) 
         self.iteration_queue = iteration_queue
         self.eof_counter = {}
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
@@ -207,6 +211,7 @@ class FilterWorker(Worker):
         self.active_clients.add(client_id)
         
         # TODO: Write on disk the new active clients!!!!!!!!
+        self.log.persist(self.active_clients)
 
     def manage_message(self, client_id, data, method):
         if not self.client_is_active(client_id):
@@ -223,7 +228,7 @@ class FilterWorker(Worker):
 
 class JoinWorker(Worker):
 
-    def __init__(self, id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue):
+    def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue, log_acum, log_leftovers):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
@@ -231,9 +236,11 @@ class JoinWorker(Worker):
         if query != QUERY_5 and query != QUERY_3:
             raise Exception('Query not supported')
 
-        self.worker_id = id
-        self.input_titles_name = create_queue_name(input_titles_name, id)
-        self.input_reviews_name = create_queue_name(input_reviews_name, id) 
+        self.worker_id = worker_id
+        self.log_acum = Logguer(create_log_file_name(log_acum, worker_id))
+        self.log_leftovers = Logguer(create_log_file_name(log_leftovers, worker_id))
+        self.input_titles_name = create_queue_name(input_titles_name, worker_id)
+        self.input_reviews_name = create_queue_name(input_reviews_name, worker_id) 
         self.output_name = output_name
         self.iteration_queue = iteration_queue
         self.eof_counter_titles = {}
@@ -332,6 +339,8 @@ class JoinWorker(Worker):
         del self.counter_dicts[client_id]
 
         # TODO: Write on disk the new acum!!!!!!!!
+        self.log_acum.persist(self.counter_dicts)
+        self.log_leftovers.persist(self.leftover_reviews)
 
     def delete_client_EOF_counter(self, client_id):
         del self.eof_counter_reviews[client_id]
@@ -526,11 +535,12 @@ class JoinWorker(Worker):
 
 class DecadeWorker(Worker):
 
-    def __init__(self, input_name, output_name, worker_id, next_workers_quantity, eof_quantity):
+    def __init__(self, input_name, output_name, worker_id, next_workers_quantity, eof_quantity, log):
         self.acum = False
         signal.signal(signal.SIGTERM, self.handle_signal)
         
         self.worker_id = worker_id
+        self.log = Logguer(create_log_file_name(log, worker_id))
         self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
@@ -608,11 +618,12 @@ class DecadeWorker(Worker):
 
 class GlobalDecadeWorker(Worker):
 
-    def __init__(self, worker_id, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity):
+    def __init__(self, worker_id, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity, log):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.worker_id = worker_id
+        self.log = Logguer(create_log_file_name(log, worker_id))
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
@@ -684,11 +695,12 @@ class GlobalDecadeWorker(Worker):
 
 class PercentileWorker(Worker):
 
-    def __init__(self, worker_id, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity):
+    def __init__(self, worker_id, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity, log):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
         
         self.worker_id = worker_id
+        self.log = Logguer(create_log_file_name(log, worker_id))
         self.stop_worker = False
         self.input_name = input_name
         self.next_workers_quantity = next_workers_quantity
@@ -757,13 +769,14 @@ class PercentileWorker(Worker):
 
 class TopNWorker(Worker):
 
-    def __init__(self, id, input_name, output_name, eof_quantity, n, last, iteration_queue, next_workers_quantity):
+    def __init__(self, worker_id, input_name, output_name, eof_quantity, n, last, iteration_queue, next_workers_quantity, log):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
         
-        self.worker_id = id
+        self.worker_id = worker_id
+        self.log = Logguer(create_log_file_name(log, worker_id))
         self.stop_worker = False
-        self.input_name = create_queue_name(input_name, id)
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
         self.next_workers_quantity = next_workers_quantity
         self.top_n = n
@@ -924,11 +937,12 @@ class ReviewSentimentWorker(Worker):
 
 class FilterReviewsWorker(Worker):
 
-    def __init__(self, worker_id, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue):
+    def __init__(self, worker_id, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue, log):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.worker_id = worker_id
+        self.log = Logguer(create_log_file_name(log, worker_id))
         self.input_name = input_name
         self.output_name1 = output_name1
         self.iteration_queue = iteration_queue
