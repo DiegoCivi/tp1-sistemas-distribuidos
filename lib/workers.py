@@ -19,15 +19,6 @@ PORT = 4321
 
 class Worker:
 
-    def __init__(self):
-        signal.signal(signal.SIGTERM, self.handle_signal)
-        self.address = os.getenv("ADDRESS")
-        self.port = PORT
-        self.health_checker = HealthCheckHandler(self.address, self.port)
-        self.health_check = Process(target=self.health_check.handle_health_check)
-        self.health_check.start()
-        
-
     def _create_batches(self, batch, next_workers_quantity):
         raise Exception('Function needs to be implemented')
 
@@ -64,6 +55,13 @@ class FilterWorker(Worker):
 
     def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last):
         signal.signal(signal.SIGTERM, self.handle_signal)
+        
+        self.address = os.getenv("ADDRESS")
+        self.port = PORT
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.health_checker = HealthCheckHandler(self.address, self.port)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
 
         self.id = id
         self.last = last
@@ -124,7 +122,8 @@ class FilterWorker(Worker):
             if self.eof_quantity == self.eof_counter[client_id]:
                 self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
                 del self.eof_counter[client_id]
-                #self.middleware.stop_consuming()
+                # self.health_check.terminate()
+                # self.middleware.stop_consuming()
 
             self.middleware.ack_message(method)
             return
@@ -787,14 +786,23 @@ class HealthCheckHandler():
     def __init__(self, address, port):
         self.address = address
         self.port = port
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def handle_signal(self, *args):
+        print("Gracefully exit")
+        self.socket.close()
 
     def handle_health_check(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind((self.address, self.port))
+        self.socket.bind((self.address, self.port))
         # Listen for incoming connections
-        sock.listen(1)
+        print("Listening for incoming connections on port ", self.port)
+        self.socket.listen(5)
+        conn, addr = self.socket.accept()
         while True:
-            msg = read_socket(sock)
+            msg, err = read_socket(conn)
+            if err:
+                print("Error reading from socket: ", err)
+                break
             print("Received message: ", msg)
-            if msg.decode() == "HEALTH_CHECK":
-                write_socket(sock, "ACK".encode())
+            if msg == "HEALTH_CHECK":
+                write_socket(conn, "ACK")

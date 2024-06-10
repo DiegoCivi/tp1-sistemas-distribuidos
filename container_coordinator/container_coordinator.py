@@ -105,6 +105,7 @@ class Connector(ProcessCreator):
                 for _ in range(CONNECTION_TRIES):            
                     try:
                         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        print(f'Soy {self.id} y me voy a conectar a: ', id)
                         s.connect((host, port))
                         print(f'Soy {self.id} y me conecte a: ', id)
                         # We send our id and create a process to handle the connection
@@ -130,6 +131,7 @@ class Connector(ProcessCreator):
         """
         Connect to the workers. This is only done by the last ContainerCoordinator.
         """
+        print("Voy a conectarme a los workers")
         for container in self.containers_list:
             for _ in range(CONNECTION_TRIES):
                 try:
@@ -281,17 +283,18 @@ class HealthChecker(ProcessCreator):
             print(f"Performing health check with {id}")
             conn.write_socket("HEALTH_CHECK")
             conn.settimeout(5) # TODO: Use an environment variable for this or a constant
-            msg = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
-            if msg != "ACK":
-                print(f"Error: {msg}")
-                self.restart_container(id)
+            msg, err = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
+            if err:
+                raise err
             
         except Exception as e:
             print(f"Error: {e}")
             # The container could be having a problem so we wait a little bit and read again with the same timeout
             time.sleep(5)
-            msg = read_socket(conn)
-            if msg != "ACK":
+            msg, err = read_socket(conn)
+            if err:
+                print(f"Error in container, restarting: {err}")
+                raise err
                 self.restart_container(id)
     
     def restart_container(self, id):
