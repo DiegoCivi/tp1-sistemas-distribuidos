@@ -221,9 +221,10 @@ class FilterWorker(Worker):
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
 
 
-class JoinWorker:
+class JoinWorker(Worker):
 
     def __init__(self, id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue):
+        self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
 
@@ -241,6 +242,8 @@ class JoinWorker:
         self.eof_workers_ids_reviews = {} # This dict stores for each active client, the workers ids of the eofs received in the reviews queue
         self.eof_quantity_titles = eof_quantity_titles
         self.eof_quantity_reviews = eof_quantity_reviews
+        self.clients_unacked_eofs_titles = {}
+        self.clients_unacked_eofs_reviews = {}
         self.counter_dicts = {}
         self.leftover_reviews = {}
         self.query = query
@@ -259,20 +262,109 @@ class JoinWorker:
         if self.middleware != None:
             self.middleware.close_connection()
 
+    def add_title_EOF_worker_id(self, client_id, worker_id):
+        client_eof_workers_ids = self.eof_workers_ids_titles.get(client_id, set())
+        client_eof_workers_ids.add(worker_id)
+        self.eof_workers_ids_titles[client_id] = client_eof_workers_ids
+
+    def is_title_EOF_repeated(self, worker_id, client_id, client_eof_workers_ids):
+        if worker_id not in client_eof_workers_ids:
+            self.add_title_EOF_worker_id(client_id, worker_id)
+            return False
+        return True
+
+    def add_review_EOF_worker_id(self, client_id, worker_id):
+        client_eof_workers_ids = self.eof_workers_ids_reviews.get(client_id, set())
+        client_eof_workers_ids.add(worker_id)
+        self.eof_workers_ids_reviews[client_id] = client_eof_workers_ids
+
+    def is_review_EOF_repeated(self, worker_id, client_id, client_eof_workers_ids):
+        if worker_id not in client_eof_workers_ids:
+            self.add_review_EOF_worker_id(client_id, worker_id)
+            return False
+        return True
+    
+    def received_all_clients_titles_EOFs(self, client_id):
+        self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0) + 1
+        self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0)
+        if  self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
+            return True
+        return False
+    
+    def received_all_clients_reviews_EOFs(self, client_id):
+        self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0) + 1
+        self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0)
+        if  self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
+            return True
+        return False
+    
+    def add_unacked_titles_EOF(self, client_id, eof_method):
+        unacked_eofs = self.clients_unacked_eofs_titles.get(client_id, set())         
+        unacked_eofs.add(eof_method.delivery_tag)
+
+        self.clients_unacked_eofs_titles[client_id] = unacked_eofs
+    
+    def add_unacked_reviews_EOF(self, client_id, eof_method):
+        unacked_eofs = self.clients_unacked_eofs_reviews.get(client_id, set())         
+        unacked_eofs.add(eof_method.delivery_tag)
+
+        self.clients_unacked_eofs_reviews[client_id] = unacked_eofs
+    
+    # def manage_EOF(self, body, method, client_id):
+    #     self.send_results(client_id)
+    #     self.ack_titles_EOFs(client_id)
+    #     self.remove_active_client(client_id)
+
+    def ack_EOFs(self, client_id):
+        for delivery_tag in self.clients_unacked_eofs_reviews[client_id]:
+            self.middleware.ack_message(delivery_tag)
+
+        for delivery_tag in self.clients_unacked_eofs_titles[client_id]:
+            self.middleware.ack_message(delivery_tag)
+
+        del self.clients_unacked_eofs_titles[client_id]
+        del self.clients_unacked_eofs_reviews[client_id]
+
+    def remove_active_client(self, client_id):
+        if client_id in self.leftover_reviews:
+            del self.leftover_reviews[client_id]
+        
+        del self.counter_dicts[client_id]
+
+        # TODO: Write on disk the new acum!!!!!!!!
+
+    def delete_client_EOF_counter(self, client_id):
+        del self.eof_counter_reviews[client_id]
+        del self.eof_counter_titles[client_id]
+    
+    def client_is_active(self, client_id):
+        return client_id in self.counter_dicts
+
     def handle_titles_data(self, method, body):
         if is_EOF(body):
             print("Me llego un EOF en titles")
             worker_id = get_EOF_worker_id(body)
             client_id = get_EOF_client_id(body)
             client_eof_workers_ids = self.eof_workers_ids_titles.get(client_id, set())
-            if worker_id not in client_eof_workers_ids:
-                client_eof_workers_ids.add(worker_id)
-                self.eof_workers_ids_titles[client_id] = client_eof_workers_ids
+            if not self.is_title_EOF_repeated(worker_id, client_id, client_eof_workers_ids):
+                if self.received_all_clients_titles_EOFs(client_id):
+                    self.add_unacked_titles_EOF(client_id, method)
+                    self.manage_EOF(body, method, client_id)
+                    self.delete_client_EOF_counter(client_id)
+                    return
+                else:
+                    if self.client_is_active(client_id):
+                        # Add the EOF delivery tag to the list of unacked EOFs
+                        self.add_unacked_titles_EOF(client_id, method)
+                        return
+            # if worker_id not in client_eof_workers_ids:
+            #     client_eof_workers_ids.add(worker_id)
+            #     self.eof_workers_ids_titles[client_id] = client_eof_workers_ids
 
-                self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0) + 1
-                self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0)
-                if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
-                    self.send_results(client_id)
+            #     self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0) + 1
+            #     self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0)
+            #     if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
+            #         self.send_results(client_id)
 
             self.middleware.ack_message(method)
             return
@@ -295,14 +387,26 @@ class JoinWorker:
             worker_id = get_EOF_worker_id(body)
             client_id = get_EOF_client_id(body)
             client_eof_workers_ids = self.eof_workers_ids_reviews.get(client_id, set())
-            if worker_id not in client_eof_workers_ids:
-                client_eof_workers_ids.add(worker_id)
-                self.eof_workers_ids_reviews[client_id] = client_eof_workers_ids
 
-                self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0) + 1
-                self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0)
-                if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
-                    self.send_results(client_id)
+            if not self.is_review_EOF_repeated(worker_id, client_id, client_eof_workers_ids):
+                if self.received_all_clients_reviews_EOFs(client_id):
+                    self.add_unacked_reviews_EOF(client_id, method)
+                    self.manage_EOF(body, method, client_id)
+                    self.delete_client_EOF_counter(client_id)
+                    return
+                else:
+                    if self.client_is_active(client_id):
+                        # Add the EOF delivery tag to the list of unacked EOFs
+                        self.add_unacked_reviews_EOF(client_id, method)
+                        return
+            # if worker_id not in client_eof_workers_ids:
+            #     client_eof_workers_ids.add(worker_id)
+            #     self.eof_workers_ids_reviews[client_id] = client_eof_workers_ids
+
+            #     self.eof_counter_reviews[client_id] = self.eof_counter_reviews.get(client_id, 0) + 1
+            #     self.eof_counter_titles[client_id] = self.eof_counter_titles.get(client_id, 0)
+            #     if self.eof_counter_titles[client_id] == self.eof_quantity_titles and self.eof_counter_reviews[client_id] == self.eof_quantity_reviews:
+            #         self.send_results(client_id)
 
             self.middleware.ack_message(method)
             return
@@ -611,8 +715,8 @@ class PercentileWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def manage_EOF(self, body, method, client_id):
-        self.send_results(client_id)
+    # def manage_EOF(self, body, method, client_id):
+    #     self.send_results(client_id)
 
     def manage_message(self, client_id, data, method):
         if client_id not in self.titles_with_sentiment:
