@@ -12,6 +12,7 @@
 
 # Define config file
 config_file = "config_file_queries.config"
+container_config = "containers_list.config"
 
 # Dictionary to store the environment variables of each service
 env_vars = {}
@@ -61,7 +62,7 @@ with open(config_file, "r") as file:
             continue
 
 # Generate docker-compose-dev.yaml
-with open("docker-compose-dev.yaml", "w") as outfile, open("containers_list.config", "w") as containers_list_file:
+with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w") as containers_list_file:
     outfile.write("services:\n")
     # Escribir servicios predefinidos
     outfile.write("  rabbitmq:\n")
@@ -111,14 +112,14 @@ with open("docker-compose-dev.yaml", "w") as outfile, open("containers_list.conf
     outfile.write("      - ./datasets:/datasets\n")
     outfile.write("\n")
     for service_name, dockerfile_path in services:
-        if "container_coordinator" not in service_name:
-            containers_list_file.write(f"{service_name}\n") 
         if service_name in env_vars:
             # Write as many workers as specified in WORKERS_QUANTITY
             if "WORKERS_QUANTITY" in env_vars[service_name]:
                 workers_quantity = int(env_vars[service_name]["WORKERS_QUANTITY"])
                 for i in range(workers_quantity):
                     worker_name = f"{service_name}{str(i)}"
+                    if "container_coordinator" not in worker_name:
+                        containers_list_file.write(f"{worker_name}\n") 
                     outfile.write(f"  {worker_name}:\n")
                     outfile.write(f"    container_name: {worker_name}\n")
                     outfile.write(f"    build:\n")
@@ -133,6 +134,8 @@ with open("docker-compose-dev.yaml", "w") as outfile, open("containers_list.conf
                     for key, value in env_vars[service_name].items():
                         if key == "WORKER_ID" or key == "ID":
                             outfile.write(f"      - {key}={i}\n")
+                        elif key == "ADDRESS":
+                            outfile.write(f"      - {key}={worker_name}\n")
                         else:
                             outfile.write(f"      - {key}={value}\n")
                     outfile.write("\n")

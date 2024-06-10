@@ -15,14 +15,15 @@ QUERY_5 = 5
 QUERY_3 = 3
 BATCH_SIZE = 100
 QUERY_COORDINATOR_QUANTITY = 1
+PORT = 4321
 
 class Worker:
 
     def __init__(self):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.address = os.getenv("ADDRESS")
-        self.port = os.getenv("PORT")
-        self.health_check = HealthCheckHandler(self.address, self.port)
+        self.port = PORT
+        self.health_checker = HealthCheckHandler(self.address, self.port)
         self.health_check = Process(target=self.health_check.handle_health_check)
         self.health_check.start()
         
@@ -790,6 +791,8 @@ class HealthCheckHandler():
     def handle_health_check(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind((self.address, self.port))
+        # Listen for incoming connections
+        sock.listen(1)
         while True:
             msg = read_socket(sock)
             print("Received message: ", msg)
