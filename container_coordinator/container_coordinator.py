@@ -33,16 +33,17 @@ class ProcessCreator:
         """
         connections[conn_identifier] = conn
     
-    def initiate_connection(self, id, socket, connections):
+    def initiate_connection(self, id, socket, connections, leader = False):
         """
         Handler of messages of a connection. This connection can be another ContainerCoordinator
         or a worker from the system.
         """
-        health_checker = HealthChecker()
-        healthcheck_process = Process(target=health_checker.check_connection, args=(id, socket, ))
-        healthcheck_process.start()
-        self.processes.append(healthcheck_process)
-        
+        if leader:
+            health_checker = HealthChecker()
+            healthcheck_process = Process(target=health_checker.check_connection, args=(id, socket, ))
+            healthcheck_process.start()
+            self.processes.append(healthcheck_process)
+            
         # Do whatever it follows...
 
         # while True: # TODO: Check this condition
@@ -114,7 +115,7 @@ class Connector(ProcessCreator):
                             print('Error')
                             raise err
 
-                        p = Process(target=self.initiate_connection, args=(self.id, s, self.connections,))
+                        p = Process(target=self.initiate_connection, args=(self.id, s, self.connections, False,))
                         
                         self.add_connection(self.connections, id, s)
 
@@ -139,7 +140,7 @@ class Connector(ProcessCreator):
                     s.connect((container, workers_port))
                     print(f'Soy {self.id} y me conecte a: ', container)
 
-                    p = Process(target=self.initiate_connection, args=(self.id, s, self.connections,))
+                    p = Process(target=self.initiate_connection, args=(container, s, self.connections, True))
                     
                     self.add_connection(self.connections, container, s)
 
@@ -208,9 +209,8 @@ class ContainerCoordinator(ProcessCreator):
         """
         Close the socket and the processes
         """
-        self._socket.close()
         self.join_processes()
-        self.health_checker.join_processes()
+        self._socket.close()
 
     def run(self):
         """
@@ -243,7 +243,7 @@ class ContainerCoordinator(ProcessCreator):
                     raise err
                 print(f"Soy {self.id} y se me conecto: ", identifier)
                 # Start the process responsible for receiving the data from the new connection
-                p = Process(target=self.initiate_connection, args=(self.id, conn, self.connections,))
+                p = Process(target=self.initiate_connection, args=(self.id, conn, self.connections, False,))
 
                 # Put in the dict the identifier with the TCP socket
                 self.add_connection(self.connections, identifier, conn)
@@ -262,10 +262,10 @@ class ContainerCoordinator(ProcessCreator):
             self.processes.append(p)
 
 
-        print('TERMINE')
+        # We wait for the end of the children processes
         self.close_resources()
 
-class HealthChecker(ProcessCreator):
+class HealthChecker():
     """
     Responsible for checking the health of a certain connection. If the connection
     is not healthy, it will restart the container. To determine if the connection is
@@ -279,23 +279,33 @@ class HealthChecker(ProcessCreator):
         """
         Check the health of the connection with the id.
         """
-        try:
-            print(f"Performing health check with {id}")
-            conn.write_socket("HEALTH_CHECK")
-            conn.settimeout(5) # TODO: Use an environment variable for this or a constant
-            msg, err = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
-            if err:
-                raise err
-            
-        except Exception as e:
-            print(f"Error: {e}")
-            # The container could be having a problem so we wait a little bit and read again with the same timeout
-            time.sleep(5)
-            msg, err = read_socket(conn)
-            if err:
-                print(f"Error in container, restarting: {err}")
-                raise err
+        while True:
+            try:
+                # print(f"Performing health check with {id}")
+                write_socket(conn, "HEALTH_CHECK")
+                conn.settimeout(5) # TODO: Use an environment variable for this or a constant
+                msg, err = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
+                if err:
+                    raise err
+                elif msg == "ACK":
+                    # print(f"Health check with {id} was successful")
+                    continue
+                else:
+                    raise Exception(f"Error in container, restarting: {msg}")
+                
+            except Exception as e:
+                print(f"Error: {e}")
+                # The container could be having a problem so we wait a little bit and read again with the same timeout
+                # time.sleep(5)
+                # conn.settimeout(5)
+                # msg, err = read_socket(conn)
+                # if err:
+                #     print(f"Error in container, restarting: {err}")
+                    # raise err
                 self.restart_container(id)
+                # elif msg == "ACK":
+                    # print(f"Health check with {id} was successful")
+                    # continue
     
     def restart_container(self, id):
         """

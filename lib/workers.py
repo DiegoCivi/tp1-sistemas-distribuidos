@@ -803,6 +803,6 @@ class HealthCheckHandler():
             if err:
                 print("Error reading from socket: ", err)
                 break
-            print("Received message: ", msg)
+            # print("Received message: ", msg)
             if msg == "HEALTH_CHECK":
                 write_socket(conn, "ACK")
