@@ -13,6 +13,7 @@ RECONNECTION_SLEEP = 5
 QUEUE_SIZE = 10
 END_MSG = 'END'
 CONTAINERS_LIST = "containers_list.config"
+WORKERS_PORT = 4321
 
 class ProcessCreator:
     """
@@ -282,36 +283,57 @@ class HealthChecker():
         while True:
             try:
                 # print(f"Performing health check with {id}")
-                write_socket(conn, "HEALTH_CHECK")
+                err = write_socket(conn, "HEALTH_CHECK")
+                if err:
+                    print(f"Error in container {id}, err was: {err}")
+                    raise err
                 conn.settimeout(5) # TODO: Use an environment variable for this or a constant
                 msg, err = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
+                if id == "filter_title_worker1":
+                    # print(msg, err)
+                    pass
                 if err:
+                    print(f"Error in container {id}, err was: {err}")
                     raise err
                 elif msg == "ACK":
                     # print(f"Health check with {id} was successful")
                     continue
                 else:
-                    raise Exception(f"Error in container, restarting: {msg}")
+                    raise Exception(f"Unexpected message from container: {msg}")
                 
-            except Exception as e:
-                print(f"Error: {e}")
-                # The container could be having a problem so we wait a little bit and read again with the same timeout
-                # time.sleep(5)
-                # conn.settimeout(5)
-                # msg, err = read_socket(conn)
-                # if err:
-                #     print(f"Error in container, restarting: {err}")
-                    # raise err
+            except: # (socket.timeout, socket.error, ConnectionResetError, Exception)
+                print(f"REINICIO DE CONTAINER {id} POR TIMEOUT O ERROR", flush=True, end="\n")
                 self.restart_container(id)
-                # elif msg == "ACK":
-                    # print(f"Health check with {id} was successful")
-                    # continue
+                # raise Exception(f"Error in container {id}, err was: {err} ESTOY POR REINICIAR, LLEGUE ACA {a}")
+                time.sleep(15)
+                conn = self.reconnect(id)
+
     
     def restart_container(self, id):
         """
         Restart the container with the id.
         """
-        os.system(f"docker restart {id}")
+        try:
+            print(f"Restarting container {id}")
+            result = os.system(f"docker restart {id}")
+            if result != 0:
+                raise Exception(f"Failed to restart container {id}")
+            print(f"Container {id} has been restarted")
+        except Exception as e:
+            print(f"Exception occurred while restarting container {id}: {e}")
+
+    def reconnect(self, id):
+        while True:
+            try:
+                conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                print(f"Reconnecting to {(id, WORKERS_PORT)}")
+                conn.connect((id, WORKERS_PORT))
+                # print(f"Reconnected to {self.host}:{self.port}")
+                return conn
+            except Exception as e:
+                print(f"Reconnection failed: {e}")
+                raise e
+                time.sleep(5)
 
 
 # HOW TO START A CONTAINER AGAIN:

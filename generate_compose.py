@@ -130,6 +130,10 @@ with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w"
                         outfile.write(f'      - rabbitmq\n')
                         outfile.write(f'    links:\n')
                         outfile.write(f'      - rabbitmq\n')
+                    if "container_coordinator" in worker_name:
+                        outfile.write(f'    volumes:\n')
+                        outfile.write(f'      - /var/run/docker.sock:/var/run/docker.sock\n')
+                        outfile.write(f'    user: root\n')
                     outfile.write(f"    environment:\n")
                     for key, value in env_vars[service_name].items():
                         if key == "WORKER_ID" or key == "ID":
