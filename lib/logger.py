@@ -1,14 +1,14 @@
 import pickle
 import os
 
-class Logguer:
+class Logger:
 
     def __init__(self, file):
         self.file = file
 
     def persist(self, content):
         f = open(self.file, 'ab')
-        pickle.dump(content)
+        pickle.dump(content, f)
         f.write(b'\n')
         f.flush()
         f.close()

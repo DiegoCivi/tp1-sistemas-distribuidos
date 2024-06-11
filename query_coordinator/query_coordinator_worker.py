@@ -11,9 +11,10 @@ def main():
     workers_q5_titles = os.getenv('WORKERS_Q5_TITLES').split(',')
     workers_q5_reviews = os.getenv('WORKERS_Q5_REVIEWS').split(',')
     eof_quantity = os.getenv('EOF_QUANTITY').split(',')
-    eof_quantity = map(int, eof_quantity)
+    eof_quantity = list(map(int, eof_quantity))
+    log = os.getenv('LOG')
 
-    query_coordinator = QueryCoordinator(workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity)
+    query_coordinator = QueryCoordinator(workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log)
     query_coordinator.run()
 
 main()
