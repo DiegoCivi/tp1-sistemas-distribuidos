@@ -590,6 +590,7 @@ class DecadeWorker(Worker):
         self.active_clients.add(client_id)
         
         # TODO: Write on disk the new active clients!!!!!!!!
+        self.log.persist(self.active_clients)
     
     # def manage_EOF(self, body, method, client_id):
     #     self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
@@ -691,6 +692,7 @@ class GlobalDecadeWorker(Worker):
         del self.counter_dicts[client_id]
 
         # TODO: Write on disk the new acum!!!!!!!!
+        self.log.persist(self.counter_dicts)
 
 
 class PercentileWorker(Worker):
@@ -766,6 +768,8 @@ class PercentileWorker(Worker):
     def remove_active_client(self, client_id):
         del self.titles_with_sentiment[client_id]
 
+        self.log.persist(self.titles_with_sentiment)
+
 
 class TopNWorker(Worker):
 
@@ -812,6 +816,7 @@ class TopNWorker(Worker):
         del self.tops[client_id]
 
         # TODO: Write on disk the new acum!!!!!!!!
+        self.log.persist(self.tops)
 
     def send_results(self, client_id):
         if not self.last:
@@ -926,6 +931,7 @@ class ReviewSentimentWorker(Worker):
         self.active_clients.add(client_id)
         
         # TODO: Write on disk the new active clients!!!!!!!!
+        self.log.persist(self.active_clients)
     
     def manage_message(self, client_id, data, method):
         if not self.client_is_active(client_id):
@@ -994,6 +1000,7 @@ class FilterReviewsWorker(Worker):
         del self.filtered_client_titles[client_id]
 
         # TODO: Write on disk the new acum!!!!!!!!
+        self.log.persist(self.filtered_client_titles)
 
     # def manage_EOF(self, body, method, client_id):
     #     self.send_results(client_id)
