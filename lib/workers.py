@@ -846,13 +846,13 @@ class TopNWorker(Worker):
     def client_is_active(self, client_id):
         return client_id in self.tops
 
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id=NO_ID):
         if client_id not in self.tops:
             self.tops[client_id] = []
 
         self.tops[client_id] = get_top_n(data, self.tops[client_id], self.top_n, self.last)
 
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
             # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.

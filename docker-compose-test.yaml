@@ -512,115 +512,115 @@ services:
       - ./persisted_data:/persisted_data
 
 
-  # top10_worker0:
-  #   container_name: top10_worker0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-  #     - WORKERS_QUANTITY=5
-  #     - LAST=0
-  #     - WORKER_ID=0
-  #     - EOF_QUANTITY=1
-  #     - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-  #     - NEXT_WORKERS_QUANTITY=1
-  #     - LOG=top10_worker_q4
-  #   volumes:
-  #     - ./persisted_data:/persisted_data
-  # top10_worker1:
-  #   container_name: top10_worker1
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-  #     - WORKERS_QUANTITY=5
-  #     - LAST=0
-  #     - WORKER_ID=1
-  #     - EOF_QUANTITY=1
-  #     - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-  #     - NEXT_WORKERS_QUANTITY=1
-  #     - LOG=top10_worker_q4
-  #   volumes:
-  #     - ./persisted_data:/persisted_data
-  # top10_worker2:
-  #   container_name: top10_worker2
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-  #     - WORKERS_QUANTITY=5
-  #     - LAST=0
-  #     - WORKER_ID=2
-  #     - EOF_QUANTITY=1
-  #     - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-  #     - NEXT_WORKERS_QUANTITY=1
-  #     - LOG=top10_worker_q4
-  #   volumes:
-  #     - ./persisted_data:/persisted_data
-  # top10_worker3:
-  #   container_name: top10_worker3
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-  #     - WORKERS_QUANTITY=5
-  #     - LAST=0
-  #     - WORKER_ID=3
-  #     - EOF_QUANTITY=1
-  #     - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-  #     - NEXT_WORKERS_QUANTITY=1
-  #     - LOG=top10_worker_q4
-  #   volumes:
-  #     - ./persisted_data:/persisted_data
-  # top10_worker4:
-  #   container_name: top10_worker4
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
-  #     - WORKERS_QUANTITY=5
-  #     - LAST=0
-  #     - WORKER_ID=4
-  #     - EOF_QUANTITY=1
-  #     - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-  #     - NEXT_WORKERS_QUANTITY=1
-  #     - LOG=top10_worker_q4
-  #   volumes:
-  #     - ./persisted_data:/persisted_data
-  # top_10_worker_last0:
-  #   container_name: top_10_worker_last0
-  #   build:
-  #     context: .
-  #     dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
-  #   environment:
-  #     - TOP_N=10
-  #     - DATA_SOURCE_NAME=QUEUE_Q4|top10_last_worker
-  #     - DATA_OUTPUT_NAME=QUEUE_q4_results
-  #     - WORKERS_QUANTITY=1
-  #     - LAST=1
-  #     - WORKER_ID=0
-  #     - EOF_QUANTITY=5
-  #     - ACCUMULATOR=True
-  #     - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
-  #     - NEXT_WORKERS_QUANTITY=1
-  #     - LOG=top10_worker_q4
-  #   volumes:
-  #     - ./persisted_data:/persisted_data
+  top10_worker0:
+    container_name: top10_worker0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=5
+      - LAST=0
+      - WORKER_ID=0
+      - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
+      - NEXT_WORKERS_QUANTITY=1
+      - LOG=top10_worker_q4
+    volumes:
+      - ./persisted_data:/persisted_data
+  top10_worker1:
+    container_name: top10_worker1
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=5
+      - LAST=0
+      - WORKER_ID=1
+      - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
+      - NEXT_WORKERS_QUANTITY=1
+      - LOG=top10_worker_q4
+    volumes:
+      - ./persisted_data:/persisted_data
+  top10_worker2:
+    container_name: top10_worker2
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=5
+      - LAST=0
+      - WORKER_ID=2
+      - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
+      - NEXT_WORKERS_QUANTITY=1
+      - LOG=top10_worker_q4
+    volumes:
+      - ./persisted_data:/persisted_data
+  top10_worker3:
+    container_name: top10_worker3
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=5
+      - LAST=0
+      - WORKER_ID=3
+      - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
+      - NEXT_WORKERS_QUANTITY=1
+      - LOG=top10_worker_q4
+    volumes:
+      - ./persisted_data:/persisted_data
+  top10_worker4:
+    container_name: top10_worker4
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_worker
+      - DATA_OUTPUT_NAME=QUEUE_Q4|top10_last_worker
+      - WORKERS_QUANTITY=5
+      - LAST=0
+      - WORKER_ID=4
+      - EOF_QUANTITY=1
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
+      - NEXT_WORKERS_QUANTITY=1
+      - LOG=top10_worker_q4
+    volumes:
+      - ./persisted_data:/persisted_data
+  top_10_worker_last0:
+    container_name: top_10_worker_last0
+    build:
+      context: .
+      dockerfile: ./workers_dockerfiles/top_10_worker.dockerfile
+    environment:
+      - TOP_N=10
+      - DATA_SOURCE_NAME=QUEUE_Q4|top10_last_worker
+      - DATA_OUTPUT_NAME=QUEUE_q4_results
+      - WORKERS_QUANTITY=1
+      - LAST=1
+      - WORKER_ID=0
+      - EOF_QUANTITY=5
+      - ACCUMULATOR=True
+      - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
+      - NEXT_WORKERS_QUANTITY=1
+      - LOG=top10_worker_q4
+    volumes:
+      - ./persisted_data:/persisted_data
 
 
   # review_sentiment_worker0:
