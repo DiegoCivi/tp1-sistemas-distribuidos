@@ -146,7 +146,7 @@ class DataCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
         self.parse_and_send_q1(batch, client_id, msg_id)
-        # self.parse_and_send_q2(batch, client_id, msg_id)
+        self.parse_and_send_q2(batch, client_id, msg_id)
         # self.parse_and_send_q3(batch, client_id, msg_id)
         # self.parse_and_send_q5(batch, client_id, msg_id)
 
@@ -318,11 +318,11 @@ class ResultsCoordinator:
         
         return True
     
-    def received_all_client_results(self, client_id):
-        self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-        if self.clients_results_counter[client_id] == 3: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
-            return True
-        return False
+    # def received_all_client_results(self, client_id):
+    #     self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
+    #     if self.clients_results_counter[client_id] == 4: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
+    #         return True
+    #     return False
 
     def client_is_active(self, client_id, method):
         return client_id in self.clients_results
@@ -350,8 +350,6 @@ class ResultsCoordinator:
         # print(f"REMOVE_CLIENT [{client_id}]:", self.clients_results_counter)
         curr_state = self.curr_state()
         self.log.persist(curr_state)
-
-        self.middleware.send_message('TEST', client_id)
     
     def received_all_query_EOFs(self, client_id, query):
         """
@@ -393,18 +391,14 @@ class ResultsCoordinator:
         self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
 
         # Persist to disk the dicts: clients_results_counter, clients_results, eof_worker_ids
-        # print(f"QUERY_FINISHED [{client_id}]:", self.clients_results)
-        # print(f"QUERY_FINISHED [{client_id}]:", self.eof_worker_ids)
-        # print(f"QUERY_FINISHED [{client_id}]:", self.clients_results_counter)
         curr_state = self.curr_state()
         self.log.persist(curr_state)
     
     def received_all_EOFs(self, client_id):
-        return self.clients_results_counter[client_id] == 1 # Change this value according to how many queries you are running
+        return self.clients_results_counter[client_id] == 2 # Change this value according to how many queries you are running
 
     def handle_results(self, method, body, fields_to_print, query):
         if is_EOF(body):
-            # print(self.clients_results)
             client_id = get_EOF_client_id(body)
             worker_id = get_EOF_worker_id(body)
 
@@ -414,11 +408,10 @@ class ResultsCoordinator:
                     self.add_unacked_EOF(client_id, method, query)
                     if self.received_all_EOFs(client_id):
                         if self.client_is_active(client_id, method):
-                            
                             self.send_results(client_id) # Sends the results and the EOF
                             self.remove_active_client(client_id)                   
-                        self.ack_EOFs(client_id, query)
-                        return
+                    self.ack_EOFs(client_id, query)
+                    return
                 else:
                     if self.client_is_active(client_id, method):
                         # Add the EOF delivery tag to the list of unacked EOFs for this especific query
@@ -452,12 +445,12 @@ class ResultsCoordinator:
     
         # # Use queues to receive the queries results
         q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
-        # q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
+        q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
         # q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
         # q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
         # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
+        self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
         # self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
         # self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
         # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
@@ -469,8 +462,8 @@ class ResultsCoordinator:
         
         results1 = Q1 + client_results_dict[Q1]
         results.append(results1)
-        # results2 = Q2 + client_results_dict[Q2]
-        # results.append(results2)
+        results2 = Q2 + client_results_dict[Q2]
+        results.append(results2)
         # results3 = Q3 + client_results_dict[Q3]
         # results.append(results3)
         # results4 = Q4 + client_results_dict[Q4]

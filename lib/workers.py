@@ -169,7 +169,6 @@ class FilterWorker(Worker):
 
         self.stop_worker = False
         self.active_clients = set()
-        self.temp = {}
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -570,21 +569,20 @@ class DecadeWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def remove_active_client(self, client_id): # TODO: Implement or remove this
-        pass
-
     def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
         for worker_id in range(next_workers_quantity):
-            workers_batches[str(worker_id)] = batch
+            workers_batches[worker_id] = batch
 
         return workers_batches
     
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+        msg_id = int(msg_id)
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
+            batch_msg_id = msg_id + worker_id
+            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, serialized_message)
 
     def client_is_active(self, client_id):
@@ -606,12 +604,15 @@ class DecadeWorker(Worker):
     #     """
     #     return False
 
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id):
+        if not self.client_is_active(client_id):
+            self.add_new_active_client(client_id)
+            
         desired_data = different_decade_counter(data)
         if not desired_data:
             return
 
-        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
+        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
     def handle_ok(self, method, body):
         """
@@ -654,10 +655,9 @@ class GlobalDecadeWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
-            worker_queue = create_queue_name(output_queue, worker_id) #output_queue + '_' + worker_id
-            print("Voy a mandar el batch a la cola: ", worker_queue)
+            worker_queue = create_queue_name(output_queue, worker_id) 
             self.middleware.send_message(worker_queue, batch)
 
     def _create_batches(self, batch, next_workers_quantity):
@@ -678,7 +678,10 @@ class GlobalDecadeWorker(Worker):
                 results['results'].append(key)
         # Send the results to the output queue
         serialized_dict = serialize_batch([results])
-        serialized_message = serialize_message(serialized_dict, client_id)
+        # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
+        # So whoever receives messages from this worker only needs to receive one message per client.
+        # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
+        serialized_message = serialize_message(serialized_dict, client_id, '0') 
 
         self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
@@ -686,7 +689,7 @@ class GlobalDecadeWorker(Worker):
     # def manage_EOF(self, body, method, client_id):
     #     self.send_client_results(client_id)
 
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id=NO_ID):
         if client_id not in self.counter_dicts:
             self.counter_dicts[client_id] = {}
 
@@ -733,10 +736,7 @@ class PercentileWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    # def manage_EOF(self, body, method, client_id):
-    #     self.send_results(client_id)
-
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id=NO_ID):
         if client_id not in self.titles_with_sentiment:
             self.titles_with_sentiment[client_id] = {}
 
@@ -755,11 +755,14 @@ class PercentileWorker(Worker):
 
         print(len(titles[0]['results']))
 
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id) # output_queue + '_' + worker_id
+            # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
+            # So whoever receives messages from this worker only needs to receive one message per client.
+            # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
+            serialized_message = serialize_message(serialized_batch, client_id, '0')
+            worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
     def _create_batches(self, batch, next_workers_quantity):
@@ -838,9 +841,6 @@ class TopNWorker(Worker):
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-    # def manage_EOF(self, body, method, client_id):
-    #     self.send_results(client_id)
-
     def client_is_active(self, client_id):
         return client_id in self.tops
 
@@ -853,7 +853,10 @@ class TopNWorker(Worker):
     def _send_batches(self, workers_batches, output_queue, client_id):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
+            # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
+            # So whoever receives messages from this worker only needs to receive one message per client.
+            # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
+            serialized_message = serialize_message(serialized_batch, client_id, '0')
             worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
@@ -908,29 +911,39 @@ class ReviewSentimentWorker(Worker):
 
     def client_is_active(self, client_id):
         return client_id in self.active_clients
+    
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+        msg_id = int(msg_id)
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            batch_msg_id = msg_id + worker_id
+            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            worker_queue = create_queue_name(output_queue, str(worker_id))
+            self.middleware.send_message(worker_queue, serialized_message)
 
-    # def remove_active_client(self, client_id): # TODO: Implement or remove this
-    #     pass
-
-    def create_and_send_batches(self, batch, client_id, output_queue=None):
+    def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
         for row in batch:
             hashed_title = hash_title(row['Title'])
-            choosen_worker = str(hashed_title % self.next_workers_quantity)
+            choosen_worker = hashed_title % next_workers_quantity
             if choosen_worker not in workers_batches:
                 workers_batches[choosen_worker] = []
             workers_batches[choosen_worker].append(row)
 
-        if output_queue == None:
-            output_queue = self.output_name
-        for worker_id, batch in workers_batches.items():
-            serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id)
-            self.middleware.send_message(worker_queue, serialized_message)
+    # def create_and_send_batches(self, batch, client_id, output_queue=None):
+    #     workers_batches = {}
+    #     for row in batch:
+    #         hashed_title = hash_title(row['Title'])
+    #         choosen_worker = str(hashed_title % self.next_workers_quantity)
+    #         if choosen_worker not in workers_batches:
+    #             workers_batches[choosen_worker] = []
+    #         workers_batches[choosen_worker].append(row)
 
-    # def manage_EOF(self, body, method, client_id):
-    #     self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+    #     for worker_id, batch in workers_batches.items():
+    #         serialized_batch = serialize_batch(batch)
+    #         serialized_message = serialize_message(serialized_batch, client_id)
+    #         worker_queue = create_queue_name(output_queue, worker_id)
+    #         self.middleware.send_message(worker_queue, serialized_message)
 
     def add_new_active_client(self, client_id):
         self.active_clients.add(client_id)
@@ -938,12 +951,12 @@ class ReviewSentimentWorker(Worker):
         # TODO: Write on disk the new active clients!!!!!!!!
         self.log.persist(self.active_clients)
     
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id):
         if not self.client_is_active(client_id):
             self.add_new_active_client(client_id)
 
         desired_data = calculate_review_sentiment(data)
-        self.create_and_send_batches(desired_data, client_id)
+        self.create_and_send_batches(desired_data, client_id, msg_id)
 
 
 class FilterReviewsWorker(Worker):
@@ -1020,10 +1033,9 @@ class FilterReviewsWorker(Worker):
 
     def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
-        print(batch)
         for row in batch:
             hashed_title = hash_title(row['Title'])
-            choosen_worker = str(hashed_title % next_workers_quantity)
+            choosen_worker = hashed_title % next_workers_quantity
             if choosen_worker not in workers_batches:
                 workers_batches[choosen_worker] = []
             workers_batches[choosen_worker].append(row)
@@ -1031,8 +1043,10 @@ class FilterReviewsWorker(Worker):
         return workers_batches
 
     def _send_batches(self, workers_batches, output_queue, client_id):
+        msg_id = 0
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id)
+            batch_msg_id = msg_id + worker_id
+            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, serialized_message)
