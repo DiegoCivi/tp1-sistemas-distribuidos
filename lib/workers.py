@@ -231,7 +231,7 @@ class FilterWorker(Worker):
 
 class JoinWorker(Worker):
 
-    def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue, log_acum, log_leftovers):
+    def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue, log_acum):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
@@ -241,7 +241,7 @@ class JoinWorker(Worker):
 
         self.worker_id = worker_id
         self.log_acum = Logger(create_log_file_name(log_acum, worker_id))
-        self.log_leftovers = Logger(create_log_file_name(log_leftovers, worker_id))
+        # self.log_leftovers = Logger(create_log_file_name(log_leftovers, worker_id)) # TODO: Write the leftovers dict on the log_acum too
         self.input_titles_name = create_queue_name(input_titles_name, worker_id)
         self.input_reviews_name = create_queue_name(input_reviews_name, worker_id) 
         self.output_name = output_name
@@ -343,7 +343,7 @@ class JoinWorker(Worker):
 
         # TODO: Write on disk the new acum!!!!!!!!
         self.log_acum.persist(self.counter_dicts)
-        self.log_leftovers.persist(self.leftover_reviews)
+        # self.log_leftovers.persist(self.leftover_reviews)
 
     def delete_client_EOF_counter(self, client_id):
         del self.eof_counter_reviews[client_id]
@@ -487,6 +487,7 @@ class JoinWorker(Worker):
         # Send batch
         batch_size = 0
         batch = {}
+        msg_id = 0
         for title, counter in self.counter_dicts[client_id].items():
             # Ignore titles with no reviews
             if counter[0] == 0:
@@ -501,14 +502,15 @@ class JoinWorker(Worker):
             # Once the batch reached the BATCH_SIZE. It can be sent.
             batch_size += 1
             if batch_size == BATCH_SIZE:
-                serialized_message = serialize_message([serialize_dict(batch)], client_id)
+                serialized_message = serialize_message([serialize_dict(batch)], client_id, str(msg_id))
                 self.middleware.send_message(self.output_name, serialized_message)
                 batch = {}
                 batch_size = 0
+                msg_id += 1
 
         # If the for loop ended with a batch that was never sent, send it
         if len(batch) != 0:
-            serialized_message = serialize_message([serialize_dict(batch)], client_id)
+            serialized_message = serialize_message([serialize_dict(batch)], client_id, str(msg_id))
             self.middleware.send_message(self.output_name, serialized_message)
 
         # Finally, send the EOF
@@ -607,7 +609,7 @@ class DecadeWorker(Worker):
     def manage_message(self, client_id, data, method, msg_id):
         if not self.client_is_active(client_id):
             self.add_new_active_client(client_id)
-            
+
         desired_data = different_decade_counter(data)
         if not desired_data:
             return
@@ -1001,12 +1003,12 @@ class FilterReviewsWorker(Worker):
         if len(self.filtered_client_titles[client_id]) != 0:
             # First to the Query Coordinator
             print("MANDO LOS RESULTADOS AL QC")
-            self.create_and_send_batches(self.filtered_client_titles[client_id], client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY) # next_workers_quantity parameter is set to 1 because there is only 1 QueryCoordinator
+            self.create_and_send_batches(self.filtered_client_titles[client_id], client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY)
             # Then to the query 4
             self.create_and_send_batches(self.filtered_client_titles[client_id], client_id, self.output_name2, self.next_workers_quantity)
 
         # Send the EOF to the QueryCoordinator
-        self.send_EOFs(client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY) # next_workers_quantity parameter is set to 1 because there is only 1 QueryCoordinator
+        self.send_EOFs(client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY)
 
         # Send the EOFs to the workers on the query 4
         self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
@@ -1023,7 +1025,7 @@ class FilterReviewsWorker(Worker):
     # def manage_EOF(self, body, method, client_id):
     #     self.send_results(client_id)
 
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id=NO_ID):
         if client_id not in self.filtered_client_titles:
             self.filtered_client_titles[client_id] = []
 
@@ -1042,7 +1044,7 @@ class FilterReviewsWorker(Worker):
 
         return workers_batches
 
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         msg_id = 0
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
