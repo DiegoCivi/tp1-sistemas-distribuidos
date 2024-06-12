@@ -127,7 +127,7 @@ class DataCoordinator:
             print('Nuevo client id: ', client_id, " en mensaje: ", body[:10])
             self.clients_parse_mode[client_id] = TITLES_MODE
 
-        self.send_to_pipelines(batch, client_id)
+        self.send_to_pipelines(batch, client_id, msg_id)
 
         self.middleware.ack_message(method)
 
@@ -138,19 +138,20 @@ class DataCoordinator:
         self.middleware.receive_messages(RECEIVE_SERVER_QUEUE, callback_with_params)
         self.middleware.consume()
 
-    def send_to_pipelines(self, batch, client_id):
+    def send_to_pipelines(self, batch, client_id, msg_id):
         batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'], client_id)
         if len(batch) == 0:
             return
         
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
-        self.parse_and_send_q1(batch, client_id)
-        # self.parse_and_send_q2(batch, client_id)
-        # self.parse_and_send_q3(batch, client_id)
-        # self.parse_and_send_q5(batch, client_id)
+        self.parse_and_send_q1(batch, client_id, msg_id)
+        # self.parse_and_send_q2(batch, client_id, msg_id)
+        # self.parse_and_send_q3(batch, client_id, msg_id)
+        # self.parse_and_send_q5(batch, client_id, msg_id)
 
-    def parse_and_send(self, batch, desired_keys, queue, query, client_id):
+    def parse_and_send(self, batch, desired_keys, queue, query, client_id, msg_id):
+        msg_id = int(msg_id)
         # First, we get only the columns the query needs
         new_batch = []
         for row in batch:
@@ -162,7 +163,7 @@ class DataCoordinator:
         workers_quantity = int(self.workers[query][QUANTITY_INDEX])
         for row in new_batch:
             hashed_title = hash_title(row['Title'])
-            choosen_worker = str(hashed_title % workers_quantity)
+            choosen_worker = hashed_title % workers_quantity
             
             if choosen_worker not in workers_batches:
                 workers_batches[choosen_worker] = []
@@ -171,11 +172,12 @@ class DataCoordinator:
         # Third, we send the batches 
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = queue + '_' + worker_id
+            batch_msg_id = msg_id + worker_id
+            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            worker_queue = queue + '_' + str(worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
-    def parse_and_send_q1(self, batch, client_id):
+    def parse_and_send_q1(self, batch, client_id, msg_id):
         """
         Parses the rows of the batch to return only
         required columns in the query 1
@@ -183,30 +185,30 @@ class DataCoordinator:
         if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
         desired_keys = ['Title', 'publishedDate', 'categories', 'authors', 'publisher']
-        self.parse_and_send(batch, desired_keys, self.workers[Q1_KEY][QUEUE_INDEX], Q1_KEY, client_id)
+        self.parse_and_send(batch, desired_keys, self.workers[Q1_KEY][QUEUE_INDEX], Q1_KEY, client_id, msg_id)
 
-    def parse_and_send_q2(self, batch, client_id):
+    def parse_and_send_q2(self, batch, client_id, msg_id):
         if self.clients_parse_mode[client_id] == REVIEWS_MODE:
             return
         desired_keys = ['Title','authors', 'publishedDate']
         batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'], client_id)
-        self.parse_and_send(batch, desired_keys, self.workers[Q2_KEY][QUEUE_INDEX], Q2_KEY, client_id)
+        self.parse_and_send(batch, desired_keys, self.workers[Q2_KEY][QUEUE_INDEX], Q2_KEY, client_id, msg_id)
     
-    def parse_and_send_q3(self, batch, client_id):
+    def parse_and_send_q3(self, batch, client_id, msg_id):
         if self.clients_parse_mode[client_id] == TITLES_MODE:
             desired_keys = ['Title', 'authors', 'publishedDate']
-            self.parse_and_send(batch, desired_keys, self.workers[Q3_TITLES_KEY][QUEUE_INDEX], Q3_TITLES_KEY, client_id)
+            self.parse_and_send(batch, desired_keys, self.workers[Q3_TITLES_KEY][QUEUE_INDEX], Q3_TITLES_KEY, client_id, msg_id)
         else:
             desired_keys = ['Title', 'review/score']
-            self.parse_and_send(batch, desired_keys, self.workers[Q3_REVIEWS_KEY][QUEUE_INDEX], Q3_REVIEWS_KEY, client_id)
+            self.parse_and_send(batch, desired_keys, self.workers[Q3_REVIEWS_KEY][QUEUE_INDEX], Q3_REVIEWS_KEY, client_id, msg_id)
     
-    def parse_and_send_q5(self, batch, client_id):
+    def parse_and_send_q5(self, batch, client_id, msg_id):
         if self.clients_parse_mode[client_id] == TITLES_MODE:
             desired_keys = ['Title', 'categories']
-            self.parse_and_send(batch, desired_keys, self.workers[Q5_TITLES_KEY][QUEUE_INDEX], Q5_TITLES_KEY, client_id)
+            self.parse_and_send(batch, desired_keys, self.workers[Q5_TITLES_KEY][QUEUE_INDEX], Q5_TITLES_KEY, client_id, msg_id)
         else:
             desired_keys = ['Title', 'review/text']
-            self.parse_and_send(batch, desired_keys, self.workers[Q5_REVIEWS_KEY][QUEUE_INDEX], Q5_REVIEWS_KEY, client_id)
+            self.parse_and_send(batch, desired_keys, self.workers[Q5_REVIEWS_KEY][QUEUE_INDEX], Q5_REVIEWS_KEY, client_id, msg_id)
 
     def drop_rows_with_missing_values(self, batch, columns, client_id):
         """

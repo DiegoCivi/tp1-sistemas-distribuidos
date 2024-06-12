@@ -153,7 +153,7 @@ class FilterWorker(Worker):
         self.input_name = create_queue_name(input_name, worker_id) 
         self.iteration_queue = iteration_queue
         self.eof_counter = {}
-        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.eof_workers_ids = {}           # This dict stores for each active client, the workers ids of the eofs received.
         self.eof_quantity = eof_quantity
         self.output_name = output_name
         self.workers_quantity = workers_quantity
@@ -169,6 +169,7 @@ class FilterWorker(Worker):
 
         self.stop_worker = False
         self.active_clients = set()
+        self.temp = {}
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -182,18 +183,20 @@ class FilterWorker(Worker):
         self.filter_condition = type
         self.filter_value = value
 
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+        msg_id = int(msg_id)
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            serialized_message = serialize_message(serialized_batch, client_id)
-            worker_queue = create_queue_name(output_queue, worker_id)
+            batch_msg_id = msg_id + worker_id
+            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, serialized_message)
 
     def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
         for row in batch:
             hashed_title = hash_title(row['Title'])
-            choosen_worker = str(hashed_title % next_workers_quantity)
+            choosen_worker = hashed_title % next_workers_quantity
             if choosen_worker not in workers_batches:
                 workers_batches[choosen_worker] = []
             workers_batches[choosen_worker].append(row)
@@ -215,17 +218,16 @@ class FilterWorker(Worker):
         # TODO: Write on disk the new active clients!!!!!!!!
         self.log.persist(self.active_clients)
 
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id):
         if not self.client_is_active(client_id):
             self.add_new_active_client(client_id)
         
-
         desired_data = filter_by(data, self.filtering_function, self.filter_value)
         if not desired_data:
             return
 
         # Create batches for each worker in the next stage and send those batches
-        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity)
+        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
 
 class JoinWorker(Worker):

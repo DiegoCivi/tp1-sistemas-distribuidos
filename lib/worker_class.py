@@ -6,13 +6,13 @@ class Worker:
     def _create_batches(self, batch, next_workers_quantity):
         raise Exception('Function needs to be implemented')
 
-    def _send_batches(self, workers_batches, output_queue, client_id):
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
         raise Exception('Function needs to be implemented')
 
-    def create_and_send_batches(self, batch, client_id, output_queue, next_workers_quantity):
+    def create_and_send_batches(self, batch, client_id, output_queue, next_workers_quantity, msg_id):
         workers_batches = self._create_batches(batch, next_workers_quantity)
 
-        self._send_batches(workers_batches, output_queue, client_id)
+        self._send_batches(workers_batches, output_queue, client_id, msg_id)
 
     def send_EOFs(self, client_id, output_queue, next_workers_quantity):
         eof_msg = create_EOF(client_id, self.worker_id)
@@ -27,7 +27,7 @@ class Worker:
         self.log.persist(self.active_clients)
         
     
-    def manage_message(self, client_id, data, method):
+    def manage_message(self, client_id, data, method, msg_id):
         raise Exception('Function needs to be implemented')
     
     def received_all_clients_EOFs(self, client_id):
@@ -108,7 +108,18 @@ class Worker:
         
         msg_id, client_id, data = deserialize_titles_message(body)
 
-        self.manage_message(client_id, data, method)
+        ############################# BORRAR #############################
+        if client_id not in self.temp:
+            self.temp[client_id] = set()
+
+        if msg_id in self.temp[client_id]:
+            print(f"@@@@@@@@ EL MSG_ID [{msg_id}] YA HABIA LLEGADO, LOS QUE YA TENIA SON: [{self.temp}] @@@@@@@@")
+            raise Exception
+        else:
+            self.temp[client_id].add(msg_id)
+        ############################# BORRAR #############################
+
+        self.manage_message(client_id, data, method, msg_id)
 
         self.middleware.ack_message(method)
             
