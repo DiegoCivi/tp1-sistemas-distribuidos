@@ -171,9 +171,11 @@ class DataFordwarder:
             
             if socket_content != EOF_MSG:
                 # Add the id to the message
-                _, message = split_message_info(socket_content)
+                msg_id, _, message = split_message_info(socket_content)
                 self.message_parser.push(message)
-                self.message_parser.add_id(self.id)
+                self.message_parser.add_ids(self.id, msg_id)
+                # self.message_parser.add_client_id(self.id)
+                # self.message_parser.add_msg_id()
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
                 self.message_parser.clean()
             else:

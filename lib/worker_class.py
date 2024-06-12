@@ -106,7 +106,7 @@ class Worker:
             self.middleware.ack_message(method)
             return
         
-        client_id, data = deserialize_titles_message(body)
+        msg_id, client_id, data = deserialize_titles_message(body)
 
         self.manage_message(client_id, data, method)
 

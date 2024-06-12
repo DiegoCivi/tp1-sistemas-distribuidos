@@ -24,26 +24,32 @@ def add_id(message, id):
     return id + ID_MSG_SEPARATOR + message
 
 def split_message_info(message):
+    """
+    Every message comes with the format: MSG_ID~|~CLIENT_ID~|~message_content
+    Here we split this message so the user can get both ids and the content message.
+    """
     message = Message(message).decode()
     return message.split(ID_MSG_SEPARATOR)
 
 def serialize_batch(batch):
     return [serialize_dict(filtered_dictionary) for filtered_dictionary in batch]
 
-def serialize_message(message_items, id=NO_ID):
+def serialize_message(message_items, client_id=NO_ID, msg_id=NO_ID):
     """
     Serialize a message (list of items) by adding a separator
     on each item and deleting the newline character
     """
     message = ROW_SEPARATOR.join(message_items)
-    message = add_id(message, id)
+    message = add_id(message, client_id)            # Add the client id to the message
+    message = add_id(message, msg_id)               # Add the message_id to the message
+
     return message
 
 def deserialize_titles_message(bytes):
     # Get the id and the message separated 
-    client_id, message = split_message_info(bytes)
+    msg_id, client_id, message = split_message_info(bytes)
      
-    return client_id, [deserialize_into_titles_dict(row) for row in message.split(ROW_SEPARATOR)] 
+    return msg_id, client_id, [deserialize_into_titles_dict(row) for row in message.split(ROW_SEPARATOR)] 
 
 def serialize_dict(dict_to_serialize):
     msg = ''
@@ -142,5 +148,7 @@ class Message:
     def clean(self):
         self.msg= ""
 
-    def add_id(self, id):
-        self.msg = add_id(self.msg, id)
+    def add_ids(self, client_id, msg_id):
+        self.msg = add_id(self.msg, client_id)
+        self.msg = add_id(self.msg, msg_id)
+

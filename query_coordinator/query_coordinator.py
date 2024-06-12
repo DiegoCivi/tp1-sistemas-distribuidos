@@ -121,9 +121,10 @@ class DataCoordinator:
             self.middleware.ack_message(method)
             return
         
-        client_id, batch = deserialize_titles_message(body)
+        msg_id, client_id, batch = deserialize_titles_message(body)
         if client_id not in self.clients_parse_mode:
             # Since titles are always first, every new client needs to be initialized with the TITLES_MODE
+            print('Nuevo client id: ', client_id, " en mensaje: ", body[:10])
             self.clients_parse_mode[client_id] = TITLES_MODE
 
         self.send_to_pipelines(batch, client_id)
@@ -223,6 +224,7 @@ class DataCoordinator:
         """
         Sends the EOF message to the middleware
         """
+        print(self.clients_parse_mode)
         if self.clients_parse_mode[client_id] == TITLES_MODE:
             self.send_EOF(Q1_KEY, self.workers[Q1_KEY][QUEUE_INDEX], client_id)
             self.send_EOF(Q2_KEY, self.workers[Q2_KEY][QUEUE_INDEX], client_id)
@@ -399,9 +401,6 @@ class ResultsCoordinator:
         return self.clients_results_counter[client_id] == 1 # Change this value according to how many queries you are running
 
     def handle_results(self, method, body, fields_to_print, query):
-        if body == b'TEST':
-            self.middleware.send_message('TEST', 'FUNC')
-            return
         if is_EOF(body):
             # print(self.clients_results)
             client_id = get_EOF_client_id(body)
@@ -438,7 +437,7 @@ class ResultsCoordinator:
             self.middleware.ack_message(method)
             return
 
-        client_id, result_dict = deserialize_titles_message(body)
+        msg_id, client_id, result_dict = deserialize_titles_message(body)
         if client_id not in self.clients_results:
             self.clients_results[client_id] = {}
         

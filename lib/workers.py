@@ -379,7 +379,7 @@ class JoinWorker(Worker):
 
             self.middleware.ack_message(method)
             return
-        client_id, data = deserialize_titles_message(body)
+        msg_id, client_id, data = deserialize_titles_message(body)
 
         if client_id not in self.counter_dicts:
             self.counter_dicts[client_id] = {}
@@ -421,7 +421,7 @@ class JoinWorker(Worker):
 
             self.middleware.ack_message(method)
             return
-        client_id, data = deserialize_titles_message(body)
+        msg_id, client_id, data = deserialize_titles_message(body)
 
         if client_id not in self.counter_dicts:
             self.counter_dicts[client_id] = {}
