@@ -2,6 +2,8 @@ FROM python:3.9.7-slim
 
 RUN apt-get update
 RUN apt-get install -y docker.io
+RUN apt-get install -y python3-pip
+RUN pip3 install docker
 
 #COPY ./workers_dockerfiles workers_dockerfiles
 #COPY ./workers workers

@@ -1,7 +1,9 @@
 import socket
-from multiprocessing import Process, Manager, Queue
+from multiprocessing import Process, Manager, Queue, Lock, Event
 from communications import read_socket, write_socket
+import random
 import os
+import docker
 import time
 import signal
 
@@ -39,14 +41,23 @@ class ProcessCreator:
         Handler of messages of a connection. This connection can be another ContainerCoordinator
         or a worker from the system.
         """
-        if leader:
-            health_checker = HealthChecker()
-            healthcheck_process = Process(target=health_checker.check_connection, args=(id, socket, ))
-            healthcheck_process.start()
-            self.processes.append(healthcheck_process)
-            
-        # Do whatever it follows...
+        try:
+            if leader:
+                health_checker = HealthChecker()
+                healthcheck_process = Process(target=health_checker.check_connection, args=(id, socket,))
+                healthcheck_process.start()
+                self.processes.append(healthcheck_process)
 
+            # while True: Do something (leader election... etc)
+
+            if leader:
+                try:
+                    healthcheck_process.join()
+                except Exception as e:
+                    print(f"Error joining healthcheck process: {e}")
+        except Exception as e:
+            print(f"Exception in initiate_connection for id {id}: {e}")
+    
         # while True: # TODO: Check this condition
             # self._socket.settimeout(1)
         #     msg = read_socket(socket)
@@ -55,14 +66,20 @@ class ProcessCreator:
         #         # Get the socket from connections with the id
         #         # Send the new ELECTION message to the next through that socket
         #         pass
-    
+
     def join_processes(self):
         """
         Every class that manages processes needs to join them and close them.
         """
+        
         for p in self.processes:
-            p.join()
-            p.close()
+            try:
+                p.join()
+                p.close()
+            except Exception as e:
+                print(f"Error joining process: {e}")
+                continue
+
 
 class Connector(ProcessCreator):
     """
@@ -82,6 +99,7 @@ class Connector(ProcessCreator):
         self.containers_list = containers_list
         # List to have all the created processes to join them later
         self.processes = []
+        self.lock = Lock()
 
     def connect_to_coordinators(self, reconnection):
         """
@@ -118,7 +136,8 @@ class Connector(ProcessCreator):
 
                         p = Process(target=self.initiate_connection, args=(self.id, s, self.connections, False,))
                         
-                        self.add_connection(self.connections, id, s)
+                        with self.lock:
+                            self.add_connection(self.connections, id, s)
 
                         p.start()
                         self.processes.append(p)
@@ -135,7 +154,7 @@ class Connector(ProcessCreator):
         """
         print("Voy a conectarme a los workers")
         for container in self.containers_list:
-            for _ in range(CONNECTION_TRIES):
+            while True: # cambiar esto
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((container, workers_port))
@@ -143,7 +162,8 @@ class Connector(ProcessCreator):
 
                     p = Process(target=self.initiate_connection, args=(container, s, self.connections, True))
                     
-                    self.add_connection(self.connections, container, s)
+                    with self.lock:
+                        self.add_connection(self.connections, container, s)
 
                     p.start()
                     self.processes.append(p)
@@ -276,6 +296,9 @@ class HealthChecker():
 
     """
     
+    def __init__(self):
+        self.restart_event = Event()
+
     def check_connection(self, id, conn):
         """
         Check the health of the connection with the id.
@@ -283,57 +306,81 @@ class HealthChecker():
         while True:
             try:
                 # print(f"Performing health check with {id}")
+                conn.settimeout(5) # TODO: Use an environment variable for this or a constant
                 err = write_socket(conn, "HEALTH_CHECK")
                 if err:
-                    print(f"Error in container {id}, err was: {err}")
+                    print(f"Error in container {id}, err was: {err}", flush=True)
                     raise err
-                conn.settimeout(5) # TODO: Use an environment variable for this or a constant
-                msg, err = read_socket(conn) # TODO: CHECK THE SOCKET PROTOCOL (udp or tcp) *IMPORTANT*
-                if id == "filter_title_worker1":
-                    # print(msg, err)
-                    pass
+                msg, err = read_socket(conn)
+                # if id == "filter_title_worker1":
+                #     print(msg, err)
+                #     pass
                 if err:
-                    print(f"Error in container {id}, err was: {err}")
+                    print(f"Error in container {id}, err was: {err}", flush=True)
                     raise err
                 elif msg == "ACK":
                     # print(f"Health check with {id} was successful")
                     continue
                 else:
-                    raise Exception(f"Unexpected message from container: {msg}")
+                    raise Exception(f"Unexpected message from container: {msg}", flush=True)
                 
             except: # (socket.timeout, socket.error, ConnectionResetError, Exception)
                 print(f"REINICIO DE CONTAINER {id} POR TIMEOUT O ERROR", flush=True, end="\n")
                 self.restart_container(id)
-                # raise Exception(f"Error in container {id}, err was: {err} ESTOY POR REINICIAR, LLEGUE ACA {a}")
-                time.sleep(15)
-                conn = self.reconnect(id)
+                self.restart_event.set()
+                # time.sleep(7)
+                conn = self.reconnect_with_backoff(id)
+                # raise Exception("An unexpected error occurred")
+                
 
     
     def restart_container(self, id):
         """
         Restart the container with the id.
         """
+        docker_client = docker.from_env()
         try:
-            print(f"Restarting container {id}")
-            result = os.system(f"docker restart {id}")
-            if result != 0:
-                raise Exception(f"Failed to restart container {id}")
-            print(f"Container {id} has been restarted")
-        except Exception as e:
-            print(f"Exception occurred while restarting container {id}: {e}")
+            print(f"Restarting container {id}", flush=True)
+            container = docker_client.containers.get(id)
+            container.restart()
+            print(f"Container {id} has been restarted", flush=True)
+        except:
+            print(f"Exception occurred while restarting container {id}, error:", flush=True)
+            raise
+
+    def reconnect_with_backoff(self, id, max_retries=5):
+        print(f"Reconnecting to {id} with backoff", flush=True)
+        retries = 0
+        while retries < max_retries:
+            try:
+                conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                conn.settimeout(5)
+                print(f"Reconnecting to {(id, WORKERS_PORT)}", flush=True)
+                conn.connect((id, WORKERS_PORT))
+                print(f"Reconnected to {id}:{WORKERS_PORT}", flush=True)
+                self.restart_event.clear()
+                return conn
+            except Exception as e:
+                wait_time = (2 ** retries) + random.uniform(0, 1)
+                print(f"Reconnection failed (attempt {retries + 1}/{max_retries}): {e}. Retrying in {wait_time:.2f} seconds.")
+                conn.close()  # Ensure the socket is closed before retrying
+                time.sleep(wait_time)
+                retries += 1
+        raise Exception(f"Failed to reconnect to {id} after {max_retries} attempts")
 
     def reconnect(self, id):
+        print(f"Reconnecting to {id}")
         while True:
             try:
                 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                print(f"Reconnecting to {(id, WORKERS_PORT)}")
+                conn.settimeout(5)
+                print(f"Reconnecting to {(id, WORKERS_PORT)}", flush=True)
                 conn.connect((id, WORKERS_PORT))
-                # print(f"Reconnected to {self.host}:{self.port}")
+                print(f"Reconnected to {id}:{WORKERS_PORT}", flush=True)
                 return conn
-            except Exception as e:
-                print(f"Reconnection failed: {e}")
-                raise e
-                time.sleep(5)
+            except:
+                print("An unexpected error occurred", flush=True)
+                time.sleep(3)
 
 
 # HOW TO START A CONTAINER AGAIN:

@@ -6,6 +6,8 @@ services:
       dockerfile: rabbitmq.dockerfile
     ports:
       - 15672:15672
+    logging:
+      driver: none
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:15672"]
       interval: 10s
