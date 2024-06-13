@@ -157,6 +157,15 @@ class StateWorker(Worker):
     
     def client_is_active(self, client_id):
         return client_id in self.clients_acum
+    
+    def remove_active_client(self, client_id):
+        if client_id not in self.clients_acum:
+            # This is a special case. Workers may not receive any message
+            # of a client, only its EOF. 
+            return
+        del self.clients_acum[client_id]
+
+        self.log.persist(self.clients_acum)
 
 class NoStateWorker(Worker):
     """
