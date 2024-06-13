@@ -4,7 +4,7 @@ from serialization import *
 import signal
 import queue
 from logger import Logger
-from worker_class import Worker
+from worker_class import NoStateWorker, StateWorker, Worker
 
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
@@ -140,7 +140,7 @@ QUERY_COORDINATOR_QUANTITY = 1
 #                 raise e
 
 
-class FilterWorker(Worker):
+class FilterWorker(NoStateWorker):
 
     def __init__(self, worker_id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last, log):
         self.acum = False
@@ -182,40 +182,34 @@ class FilterWorker(Worker):
         self.filter_condition = type
         self.filter_value = value
 
-    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
-        msg_id = int(msg_id)
-        for worker_id, batch in workers_batches.items():
-            serialized_batch = serialize_batch(batch)
-            batch_msg_id = msg_id + worker_id
-            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
-            worker_queue = create_queue_name(output_queue, str(worker_id))
-            self.middleware.send_message(worker_queue, serialized_message)
+    # def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+    #     msg_id = int(msg_id)
+    #     for worker_id, batch in workers_batches.items():
+    #         serialized_batch = serialize_batch(batch)
+    #         batch_msg_id = msg_id + worker_id
+    #         serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+    #         worker_queue = create_queue_name(output_queue, str(worker_id))
+    #         self.middleware.send_message(worker_queue, serialized_message)
 
-    def _create_batches(self, batch, next_workers_quantity):
-        workers_batches = {}
-        for row in batch:
-            hashed_title = hash_title(row['Title'])
-            choosen_worker = hashed_title % next_workers_quantity
-            if choosen_worker not in workers_batches:
-                workers_batches[choosen_worker] = []
-            workers_batches[choosen_worker].append(row)
+    # def _create_batches(self, batch, next_workers_quantity):
+    #     workers_batches = {}
+    #     for row in batch:
+    #         hashed_title = hash_title(row['Title'])
+    #         choosen_worker = hashed_title % next_workers_quantity
+    #         if choosen_worker not in workers_batches:
+    #             workers_batches[choosen_worker] = []
+    #         workers_batches[choosen_worker].append(row)
 
-        return workers_batches
+    #     return workers_batches
     
-    def client_is_active(self, client_id):
-        return client_id in self.active_clients
+    # def client_is_active(self, client_id):
+    #     return client_id in self.active_clients
 
-    # def manage_EOF(self, body, method, client_id):
-    #     self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
-    #     if self.eof_quantity == self.eof_counter[client_id]:
-    #         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-    #         del self.eof_counter[client_id]
-
-    def add_new_active_client(self, client_id):
-        self.active_clients.add(client_id)
+    # def add_new_active_client(self, client_id):
+    #     self.active_clients.add(client_id)
         
-        # TODO: Write on disk the new active clients!!!!!!!!
-        self.log.persist(self.active_clients)
+    #     # TODO: Write on disk the new active clients!!!!!!!!
+    #     self.log.persist(self.active_clients)
 
     def manage_message(self, client_id, data, method, msg_id):
         if not self.client_is_active(client_id):
@@ -229,7 +223,7 @@ class FilterWorker(Worker):
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
 
-class JoinWorker(Worker):
+class JoinWorker(StateWorker):
 
     def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue, log_acum):
         self.acum = True
@@ -538,7 +532,7 @@ class JoinWorker(Worker):
                 raise e
 
 
-class DecadeWorker(Worker):
+class DecadeWorker(NoStateWorker):
 
     def __init__(self, input_name, output_name, worker_id, next_workers_quantity, eof_quantity, log):
         self.acum = False
@@ -572,29 +566,34 @@ class DecadeWorker(Worker):
             self.middleware.close_connection()
 
     def _create_batches(self, batch, next_workers_quantity):
+        """
+        Doesnt't use the NoStateWorker's implementation of _create_batches(),
+        because it handles serialization of filtered results different than the
+        other NoStateeWorkers. 
+        """
         workers_batches = {}
         for worker_id in range(next_workers_quantity):
             workers_batches[worker_id] = batch
 
         return workers_batches
     
-    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
-        msg_id = int(msg_id)
-        for worker_id, batch in workers_batches.items():
-            serialized_batch = serialize_batch(batch)
-            batch_msg_id = msg_id + worker_id
-            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
-            worker_queue = create_queue_name(output_queue, str(worker_id))
-            self.middleware.send_message(worker_queue, serialized_message)
+    # def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+    #     msg_id = int(msg_id)
+    #     for worker_id, batch in workers_batches.items():
+    #         serialized_batch = serialize_batch(batch)
+    #         batch_msg_id = msg_id + worker_id
+    #         serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+    #         worker_queue = create_queue_name(output_queue, str(worker_id))
+    #         self.middleware.send_message(worker_queue, serialized_message)
 
-    def client_is_active(self, client_id):
-        return client_id in self.active_clients
+    # def client_is_active(self, client_id):
+    #     return client_id in self.active_clients
     
-    def add_new_active_client(self, client_id):
-        self.active_clients.add(client_id)
+    # def add_new_active_client(self, client_id):
+    #     self.active_clients.add(client_id)
         
-        # TODO: Write on disk the new active clients!!!!!!!!
-        self.log.persist(self.active_clients)
+    #     # TODO: Write on disk the new active clients!!!!!!!!
+    #     self.log.persist(self.active_clients)
     
     # def manage_EOF(self, body, method, client_id):
     #     self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
@@ -616,15 +615,15 @@ class DecadeWorker(Worker):
 
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()
+    # def handle_ok(self, method, body):
+    #     """
+    #     If an 'OK' was received, it means we can continue to the next iteration
+    #     """
+    #     self.middleware.ack_message(method)
+    #     self.middleware.stop_consuming()
 
 
-class GlobalDecadeWorker(Worker):
+class GlobalDecadeWorker(StateWorker):
 
     def __init__(self, worker_id, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity, log):
         self.acum = True
@@ -704,7 +703,7 @@ class GlobalDecadeWorker(Worker):
         self.log.persist(self.counter_dicts)
 
 
-class PercentileWorker(Worker):
+class PercentileWorker(StateWorker):
 
     def __init__(self, worker_id, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity, log):
         self.acum = True
@@ -780,7 +779,7 @@ class PercentileWorker(Worker):
         self.log.persist(self.titles_with_sentiment)
 
 
-class TopNWorker(Worker):
+class TopNWorker(StateWorker):
 
     def __init__(self, worker_id, input_name, output_name, eof_quantity, n, last, iteration_queue, next_workers_quantity, log):
         self.acum = True
@@ -878,7 +877,7 @@ class TopNWorker(Worker):
             title_dict[COUNTER_FIELD] = str(title_dict[COUNTER_FIELD])
 
 
-class ReviewSentimentWorker(Worker):
+class ReviewSentimentWorker(NoStateWorker):
 
     def __init__(self, input_name, output_name, worker_id, workers_quantity, next_workers_quantity, eof_quantity, log):
         self.acum = False
@@ -911,28 +910,28 @@ class ReviewSentimentWorker(Worker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def client_is_active(self, client_id):
-        return client_id in self.active_clients
+    # def client_is_active(self, client_id):
+    #     return client_id in self.active_clients
     
-    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
-        msg_id = int(msg_id)
-        for worker_id, batch in workers_batches.items():
-            serialized_batch = serialize_batch(batch)
-            batch_msg_id = msg_id + worker_id
-            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
-            worker_queue = create_queue_name(output_queue, str(worker_id))
-            self.middleware.send_message(worker_queue, serialized_message)
+    # def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+    #     msg_id = int(msg_id)
+    #     for worker_id, batch in workers_batches.items():
+    #         serialized_batch = serialize_batch(batch)
+    #         batch_msg_id = msg_id + worker_id
+    #         serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+    #         worker_queue = create_queue_name(output_queue, str(worker_id))
+    #         self.middleware.send_message(worker_queue, serialized_message)
 
-    def _create_batches(self, batch, next_workers_quantity):
-        workers_batches = {}
-        for row in batch:
-            hashed_title = hash_title(row['Title'])
-            choosen_worker = hashed_title % next_workers_quantity
-            if choosen_worker not in workers_batches:
-                workers_batches[choosen_worker] = []
-            workers_batches[choosen_worker].append(row)
+    # def _create_batches(self, batch, next_workers_quantity):
+    #     workers_batches = {}
+    #     for row in batch:
+    #         hashed_title = hash_title(row['Title'])
+    #         choosen_worker = hashed_title % next_workers_quantity
+    #         if choosen_worker not in workers_batches:
+    #             workers_batches[choosen_worker] = []
+    #         workers_batches[choosen_worker].append(row)
         
-        return workers_batches
+    #     return workers_batches
 
     # def create_and_send_batches(self, batch, client_id, output_queue=None):
     #     workers_batches = {}
@@ -949,11 +948,11 @@ class ReviewSentimentWorker(Worker):
     #         worker_queue = create_queue_name(output_queue, worker_id)
     #         self.middleware.send_message(worker_queue, serialized_message)
 
-    def add_new_active_client(self, client_id):
-        self.active_clients.add(client_id)
+    # def add_new_active_client(self, client_id):
+    #     self.active_clients.add(client_id)
         
-        # TODO: Write on disk the new active clients!!!!!!!!
-        self.log.persist(self.active_clients)
+    #     # TODO: Write on disk the new active clients!!!!!!!!
+    #     self.log.persist(self.active_clients)
     
     def manage_message(self, client_id, data, method, msg_id):
         if not self.client_is_active(client_id):
@@ -963,7 +962,7 @@ class ReviewSentimentWorker(Worker):
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
 
-class FilterReviewsWorker(Worker):
+class FilterReviewsWorker(StateWorker):
 
     def __init__(self, worker_id, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue, log):
         self.acum = True

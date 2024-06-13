@@ -20,11 +20,11 @@ class Worker:
             worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, eof_msg)
 
-    def remove_active_client(self, client_id):
-        self.active_clients.remove(client_id)
+    # def remove_active_client(self, client_id):
+    #     self.active_clients.remove(client_id)
 
-        # TODO: Write on disk the new active clients!!!!!!!!
-        self.log.persist(self.active_clients)
+    #     # TODO: Write on disk the new active clients!!!!!!!!
+    #     self.log.persist(self.active_clients)
         
     
     def manage_message(self, client_id, data, method, msg_id=NO_ID):
@@ -62,16 +62,19 @@ class Worker:
     def client_is_active(self, client_id):
         raise Exception('Function needs to be implemented')
     
-    def send_results(self, client_id):
+    def manage_EOF(self, body, method, client_id):
         raise Exception('Function needs to be implemented')
     
-    def manage_EOF(self, body, method, client_id):
-        if self.acum:
-            self.send_results(client_id)
-        else:
-            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-        self.ack_EOFs(client_id)
-        self.remove_active_client(client_id)
+    # def send_results(self, client_id):
+    #     raise Exception('Function needs to be implemented')
+    
+    # def manage_EOF(self, body, method, client_id):
+    #     if self.acum:
+    #         self.send_results(client_id)
+    #     else:
+    #         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+    #     self.ack_EOFs(client_id)
+    #     self.remove_active_client(client_id)
 
     def ack_EOFs(self, client_id):
         for delivery_tag in self.clients_unacked_eofs[client_id]:
@@ -134,3 +137,68 @@ class Worker:
                 print("Gracefully exited")
             else:
                 raise e
+            
+
+class StateWorker(Worker):
+    """
+    This type of workers acummulate various messages for each client, creating only one big message
+    """
+
+    def remove_active_client(self, client_id):
+        raise Exception('Function needs to be implemented')
+
+    def manage_EOF(self, body, method, client_id):
+        self.send_results(client_id)
+        self.ack_EOFs(client_id)
+        self.remove_active_client(client_id)
+
+    def send_results(self, client_id):
+        raise Exception('Function needs to be implemented')
+    
+    def client_is_active(self, client_id):
+        return client_id in self.clients_acum
+
+class NoStateWorker(Worker):
+    """
+    This type of workers filter each message and create one message per message receive.
+    """
+
+    def remove_active_client(self, client_id):
+        self.active_clients.remove(client_id)
+
+        # TODO: Write on disk the new active clients!!!!!!!!
+        self.log.persist(self.active_clients)
+
+    def client_is_active(self, client_id):
+        return client_id in self.active_clients
+
+    def add_new_active_client(self, client_id):
+        self.active_clients.add(client_id)
+        
+        # TODO: Write on disk the new active clients!!!!!!!!
+        self.log.persist(self.active_clients)
+
+    def manage_EOF(self, body, method, client_id):
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+        self.ack_EOFs(client_id)
+        self.remove_active_client(client_id)
+
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
+        msg_id = int(msg_id)
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            batch_msg_id = msg_id + worker_id
+            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            worker_queue = create_queue_name(output_queue, str(worker_id))
+            self.middleware.send_message(worker_queue, serialized_message)
+
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for row in batch:
+            hashed_title = hash_title(row['Title'])
+            choosen_worker = hashed_title % next_workers_quantity
+            if choosen_worker not in workers_batches:
+                workers_batches[choosen_worker] = []
+            workers_batches[choosen_worker].append(row)
+        
+        return workers_batches
