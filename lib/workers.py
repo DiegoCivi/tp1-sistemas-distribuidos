@@ -41,6 +41,12 @@ class Worker:
             
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+        self.address = os.getenv("ADDRESS")
+        self.port = PORT
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.health_checker = HealthCheckHandler(self.address, self.port)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
         try:
             # Read the data
             self.middleware.receive_messages(self.input_name, callback_with_params)
@@ -55,13 +61,6 @@ class FilterWorker(Worker):
 
     def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last):
         signal.signal(signal.SIGTERM, self.handle_signal)
-        
-        self.address = os.getenv("ADDRESS")
-        self.port = PORT
-        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.health_checker = HealthCheckHandler(self.address, self.port)
-        self.health_check = Process(target=self.health_checker.handle_health_check)
-        self.health_check.start()
 
         self.id = id
         self.last = last
@@ -167,6 +166,7 @@ class JoinWorker:
         self.queue = queue.Queue()
         self.address = os.getenv("ADDRESS")
         self.port = os.getenv("PORT")
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
         self.health_check = HealthCheckHandler(self.address, self.port)
         self.health_check = Process(target=self.health_check.handle_health_check)
         self.health_check.start()

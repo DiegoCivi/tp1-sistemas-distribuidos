@@ -1,5 +1,5 @@
 import socket
-from multiprocessing import Process, Manager, Queue, Lock, Event
+from multiprocessing import Process, Manager, Queue
 from communications import read_socket, write_socket
 import random
 import os
@@ -99,7 +99,6 @@ class Connector(ProcessCreator):
         self.containers_list = containers_list
         # List to have all the created processes to join them later
         self.processes = []
-        self.lock = Lock()
 
     def connect_to_coordinators(self, reconnection):
         """
@@ -136,8 +135,7 @@ class Connector(ProcessCreator):
 
                         p = Process(target=self.initiate_connection, args=(self.id, s, self.connections, False,))
                         
-                        with self.lock:
-                            self.add_connection(self.connections, id, s)
+                        self.add_connection(self.connections, id, s)
 
                         p.start()
                         self.processes.append(p)
@@ -162,8 +160,7 @@ class Connector(ProcessCreator):
 
                     p = Process(target=self.initiate_connection, args=(container, s, self.connections, True))
                     
-                    with self.lock:
-                        self.add_connection(self.connections, container, s)
+                    self.add_connection(self.connections, container, s)
 
                     p.start()
                     self.processes.append(p)
@@ -295,9 +292,6 @@ class HealthChecker():
     for a little bit.
 
     """
-    
-    def __init__(self):
-        self.restart_event = Event()
 
     def check_connection(self, id, conn):
         """
@@ -306,12 +300,11 @@ class HealthChecker():
         while True:
             try:
                 # print(f"Performing health check with {id}")
-                conn.settimeout(5) # TODO: Use an environment variable for this or a constant
                 err = write_socket(conn, "HEALTH_CHECK")
                 if err:
                     print(f"Error in container {id}, err was: {err}", flush=True)
                     raise err
-                msg, err = read_socket(conn)
+                msg, err = read_socket(conn, timeout=5)
                 # if id == "filter_title_worker1":
                 #     print(msg, err)
                 #     pass
@@ -327,8 +320,6 @@ class HealthChecker():
             except: # (socket.timeout, socket.error, ConnectionResetError, Exception)
                 print(f"REINICIO DE CONTAINER {id} POR TIMEOUT O ERROR", flush=True, end="\n")
                 self.restart_container(id)
-                self.restart_event.set()
-                # time.sleep(7)
                 conn = self.reconnect_with_backoff(id)
                 # raise Exception("An unexpected error occurred")
                 
@@ -358,7 +349,6 @@ class HealthChecker():
                 print(f"Reconnecting to {(id, WORKERS_PORT)}", flush=True)
                 conn.connect((id, WORKERS_PORT))
                 print(f"Reconnected to {id}:{WORKERS_PORT}", flush=True)
-                self.restart_event.clear()
                 return conn
             except Exception as e:
                 wait_time = (2 ** retries) + random.uniform(0, 1)

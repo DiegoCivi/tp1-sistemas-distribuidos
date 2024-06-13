@@ -176,10 +176,12 @@ class DataFordwarder:
                 self.message_parser.clean()
             else:
                 # Add the id to the EOF and send it
+                self.message_parser.push(socket_content)
                 msg = EOF_MSG + '_' + self.id
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
         
         print(f'CLIENT_{self.id} HAS FINISHED')
+        self.message_parser.clean()
 
     def handle_signal(self, *args):
         print("Gracefully exit")
