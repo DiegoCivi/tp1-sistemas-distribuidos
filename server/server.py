@@ -6,6 +6,7 @@ import os
 import signal
 import queue
 from multiprocessing import Process, Queue
+from healthchecking import HealthCheckHandler
 
 
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
@@ -15,7 +16,7 @@ EOF_MSG = "EOF"
 
 class Server: # TODO: Implement SIGTERM handling
 
-    def __init__(self, host, port, listen_backlog):
+    def __init__(self, host, port, health_check_port, listen_backlog):
         self.clients = {}
         self._stop_server= False
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,6 +24,9 @@ class Server: # TODO: Implement SIGTERM handling
         self._server_socket.listen(listen_backlog)
         self.clients_accepted = 0
         self.sockets_queue = Queue()
+        self.health_check_handler = HealthCheckHandler(host, health_check_port)
+        self.health_check_handler_p = Process(target=self.health_check_handler.handle_health_check)
+        self.health_check_handler_p.start()
 
     def run(self):
         # Create a process that will be to send the results back to the client
@@ -197,8 +201,8 @@ class DataFordwarder:
 
 
 def main():    
-    HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG')
-    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
+    HOST, PORT, HEALTH_CHECK_PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv("HC_PORT"), os.getenv('LISTEN_BACKLOG')
+    server = Server(HOST, int(PORT), int(HEALTH_CHECK_PORT), int(LISTEN_BACKLOG))
     server.run()
 
 main()

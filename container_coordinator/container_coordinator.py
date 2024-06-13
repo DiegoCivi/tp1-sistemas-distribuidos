@@ -6,6 +6,7 @@ import os
 import docker
 import time
 import signal
+from healthchecking import HealthChecker, HealthCheckHandler
 
 CONNECTION_TRIES = 3
 LOOP_CONNECTION_PERIOD = 2
@@ -36,7 +37,7 @@ class ProcessCreator:
         """
         connections[conn_identifier] = conn
     
-    def initiate_connection(self, id, socket, connections, leader = False):
+    def initiate_connection(self, id, port, socket, connections, leader = False):
         """
         Handler of messages of a connection. This connection can be another ContainerCoordinator
         or a worker from the system.
@@ -44,11 +45,11 @@ class ProcessCreator:
         try:
             if leader:
                 health_checker = HealthChecker()
-                healthcheck_process = Process(target=health_checker.check_connection, args=(id, socket,))
+                healthcheck_process = Process(target=health_checker.check_connection, args=(id, port, socket,))
                 healthcheck_process.start()
                 self.processes.append(healthcheck_process)
 
-            # while True: Do something (leader election... etc)
+            # while True: Do something (leader election... etc) PUT SPECIAL HC HERE TO CHECK IF LEADER IS ALIVE
 
             if leader:
                 try:
@@ -100,7 +101,7 @@ class Connector(ProcessCreator):
         # List to have all the created processes to join them later
         self.processes = []
 
-    def connect_to_coordinators(self, reconnection):
+    def connect_to_coordinators(self, reconnection, port):
         """
         Connect to the other ContainerCoordinators.
         
@@ -133,7 +134,7 @@ class Connector(ProcessCreator):
                             print('Error')
                             raise err
 
-                        p = Process(target=self.initiate_connection, args=(self.id, s, self.connections, False,))
+                        p = Process(target=self.initiate_connection, args=(self.id, port, s, self.connections, False,))
                         
                         self.add_connection(self.connections, id, s)
 
@@ -146,7 +147,7 @@ class Connector(ProcessCreator):
                         continue
         self.join_processes()
 
-    def connect_to_workers(self, workers_port):
+    def connect_to_workers(self, port):
         """
         Connect to the workers. This is only done by the last ContainerCoordinator.
         """
@@ -155,10 +156,10 @@ class Connector(ProcessCreator):
             while True: # cambiar esto
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.connect((container, workers_port))
+                    s.connect((container, port))
                     print(f'Soy {self.id} y me conecte a: ', container)
 
-                    p = Process(target=self.initiate_connection, args=(container, s, self.connections, True))
+                    p = Process(target=self.initiate_connection, args=(container, port, s, self.connections, True))
                     
                     self.add_connection(self.connections, container, s)
 
@@ -179,8 +180,7 @@ class ContainerCoordinator(ProcessCreator):
     and one of his connection shutdowns, it needs to get that container back and running.
     """
 
-    def __init__(self, id, address, listen_backlog, coordinators_list, containers_list, workers_port):
-
+    def __init__(self, id, address, listen_backlog, coordinators_list, containers_list, coords_port, workers_port):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.bind(address)
         self._socket.listen(listen_backlog)
@@ -193,6 +193,7 @@ class ContainerCoordinator(ProcessCreator):
         # List of containers that the coordinator is responsible for
         self.containers_list = containers_list
         self.workers_port = workers_port
+        self.coords_port = coords_port
         # This list of tuples has the address of the other coordinators with their id [(host1, port1, id1), (host2, port2, id2), ...]
         self.coordinators_list = coordinators_list
         # List to have all the created processes to join them later
@@ -206,7 +207,7 @@ class ContainerCoordinator(ProcessCreator):
     
     def create_connector(self, coord_id, connections, coordinators_list, containers_list, reconnection, coord = True):
         connector = Connector(coord_id, connections, coordinators_list, containers_list)
-        connector.connect_to_coordinators(reconnection) if coord == True else connector.connect_to_workers(self.workers_port)
+        connector.connect_to_coordinators(reconnection, self.coords_port) if coord == True else connector.connect_to_workers(self.workers_port)
     
     def initiate_reconnection(self):
         """
@@ -261,7 +262,7 @@ class ContainerCoordinator(ProcessCreator):
                     raise err
                 print(f"Soy {self.id} y se me conecto: ", identifier)
                 # Start the process responsible for receiving the data from the new connection
-                p = Process(target=self.initiate_connection, args=(self.id, conn, self.connections, False,))
+                p = Process(target=self.initiate_connection, args=(self.id, self.coords_port, conn, self.connections, False,))
 
                 # Put in the dict the identifier with the TCP socket
                 self.add_connection(self.connections, identifier, conn)
@@ -283,96 +284,6 @@ class ContainerCoordinator(ProcessCreator):
         # We wait for the end of the children processes
         self.close_resources()
 
-class HealthChecker():
-    """
-    Responsible for checking the health of a certain connection. If the connection
-    is not healthy, it will restart the container. To determine if the connection is
-    healthy, a simple message will be sent to the other side with a timeout of fixed
-    time. If an ACK is not received, the container will be restarted after waiting 
-    for a little bit.
-
-    """
-
-    def check_connection(self, id, conn):
-        """
-        Check the health of the connection with the id.
-        """
-        while True:
-            try:
-                # print(f"Performing health check with {id}")
-                err = write_socket(conn, "HEALTH_CHECK")
-                if err:
-                    print(f"Error in container {id}, err was: {err}", flush=True)
-                    raise err
-                msg, err = read_socket(conn, timeout=5)
-                # if id == "filter_title_worker1":
-                #     print(msg, err)
-                #     pass
-                if err:
-                    print(f"Error in container {id}, err was: {err}", flush=True)
-                    raise err
-                elif msg == "ACK":
-                    # print(f"Health check with {id} was successful")
-                    continue
-                else:
-                    raise Exception(f"Unexpected message from container: {msg}", flush=True)
-                
-            except: # (socket.timeout, socket.error, ConnectionResetError, Exception)
-                print(f"REINICIO DE CONTAINER {id} POR TIMEOUT O ERROR", flush=True, end="\n")
-                self.restart_container(id)
-                conn = self.reconnect_with_backoff(id)
-                # raise Exception("An unexpected error occurred")
-                
-
-    
-    def restart_container(self, id):
-        """
-        Restart the container with the id.
-        """
-        docker_client = docker.from_env()
-        try:
-            print(f"Restarting container {id}", flush=True)
-            container = docker_client.containers.get(id)
-            container.restart()
-            print(f"Container {id} has been restarted", flush=True)
-        except:
-            print(f"Exception occurred while restarting container {id}, error:", flush=True)
-            raise
-
-    def reconnect_with_backoff(self, id, max_retries=5):
-        print(f"Reconnecting to {id} with backoff", flush=True)
-        retries = 0
-        while retries < max_retries:
-            try:
-                conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                conn.settimeout(5)
-                print(f"Reconnecting to {(id, WORKERS_PORT)}", flush=True)
-                conn.connect((id, WORKERS_PORT))
-                print(f"Reconnected to {id}:{WORKERS_PORT}", flush=True)
-                return conn
-            except Exception as e:
-                wait_time = (2 ** retries) + random.uniform(0, 1)
-                print(f"Reconnection failed (attempt {retries + 1}/{max_retries}): {e}. Retrying in {wait_time:.2f} seconds.")
-                conn.close()  # Ensure the socket is closed before retrying
-                time.sleep(wait_time)
-                retries += 1
-        raise Exception(f"Failed to reconnect to {id} after {max_retries} attempts")
-
-    def reconnect(self, id):
-        print(f"Reconnecting to {id}")
-        while True:
-            try:
-                conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                conn.settimeout(5)
-                print(f"Reconnecting to {(id, WORKERS_PORT)}", flush=True)
-                conn.connect((id, WORKERS_PORT))
-                print(f"Reconnected to {id}:{WORKERS_PORT}", flush=True)
-                return conn
-            except:
-                print("An unexpected error occurred", flush=True)
-                time.sleep(3)
-
-
 # HOW TO START A CONTAINER AGAIN:
 # To start again a container, the command "docker start <container_name>" can be used.
 
@@ -383,7 +294,7 @@ class HealthChecker():
 def parse_string_to_list(input_string):
     elements = input_string.split(',')
     
-    result = [(elements[i], int(elements[i + 1]), elements[i + 2]) for i in range(0, len(elements), 3)]
+    result = [(element, int(element[-1])) for element in elements]
     
     return result
 
@@ -395,14 +306,15 @@ def main():
     coordinators_list = os.getenv('COORDINATORS_LIST')                      # host1, port1, id1, host2, port2, id2, ...
     coordinators_list = parse_string_to_list(coordinators_list)             # [(host1, port1, id1), (host2, port2, id2), ...]
     coord_id = int(os.getenv('ID'))
+    coords_port = int(os.getenv('COORDS_PORT'))
+    workers_port = int(os.getenv('PORT'))
     listen_backlog = int(os.getenv('LISTEN_BACKLOG'))
-    workers_port = int(os.getenv('WORKERS_PORT'))
     containers_list = read_workers_file(CONTAINERS_LIST)
 
     coord_info = coordinators_list[coord_id]                                # (host, port, id)
     coord_addr = (coord_info[HOST_INDEX], coord_info[PORT_INDEX])
     print("Mi addr es: ", coord_addr)
-    container_coord = ContainerCoordinator(coord_id, coord_addr, listen_backlog, coordinators_list, containers_list, workers_port)
+    container_coord = ContainerCoordinator(coord_id, coord_addr, listen_backlog, coordinators_list, containers_list, coords_port, workers_port)
     container_coord.run()
 
 

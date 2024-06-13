@@ -7,6 +7,7 @@ import socket
 import os
 from multiprocessing import Process
 from communications import read_socket, write_socket
+from healthchecking import HealthCheckHandler
 
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
@@ -15,7 +16,6 @@ QUERY_5 = 5
 QUERY_3 = 3
 BATCH_SIZE = 100
 QUERY_COORDINATOR_QUANTITY = 1
-PORT = 4321
 
 class Worker:
 
@@ -42,7 +42,7 @@ class Worker:
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         self.address = os.getenv("ADDRESS")
-        self.port = PORT
+        self.port = os.getenv("PORT")
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
         self.health_checker = HealthCheckHandler(self.address, self.port)
         self.health_check = Process(target=self.health_checker.handle_health_check)
@@ -780,29 +780,3 @@ class FilterReviewsWorker(Worker):
             serialized_message = serialize_message(serialized_batch, client_id)
             worker_queue = create_queue_name(output_queue, worker_id)#output_queue + '_' + worker_id
             self.middleware.send_message(worker_queue, serialized_message)
-
-class HealthCheckHandler():
-
-    def __init__(self, address, port):
-        self.address = address
-        self.port = port
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.socket.close()
-
-    def handle_health_check(self):
-        self.socket.bind((self.address, self.port))
-        # Listen for incoming connections
-        print("Listening for incoming connections on port ", self.port)
-        self.socket.listen(5)
-        conn, addr = self.socket.accept()
-        while True:
-            msg, err = read_socket(conn)
-            if err:
-                print("Error reading from socket: ", err)
-                break
-            # print("Received message: ", msg)
-            if msg == "HEALTH_CHECK":
-                write_socket(conn, "ACK")

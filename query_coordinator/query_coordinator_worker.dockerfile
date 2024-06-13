@@ -5,6 +5,7 @@ RUN python3 -m pip install pika
 COPY ./lib/middleware.py middleware.py
 COPY ./lib/communications.py communications.py
 COPY ./lib/serialization.py serialization.py
+COPY ./lib/healtchecking.py healtchecking.py
 COPY ./query_coordinator/query_coordinator.py query_coordinator.py
 COPY ./query_coordinator/query_coordinator_worker.py query_coordinator_worker.py
 

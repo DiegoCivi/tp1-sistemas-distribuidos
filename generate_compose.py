@@ -58,6 +58,12 @@ with open(config_file, "r") as file:
             if "ACCUMULATOR" in env_vars[service_name] and env_vars[service_name]["ACCUMULATOR"] == "True":
                 env_vars[service_name]["EOF_QUANTITY"] = env_vars[last_service_name]["WORKERS_QUANTITY"]
             last_service_name = service_name
+            if not "ADDRESS" in env_vars[service_name]:
+                env_vars[service_name]["ADDRESS"] = service_name
+                if service_name == "container_coordinator":
+                    env_vars[service_name]["COORDS_PORT"] = 1234
+                    continue
+                env_vars[service_name]["PORT"] = 4321  
         else:
             continue
 
@@ -92,6 +98,7 @@ with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w"
     outfile.write("      - HOST=server\n")
     outfile.write("      - PORT=12345\n")
     outfile.write("      - LISTEN_BACKLOG=1\n")
+    outfile.write("      - HC_PORT=4321\n")
     outfile.write("\n")
     outfile.write("  client:\n")
     outfile.write("    container_name: client\n")
@@ -111,15 +118,18 @@ with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w"
     outfile.write("    volumes:\n")
     outfile.write("      - ./datasets:/datasets\n")
     outfile.write("\n")
+    containers_list_file.write("server\n")
+    coords_list = []
     for service_name, dockerfile_path in services:
         if service_name in env_vars:
             # Write as many workers as specified in WORKERS_QUANTITY
             if "WORKERS_QUANTITY" in env_vars[service_name]:
                 workers_quantity = int(env_vars[service_name]["WORKERS_QUANTITY"])
+                if not coords_list and "container_coordinator" in service_name:
+                    coords_list = [f"{service_name}{str(i)}" for i in range(workers_quantity)]
                 for i in range(workers_quantity):
                     worker_name = f"{service_name}{str(i)}"
-                    if "container_coordinator" not in worker_name:
-                        containers_list_file.write(f"{worker_name}\n") 
+                    containers_list_file.write(f"{worker_name}\n") 
                     outfile.write(f"  {worker_name}:\n")
                     outfile.write(f"    container_name: {worker_name}\n")
                     outfile.write(f"    build:\n")
@@ -142,4 +152,7 @@ with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w"
                             outfile.write(f"      - {key}={worker_name}\n")
                         else:
                             outfile.write(f"      - {key}={value}\n")
+                    if "container_coordinator" in worker_name:
+                        coords_list_string = ",".join(coords_list)
+                        outfile.write(f"      - COORDS_PORT={coords_list_string}\n")
                     outfile.write("\n")

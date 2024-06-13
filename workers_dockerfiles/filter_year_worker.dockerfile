@@ -8,6 +8,7 @@ COPY ./lib/middleware.py middleware.py
 COPY ./lib/filters.py filters.py
 COPY ./lib/workers.py workers.py
 COPY ./lib/communications.py communications.py
+COPY ./lib/healtchecking.py healtchecking.py
 
 COPY ./workers/filter_year_worker.py filter_year_worker.py
 

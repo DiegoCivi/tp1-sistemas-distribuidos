@@ -8,6 +8,7 @@ RUN pip3 install docker
 #COPY ./workers_dockerfiles workers_dockerfiles
 #COPY ./workers workers
 COPY ./lib/communications.py communications.py
+COPY ./lib/healtchecking.py healtchecking.py
 COPY ./container_coordinator/container_coordinator.py container_coordinator.py
 COPY ./containers_list.config containers_list.config
 #COPY ./lib/ lib
