@@ -148,7 +148,7 @@ class DataCoordinator:
         self.parse_and_send_q1(batch, client_id, msg_id)
         self.parse_and_send_q2(batch, client_id, msg_id)
         self.parse_and_send_q3(batch, client_id, msg_id)
-        # self.parse_and_send_q5(batch, client_id, msg_id)
+        self.parse_and_send_q5(batch, client_id, msg_id)
 
     def parse_and_send(self, batch, desired_keys, queue, query, client_id, msg_id):
         msg_id = int(msg_id)
@@ -317,12 +317,6 @@ class ResultsCoordinator:
             return False
         
         return True
-    
-    # def received_all_client_results(self, client_id):
-    #     self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-    #     if self.clients_results_counter[client_id] == 4: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
-    #         return True
-    #     return False
 
     def client_is_active(self, client_id, method):
         return client_id in self.clients_results
@@ -392,7 +386,7 @@ class ResultsCoordinator:
         self.log.persist(curr_state)
     
     def received_all_EOFs(self, client_id):
-        return self.clients_results_counter[client_id] == 4 # Change this value according to how many queries you are running
+        return self.clients_results_counter[client_id] == QUERIES_QUANTITY # Change this value according to how many queries you are running
 
     def handle_results(self, method, body, fields_to_print, query):
         if is_EOF(body):
@@ -415,17 +409,6 @@ class ResultsCoordinator:
                         self.add_unacked_EOF(client_id, method, query)
                         return
 
-                # if self.received_all_client_results(client_id):
-                #     self.add_unacked_EOF(client_id, method)
-                #     self.manage_EOF(body, method, client_id)
-                #     #self.delete_client_EOF_counter(client_id)
-                #     return
-                # else:
-                #     if self.client_is_active(client_id, method):
-                #         # Add the EOF delivery tag to the list of unacked EOFs
-                #         self.add_unacked_EOF(client_id, method)
-                #         return
-
             self.middleware.ack_message(method)
             return
 
@@ -445,12 +428,12 @@ class ResultsCoordinator:
         q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
         q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
         q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
-        # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
+        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
         self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
         self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
         self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
         self.middleware.consume()
 
     def assemble_results(self, client_id):
@@ -465,8 +448,8 @@ class ResultsCoordinator:
         results.append(results3)
         results4 = Q4 + client_results_dict[Q4]
         results.append(results4)
-        # results5 = Q5 + client_results_dict[Q5]
-        # results.append(results5)
+        results5 = Q5 + client_results_dict[Q5]
+        results.append(results5)
         
         results = '\n'.join(results)
         return results

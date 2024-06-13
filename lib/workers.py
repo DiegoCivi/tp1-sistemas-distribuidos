@@ -931,6 +931,8 @@ class ReviewSentimentWorker(Worker):
             if choosen_worker not in workers_batches:
                 workers_batches[choosen_worker] = []
             workers_batches[choosen_worker].append(row)
+        
+        return workers_batches
 
     # def create_and_send_batches(self, batch, client_id, output_queue=None):
     #     workers_batches = {}
@@ -958,7 +960,7 @@ class ReviewSentimentWorker(Worker):
             self.add_new_active_client(client_id)
 
         desired_data = calculate_review_sentiment(data)
-        self.create_and_send_batches(desired_data, client_id, msg_id)
+        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
 
 class FilterReviewsWorker(Worker):
