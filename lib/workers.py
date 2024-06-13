@@ -33,6 +33,7 @@ class FilterWorker(NoStateWorker):
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
         self.clients_unacked_eofs = {}
+        self.last_clients_msg = {}
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -56,16 +57,8 @@ class FilterWorker(NoStateWorker):
         self.filter_condition = type
         self.filter_value = value
 
-    def manage_message(self, client_id, data, method, msg_id):
-        if not self.client_is_active(client_id):
-            self.add_new_active_client(client_id)
-        
-        desired_data = filter_by(data, self.filtering_function, self.filter_value)
-        if not desired_data:
-            return
-
-        # Create batches for each worker in the next stage and send those batches
-        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
+    def apply_filter(self, data):
+        return filter_by(data, self.filtering_function, self.filter_value)
 
 
 class JoinWorker(StateWorker):
@@ -93,7 +86,6 @@ class JoinWorker(StateWorker):
         self.eof_quantity_reviews = eof_quantity_reviews
         self.clients_unacked_eofs_titles = {}
         self.clients_unacked_eofs_reviews = {}
-        # self.counter_dicts = {}
         self.clients_acum = {}
         self.leftover_reviews = {}
         self.query = query
@@ -104,6 +96,9 @@ class JoinWorker(StateWorker):
         except Exception as e:
             raise e
         self.middleware = middleware
+
+        self.stop_worker = False
+        self.active_clients = set()
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -371,6 +366,7 @@ class DecadeWorker(NoStateWorker):
         self.eof_counter = {}
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.clients_unacked_eofs = {}
+        self.last_clients_msg = {}
         self.queue = queue.Queue()
         try:
             middleware = Middleware(self.queue)
@@ -398,16 +394,9 @@ class DecadeWorker(NoStateWorker):
             workers_batches[worker_id] = batch
 
         return workers_batches
-
-    def manage_message(self, client_id, data, method, msg_id):
-        if not self.client_is_active(client_id):
-            self.add_new_active_client(client_id)
-
-        desired_data = different_decade_counter(data)
-        if not desired_data:
-            return
-
-        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
+    
+    def apply_filter(self, data):
+        return different_decade_counter(data)
 
 
 class GlobalDecadeWorker(StateWorker):
@@ -436,6 +425,9 @@ class GlobalDecadeWorker(StateWorker):
         except Exception as e:
             raise e
         self.middleware = middleware
+
+        self.msg_counter = 0
+        self.clients_acummulated_msgs = {}
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -472,11 +464,12 @@ class GlobalDecadeWorker(StateWorker):
         self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-    def manage_message(self, client_id, data, method, msg_id=NO_ID):
+    def acummulate_message(self, client_id, data):
         if client_id not in self.clients_acum:
             self.clients_acum[client_id] = {}
 
         accumulate_authors_decades(data, self.clients_acum[client_id])
+        
 
 
 class PercentileWorker(StateWorker):
@@ -507,6 +500,9 @@ class PercentileWorker(StateWorker):
             raise e
         self.middleware = middleware
 
+        self.msg_counter = 0
+        self.clients_acummulated_msgs = {}
+
     def handle_signal(self, *args):
         print("Gracefully exit")
         self.queue.put('SIGTERM')
@@ -514,7 +510,14 @@ class PercentileWorker(StateWorker):
         if self.middleware != None:
             self.middleware.close_connection()
 
-    def manage_message(self, client_id, data, method, msg_id=NO_ID):
+    # def manage_message(self, client_id, data, method, msg_id=NO_ID):
+    #     if client_id not in self.clients_acum:
+    #         self.clients_acum[client_id] = {}
+
+    #     for title, sentiment_value in data[0].items():
+    #         self.clients_acum[client_id][title] = float(sentiment_value)
+
+    def acummulate_message(self, client_id, data):
         if client_id not in self.clients_acum:
             self.clients_acum[client_id] = {}
 
@@ -576,6 +579,10 @@ class TopNWorker(StateWorker):
             raise e
         self.middleware = middleware
 
+        self.msg_counter = 0
+        self.clients_acummulated_msgs = {}
+
+
     def handle_signal(self, *args):
         print("Gracefully exit")
         self.queue.put('SIGTERM')
@@ -600,11 +607,18 @@ class TopNWorker(StateWorker):
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-    def manage_message(self, client_id, data, method, msg_id=NO_ID):
+    # def manage_message(self, client_id, data, method, msg_id=NO_ID):
+    #     if client_id not in self.clients_acum:
+    #         self.clients_acum[client_id] = []
+
+    #     self.clients_acum[client_id] = get_top_n(data, self.clients_acum[client_id], self.top_n, self.last)
+    
+    def acummulate_message(self, client_id, data):
         if client_id not in self.clients_acum:
             self.clients_acum[client_id] = []
 
         self.clients_acum[client_id] = get_top_n(data, self.clients_acum[client_id], self.top_n, self.last)
+        
 
     def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
@@ -648,6 +662,7 @@ class ReviewSentimentWorker(NoStateWorker):
         self.eof_quantity = eof_quantity
         self.eof_counter = {}
         self.clients_unacked_eofs = {}
+        self.last_clients_msg = {}
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -664,13 +679,9 @@ class ReviewSentimentWorker(NoStateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
-    
-    def manage_message(self, client_id, data, method, msg_id):
-        if not self.client_is_active(client_id):
-            self.add_new_active_client(client_id)
 
-        desired_data = calculate_review_sentiment(data)
-        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
+    def apply_filter(self, data):
+        return calculate_review_sentiment(data)
 
 
 class FilterReviewsWorker(StateWorker):
@@ -702,7 +713,8 @@ class FilterReviewsWorker(StateWorker):
         self.middleware = middleware
 
         self.stop_worker = False
-        self.filtered_results_quantity = 0
+        self.msg_counter = 0
+        self.clients_acummulated_msgs = {}
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -715,7 +727,6 @@ class FilterReviewsWorker(StateWorker):
         # Send the results to the query 4 and the QueryCoordinator
         if len(self.clients_acum[client_id]) != 0:
             # First to the Query Coordinator
-            print("MANDO LOS RESULTADOS AL QC")
             self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY)
             # Then to the query 4
             self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name2, self.next_workers_quantity)
@@ -726,13 +737,14 @@ class FilterReviewsWorker(StateWorker):
         # Send the EOFs to the workers on the query 4
         self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
 
-    def manage_message(self, client_id, data, method, msg_id=NO_ID):
-        if client_id not in self.clients_acum:
-            self.clients_acum[client_id] = []
+    # def manage_message(self, client_id, data, method, msg_id=NO_ID):
+    #     if client_id not in self.clients_acum:
+    #         self.clients_acum[client_id] = []
 
-        desired_data = review_quantity_value(data, self.minimum_quantity)
-        for title, counter in desired_data[0].items():
-            self.clients_acum[client_id].append({'Title': title, 'counter': counter})
+    #     desired_data = review_quantity_value(data, self.minimum_quantity)
+    #     for title, counter in desired_data[0].items():
+    #         self.clients_acum[client_id].append({'Title': title, 'counter': counter})
+
 
     def _create_batches(self, batch, next_workers_quantity):
         workers_batches = {}
@@ -753,3 +765,12 @@ class FilterReviewsWorker(StateWorker):
             serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
             worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, serialized_message)
+
+    def acummulate_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = []
+
+        desired_data = review_quantity_value(data, self.minimum_quantity)
+        for title, counter in desired_data[0].items():
+            self.clients_acum[client_id].append({'Title': title, 'counter': counter})
+        

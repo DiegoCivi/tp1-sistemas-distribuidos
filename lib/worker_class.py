@@ -19,14 +19,7 @@ class Worker:
         for worker_id in range(next_workers_quantity):
             worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, eof_msg)
-
-    # def remove_active_client(self, client_id):
-    #     self.active_clients.remove(client_id)
-
-    #     # TODO: Write on disk the new active clients!!!!!!!!
-    #     self.log.persist(self.active_clients)
         
-    
     def manage_message(self, client_id, data, method, msg_id=NO_ID):
         raise Exception('Function needs to be implemented')
     
@@ -64,17 +57,7 @@ class Worker:
     
     def manage_EOF(self, body, method, client_id):
         raise Exception('Function needs to be implemented')
-    
-    # def send_results(self, client_id):
-    #     raise Exception('Function needs to be implemented')
-    
-    # def manage_EOF(self, body, method, client_id):
-    #     if self.acum:
-    #         self.send_results(client_id)
-    #     else:
-    #         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-    #     self.ack_EOFs(client_id)
-    #     self.remove_active_client(client_id)
+
 
     def ack_EOFs(self, client_id):
         for delivery_tag in self.clients_unacked_eofs[client_id]:
@@ -88,7 +71,10 @@ class Worker:
 
         self.clients_unacked_eofs[client_id] = unacked_eofs
 
-    def handle_data(self, method, body):            
+    def is_message_repeated(self, client_id, msg_id):
+        raise Exception('Function needs to be implemented')
+
+    def handle_data(self, method, body):       
         if is_EOF(body):
             worker_id = get_EOF_worker_id(body)                                 # The id of the worker that sent the EOF
             client_id = get_EOF_client_id(body)                                 # The id of the active client
@@ -111,18 +97,8 @@ class Worker:
         
         msg_id, client_id, data = deserialize_titles_message(body)
 
-        ############################# BORRAR #############################
-        # if client_id not in self.temp:
-        #     self.temp[client_id] = set()
-
-        # if msg_id in self.temp[client_id]:
-        #     print(f"@@@@@@@@ EL MSG_ID [{msg_id}] YA HABIA LLEGADO, LOS QUE YA TENIA SON: [{self.temp}] @@@@@@@@")
-        #     raise Exception
-        # else:
-        #     self.temp[client_id].add(msg_id)
-        ############################# BORRAR #############################
-
-        self.manage_message(client_id, data, method, msg_id)
+        if not self.is_message_repeated(client_id, msg_id):
+            self.manage_message(client_id, data, method, msg_id)
 
         self.middleware.ack_message(method)
             
@@ -143,6 +119,11 @@ class StateWorker(Worker):
     """
     This type of workers acummulate various messages for each client, creating only one big message
     """
+
+    def is_message_repeated(self, client_id, msg_id):
+        if client_id in self.clients_acummulated_msgs:
+            return msg_id in self.clients_acummulated_msgs[client_id]
+        return False
 
     def remove_active_client(self, client_id):
         raise Exception('Function needs to be implemented')
@@ -165,17 +146,51 @@ class StateWorker(Worker):
             return
         del self.clients_acum[client_id]
 
-        self.log.persist(self.clients_acum)
+        self.log.persist(self.clients_acum) # TODO: Persist also the msg_ids of the messages acumulated
+
+    def acummulate_message(self, client_id, data):
+        raise Exception('Function needs to be implemented')
+
+    def need_to_persist(self):
+        return self.msg_counter == 500 # TODO: Make this a parameter for the worker!
+    
+    def persist_acum(self):
+        self.log.persist(self.acum)
+        self.msg_counter = 0
+
+    def manage_message(self, client_id, data, method, msg_id=NO_ID):
+        self.acummulate_message(client_id, data)
+
+        self.add_acummulated_msg(client_id, method)
+        if self.need_to_persist():
+            self.persist_acum()
+
+    def add_acummulated_msg(self, client_id, msg_method):
+        if client_id not in self.clients_acummulated_msgs:
+            self.clients_acummulated_msgs[client_id] = set()
+
+        self.clients_acummulated_msgs[client_id].add(msg_method.delivery_tag)
+        
 
 class NoStateWorker(Worker):
     """
     This type of workers filter each message and create one message per message receive.
     """
 
+    def is_message_repeated(self, client_id, msg_id):
+        """
+        If the message received has the same id that the last message received,
+        it is a repeated message.
+        """
+        last_client_message = self.last_clients_msg.get(client_id, None)
+        
+        self.last_clients_msg[client_id] = msg_id
+
+        return last_client_message == msg_id
+
     def remove_active_client(self, client_id):
         self.active_clients.remove(client_id)
 
-        # TODO: Write on disk the new active clients!!!!!!!!
         self.log.persist(self.active_clients)
 
     def client_is_active(self, client_id):
@@ -184,7 +199,6 @@ class NoStateWorker(Worker):
     def add_new_active_client(self, client_id):
         self.active_clients.add(client_id)
         
-        # TODO: Write on disk the new active clients!!!!!!!!
         self.log.persist(self.active_clients)
 
     def manage_EOF(self, body, method, client_id):
@@ -211,3 +225,16 @@ class NoStateWorker(Worker):
             workers_batches[choosen_worker].append(row)
         
         return workers_batches
+    
+    def manage_message(self, client_id, data, method, msg_id=NO_ID):
+        if not self.client_is_active(client_id):
+            self.add_new_active_client(client_id)
+        
+        desired_data = self.apply_filter(data)
+        if not desired_data:
+            return
+        
+        self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
+
+    def apply_filter(self, data):
+        raise Exception('Function needs to be implemented')
