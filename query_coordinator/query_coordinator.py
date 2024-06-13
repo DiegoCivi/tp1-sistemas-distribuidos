@@ -115,6 +115,10 @@ class DataCoordinator:
             client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())
 
             if file_identifier not in client_eof_workers_ids:
+                # Add the identifier
+                client_eof_workers_ids.add(file_identifier)
+                self.eof_workers_ids[client_id] = client_eof_workers_ids
+                
                 self.manage_EOF(client_id)
                 self.change_parse_mode(REVIEWS_MODE, client_id)
             
