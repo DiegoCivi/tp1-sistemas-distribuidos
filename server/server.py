@@ -162,6 +162,8 @@ class DataFordwarder:
         # Then read the reviews dataset
         self._receive_and_forward_data(REVIEWS_FILE_IDENTIFIER) 
         print("Ya mande todo el archivo reviews")
+        #self._client_socket.close()
+        self.middleware.close_connection()
                 
     def _receive_and_forward_data(self, file_identifier):
         while self.message_parser.decode() != EOF_MSG:
@@ -174,15 +176,15 @@ class DataFordwarder:
                 msg_id, _, message = split_message_info(socket_content)
                 self.message_parser.push(message)
                 self.message_parser.add_ids(self.id, msg_id)
-                # self.message_parser.add_client_id(self.id)
-                # self.message_parser.add_msg_id()
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
                 self.message_parser.clean()
             else:
                 # Add the file identifier to the EOF and send it
+                self.message_parser.push(socket_content)                        # TODO: Add a func to message_parser so it can create the eof_msg by its own
                 msg = EOF_MSG + '_' + self.id + '_' + file_identifier
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, msg)
         
+        self.message_parser.clean()
         print(f'CLIENT_{self.id} HAS FINISHED')
 
     def handle_signal(self, *args):
