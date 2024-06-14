@@ -19,6 +19,7 @@ class HealthChecker():
         """
         while True:
             try:
+                time.sleep(1)
                 err = write_socket(conn, "HEALTH_CHECK")
                 if err:
                     print(f"Error in container {container_id}, err was: {err}", flush=True)
@@ -82,9 +83,10 @@ class HealthCheckHandler():
         self.socket.listen(max_listen_backlog)
 
     def handle_health_check(self):
+        time.sleep(1)
         print("Listening for incoming connections on port ", self.port)
         conn, addr = self.socket.accept()
-        print("Received connection from, beginning healthcheck handling", addr)
+        print("Received connection from {addr}, beginning healthcheck handling", addr)
         while True:
             msg, err = read_socket(conn)
             if err:
@@ -92,6 +94,24 @@ class HealthCheckHandler():
                 break
             if msg == "HEALTH_CHECK":
                 write_socket(conn, "ACK")
+
+    def handle_health_check_with_timeout(self, timeout):
+        print("Listening for incoming connections on port ", self.port)
+        conn, addr = self.socket.accept()
+        print("Received connection from, beginning healthcheck handling", addr)
+        while True:
+            try:
+                time.sleep(1)
+                self.socket.settimeout(timeout)
+                msg, err = read_socket(conn)
+                if err:
+                    print("Error reading from socket: ", err)
+                    break
+                if msg == "HEALTH_CHECK":
+                    write_socket(conn, "ACK")
+            except:
+                print("Timeout occurred while reading from socket")
+                break
 
     def close(self):
         self.socket.close()

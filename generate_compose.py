@@ -58,9 +58,9 @@ with open(config_file, "r") as file:
             if "ACCUMULATOR" in env_vars[service_name] and env_vars[service_name]["ACCUMULATOR"] == "True":
                 env_vars[service_name]["EOF_QUANTITY"] = env_vars[last_service_name]["WORKERS_QUANTITY"]
             last_service_name = service_name
-            if not "ADDRESS" in env_vars[service_name]:
+            if not "ADDRESS" in env_vars[service_name] or not "PORT" in env_vars[service_name]:
                 env_vars[service_name]["ADDRESS"] = service_name
-                if service_name == "container_coordinator":
+                if "container_coordinator" in service_name:
                     env_vars[service_name]["COORDS_PORT"] = 1234
                     continue
                 env_vars[service_name]["PORT"] = 4321  
@@ -154,5 +154,5 @@ with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w"
                             outfile.write(f"      - {key}={value}\n")
                     if "container_coordinator" in worker_name:
                         coords_list_string = ",".join(coords_list)
-                        outfile.write(f"      - COORDS_PORT={coords_list_string}\n")
+                        outfile.write(f"      - COORDS_LIST={coords_list_string}\n")
                     outfile.write("\n")

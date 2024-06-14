@@ -53,6 +53,7 @@ class Server: # TODO: Implement SIGTERM handling
             process.join()
 
         results_p.join()
+        self.health_check_handler_p.join()
 
     
 def initiate_data_fordwarder(socket, client_id):
@@ -197,6 +198,7 @@ class DataFordwarder:
             self._client_socket.close()
         if self._server_socket != None:
             self._server_socket.shutdown(socket.SHUT_RDWR)
+        
 
 
 

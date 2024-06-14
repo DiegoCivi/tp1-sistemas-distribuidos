@@ -1,14 +1,11 @@
 FROM python:3.9.7-slim
 
 RUN apt-get update
-RUN apt-get install -y docker.io
-RUN apt-get install -y python3-pip
-RUN pip3 install docker
-
+RUN python3 -m pip install docker
 #COPY ./workers_dockerfiles workers_dockerfiles
 #COPY ./workers workers
 COPY ./lib/communications.py communications.py
-COPY ./lib/healtchecking.py healtchecking.py
+COPY ./lib/healthchecking.py healthchecking.py
 COPY ./container_coordinator/container_coordinator.py container_coordinator.py
 COPY ./containers_list.config containers_list.config
 #COPY ./lib/ lib

@@ -3,6 +3,7 @@ from serialization import serialize_message, deserialize_titles_message, ROW_SEP
 import signal
 import queue
 from multiprocessing import Process
+from healthchecking import HealthCheckHandler
 import logging
 
 TITLES_MODE = 'titles'
@@ -27,7 +28,7 @@ ID = '0' # WARNING: If this is changed, results will never get back to the Query
 
 class QueryCoordinator:
 
-    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity):
+    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, address, port):
         """
         Initializes the query coordinator with the title parse mode
         """
@@ -39,6 +40,9 @@ class QueryCoordinator:
         self.eof_quantity = eof_quantity
 
         self.stop_coordinator = False
+        self.health_check_handler = HealthCheckHandler(address, port)
+        self.health_check_handler_p = Process(target=self.health_check_handler.handle_health_check)
+        self.health_check_handler_p.start()
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -52,6 +56,7 @@ class QueryCoordinator:
         self.queue.put('SIGTERM')
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check_handler_p.join()
 
     def run(self):
         data_coordinator_p = Process(target=self.initiate_data_coordinator, args=())
@@ -280,7 +285,7 @@ class ResultsCoordinator:
             print("Me llefo un eof: ", body)
             client_id = get_EOF_id(body)
             self.clients_results_counter[client_id] = self.clients_results_counter.get(client_id, 0) + 1
-            if self.clients_results_counter[client_id] == 3: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
+            if self.clients_results_counter[client_id] == 7: # VALOR HARDCODEADO DEPENDE DE CUANTAS QUERIES ESTEN CORRIENDO
                 self.send_results(client_id)
                 # self.middleware.stop_consuming()
 
@@ -302,15 +307,15 @@ class ResultsCoordinator:
     
         # # Use queues to receive the queries results
         q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
-        # q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
-        # q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
-        # q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
-        # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
+        q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
+        q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
+        q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
+        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+        self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
+        self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
+        self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
+        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
         self.middleware.consume()
 
     def assemble_results(self, client_id):
@@ -320,14 +325,14 @@ class ResultsCoordinator:
         
         results1 = Q1 + client_results_dict[Q1]
         results.append(results1)
-        # results2 = Q2 + client_results_dict[Q2]
-        # results.append(results2)
-        # results3 = Q3 + client_results_dict[Q3]
-        # results.append(results3)
-        # results4 = Q4 + client_results_dict[Q4]
-        # results.append(results4)
-        # results5 = Q5 + client_results_dict[Q5]
-        # results.append(results5)
+        results2 = Q2 + client_results_dict[Q2]
+        results.append(results2)
+        results3 = Q3 + client_results_dict[Q3]
+        results.append(results3)
+        results4 = Q4 + client_results_dict[Q4]
+        results.append(results4)
+        results5 = Q5 + client_results_dict[Q5]
+        results.append(results5)
         
         results = '\n'.join(results)
         return results

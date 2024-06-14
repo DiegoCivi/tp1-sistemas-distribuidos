@@ -8,7 +8,7 @@ import time
 import signal
 from healthchecking import HealthChecker, HealthCheckHandler
 
-CONNECTION_TRIES = 3
+CONNECTION_TRIES = 20
 LOOP_CONNECTION_PERIOD = 2
 HOST_INDEX = 0
 PORT_INDEX = 1
@@ -43,30 +43,48 @@ class ProcessCreator:
         or a worker from the system.
         """
         try:
+            healthcheck_process = None
             if leader:
+                # I'm the leader, I have to send healthchecks to the workers and coordinators, if
+                # they don't respond, I have to restart them, and if I die, coordinators will
+                # notice and start a new election
                 health_checker = HealthChecker()
                 healthcheck_process = Process(target=health_checker.check_connection, args=(id, port, socket,))
                 healthcheck_process.start()
                 self.processes.append(healthcheck_process)
+            else:
+                # I'm not a leader, I have to listen for healthchecks and ack them but also
+                # use a timeout to check if the leader is still alive, if not I have to start
+                # a new election
+                health_check_handler = HealthCheckHandler(id, port)
+                health_check_handler.handle_health_check(socket)
+                health_check_handler.handle_health_check_with_timeout(socket, 5)
+                # healthcheck_process = Process(target=health_check_handler.handle_health_check_with_timeout, args=(socket, 5,))
+                # healthcheck_process.start()
+                # self.processes.append(healthcheck_process)
 
-            # while True: Do something (leader election... etc) PUT SPECIAL HC HERE TO CHECK IF LEADER IS ALIVE
+            # while True:
+            #     # do something about election
+            #     pass
 
-            if leader:
-                try:
-                    healthcheck_process.join()
-                except Exception as e:
-                    print(f"Error joining healthcheck process: {e}")
+
+
+            # while True: # TODO: Check this condition
+                # self._socket.settimeout(1)
+            #     msg = read_socket(socket)
+            #     if msg.startswith('ELECTION'):
+            #         # Get the id
+            #         # Get the socket from connections with the id
+            #         # Send the new ELECTION message to the next through that socket
+            #         pass
+
+            try:
+                healthcheck_process.join()
+            except Exception as e:
+                print(f"Error joining healthcheck process: {e}")
         except Exception as e:
             print(f"Exception in initiate_connection for id {id}: {e}")
     
-        # while True: # TODO: Check this condition
-            # self._socket.settimeout(1)
-        #     msg = read_socket(socket)
-        #     if msg.startswith('ELECTION'):
-        #         # Get the id
-        #         # Get the socket from connections with the id
-        #         # Send the new ELECTION message to the next through that socket
-        #         pass
 
     def join_processes(self):
         """
@@ -120,23 +138,27 @@ class Connector(ProcessCreator):
         else:
             coordinators_list = self.coordinators_list[self.id + 1:]
 
-        for host, port, id in coordinators_list:
-            if id not in self.connections and str(self.id) != id:
+        for host, id in coordinators_list:
+            if id not in self.connections and self.id != id:
                 for _ in range(CONNECTION_TRIES):            
                     try:
                         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        print(f'Soy {self.id} y me voy a conectar a: ', id)
+                        print(f'Soy {self.id} y me voy a conectar a: {id} con host: {host} y port: {port}')
+                        print(f'Types de host y port: {type(host)} {type(port)}')
                         s.connect((host, port))
-                        print(f'Soy {self.id} y me conecte a: ', id)
+                        print(f'Soy {self.id} y me CONECTE a: ', id)
                         # We send our id and create a process to handle the connection
                         err = write_socket(s, str(self.id))
                         if err != None:
                             print('Error')
                             raise err
-
-                        p = Process(target=self.initiate_connection, args=(self.id, port, s, self.connections, False,))
+                        if self.id == len(self.coordinators_list) - 1: # watch this, there's a bug about sockets
+                            p = Process(target=self.initiate_connection, args=(str(id), port, s, self.connections, True,))
+                            self.add_connection(self.connections, str(id), s)
+                        else:
+                            p = Process(target=self.initiate_connection, args=(str(self.id), port, s, self.connections, False,))
+                            self.add_connection(self.connections, str(self.id), s)
                         
-                        self.add_connection(self.connections, id, s)
 
                         p.start()
                         self.processes.append(p)
@@ -153,6 +175,8 @@ class Connector(ProcessCreator):
         """
         print("Voy a conectarme a los workers")
         for container in self.containers_list:
+            if "container_coordinator" in container:
+                continue
             while True: # cambiar esto
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -303,16 +327,16 @@ def read_workers_file(file_path):
         return [line.strip() for line in file.readlines()]
 
 def main():
-    coordinators_list = os.getenv('COORDINATORS_LIST')                      # host1, port1, id1, host2, port2, id2, ...
+    coordinators_list = os.getenv('COORDS_LIST')                      # host1, port1, id1, host2, port2, id2, ...
     coordinators_list = parse_string_to_list(coordinators_list)             # [(host1, port1, id1), (host2, port2, id2), ...]
     coord_id = int(os.getenv('ID'))
     coords_port = int(os.getenv('COORDS_PORT'))
-    workers_port = int(os.getenv('PORT'))
+    workers_port = int(os.getenv('WORKERS_PORT'))
     listen_backlog = int(os.getenv('LISTEN_BACKLOG'))
     containers_list = read_workers_file(CONTAINERS_LIST)
 
     coord_info = coordinators_list[coord_id]                                # (host, port, id)
-    coord_addr = (coord_info[HOST_INDEX], coord_info[PORT_INDEX])
+    coord_addr = (coord_info[HOST_INDEX], coords_port)
     print("Mi addr es: ", coord_addr)
     container_coord = ContainerCoordinator(coord_id, coord_addr, listen_backlog, coordinators_list, containers_list, coords_port, workers_port)
     container_coord.run()
