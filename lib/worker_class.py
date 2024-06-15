@@ -206,7 +206,7 @@ class StateWorker(Worker):
         raise Exception('Function needs to be implemented')
 
     def need_to_persist(self):
-        return self.msg_counter == 200 # TODO: Make this a parameter for the worker!
+        return self.msg_counter == 150 # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefectch count
     
     def persist_acum(self):
         # TODO: Persist also the ids of the messages accumulated
@@ -214,11 +214,26 @@ class StateWorker(Worker):
         self.msg_counter = 0
 
     def ack_messages(self, client_id):
+        ########################## ACK ALL MESSAGES RECEIVED ##########################
         # self.middleware.ack_all(self.last_msg)
-        for msg_delivery_tag in self.clients_unacked_msgs[client_id]:
-            self.middleware.ack_message(msg_delivery_tag)
+        ###############################################################################
+
+        ########################## ACK ALL MESSAGES RECEIVED FROM A CLIENT ##########################
+        # for msg_delivery_tag in self.clients_unacked_msgs[client_id]:
+        #     self.middleware.ack_message(msg_delivery_tag)
+        # self.middleware.send_message('DEBUG', f'Ya se persistio y tenemos un counter en {self.msg_counter}')
+        # self.clients_unacked_msgs[client_id] = set()
+        #############################################################################################
+
+        ########################## ACK ALL MESSAGES RECEIVED FROM ALL CLIENTS ##########################
+        for _, unacked_msgs in self.clients_unacked_msgs.items():
+            while len(unacked_msgs) > 0:
+                tag = unacked_msgs.pop()
+                self.middleware.ack_message(tag)
+
+            
         self.middleware.send_message('DEBUG', f'Ya se persistio y tenemos un counter en {self.msg_counter}')
-        self.clients_unacked_msgs[client_id] = set()
+        ################################################################################################
 
     def manage_message(self, client_id, data, method, msg_id):
         self.acummulate_message(client_id, data)
