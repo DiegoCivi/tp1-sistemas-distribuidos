@@ -98,7 +98,9 @@ class JoinWorker(StateWorker):
         self.middleware = middleware
 
         self.stop_worker = False
-        self.active_clients = set()
+        self.clients_acummulated_review_msgs = {}
+        self.clients_acummulated_titles_msgs = {}
+        self.msg_counter = 0
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -179,6 +181,11 @@ class JoinWorker(StateWorker):
         del self.eof_counter_reviews[client_id]
         del self.eof_counter_titles[client_id]
 
+    def persist_acum(self):
+        raise Exception('Function needs to be implemented')
+
+    ##########  START TITLES MESSAGES HANDLING ##########
+
     def handle_titles_data(self, method, body):
         if is_EOF(body):
             print("Me llego un EOF en titles")
@@ -201,9 +208,43 @@ class JoinWorker(StateWorker):
             return
         msg_id, client_id, data = deserialize_titles_message(body)
 
+        if not self.is_titles_message_repeated(client_id, msg_id):
+            self.manage_titles_message(client_id, data, method)
+            return
+
+        self.middleware.ack_message(method)
+
+    def is_titles_message_repeated(self, client_id, msg_id):
+        if client_id in self.clients_acummulated_titles_msgs:
+            return msg_id in self.clients_acummulated_titles_msgs[client_id]
+        return False
+    
+    def manage_titles_message(self, client_id, data, method):
+        self.acummulate_title_message(client_id, data)
+
+        self.add_acummulated_title_msg(client_id, method)
+        self.msg_counter += 1
+        if self.need_to_persist():
+            self.persist_acum()
+            self.ack_titles_messages(client_id)
+
+    def ack_titles_messages(self, client_id):
+        for msg_delivery_tag in self.clients_acummulated_titles_msgs[client_id]:
+            self.middleware.ack_message(msg_delivery_tag)
+        
+    def add_acummulated_title_msg(self, client_id, msg_method):
+        if client_id not in self.clients_acummulated_titles_msgs:
+            self.clients_acummulated_titles_msgs[client_id] = set()
+
+        self.clients_acummulated_titles_msgs[client_id].add(msg_method.delivery_tag)
+
+    def acummulate_title_message(self, client_id, data):
         if client_id not in self.clients_acum:
             self.clients_acum[client_id] = {}
 
+        self.add_title(client_id, data)
+
+    def add_title(self, client_id, data):
         for row_dictionary in data:
             title = row_dictionary['Title']
             if self.query == QUERY_5:
@@ -211,7 +252,11 @@ class JoinWorker(StateWorker):
             else:
                 self.clients_acum[client_id][title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
 
-        self.middleware.ack_message(method)
+
+
+    ###########  END REVIEWS MESSAGES HANDLING ###########
+
+    ##########  START REVIEWS MESSAGES HANDLING ##########
 
     def handle_reviews_data(self, method, body):
         if is_EOF(body):
@@ -235,18 +280,53 @@ class JoinWorker(StateWorker):
             return
         msg_id, client_id, data = deserialize_titles_message(body)
 
+        if not self.is_reviews_message_repeated(client_id, msg_id):
+            self.manage_review_message(client_id, data, method)
+            return
+
+        self.middleware.ack_message(method)
+    
+    def is_reviews_message_repeated(self, client_id, msg_id):
+        if client_id in self.clients_acummulated_review_msgs:
+            return msg_id in self.clients_acummulated_review_msgs[client_id]
+        return False
+
+    def manage_review_message(self, client_id, data, method):
+        self.acummulate_review_message(client_id, data)
+
+        self.add_acummulated_review_msg(client_id, method)
+        self.msg_counter += 1
+        if self.need_to_persist():
+            self.persist_acum()
+            self.ack_reviews_messages(client_id)
+    
+    def ack_reviews_messages(self, client_id):
+        for msg_delivery_tag in self.clients_acummulated_review_msgs[client_id]:
+            self.middleware.ack_message(msg_delivery_tag)
+    
+    def acummulate_review_message(self, client_id, data):
         if client_id not in self.clients_acum:
             self.clients_acum[client_id] = {}
 
         self.add_review(client_id, data)
 
-        self.middleware.ack_message(method)
+    def add_acummulated_review_msg(self, client_id, msg_method):
+        if client_id not in self.clients_acummulated_review_msgs:
+            self.clients_acummulated_review_msgs[client_id] = set()
+
+        self.clients_acummulated_review_msgs[client_id].add(msg_method.delivery_tag)
 
     def add_review(self, client_id, batch):
+        """
+        Add a review to a title. However as titles an reviews arrive from different queues, it can happen
+        that a review from a title arrives but the title didn't arrive yet. If this is the casee, we have a
+        separate dict to store thos reviews so we can check later if the title has been really filtered by
+        previous workers or it just arrived late.
+        """
         for row_dictionary in batch:
             title = row_dictionary['Title']
 
-            if client_id in self.eof_counter_titles  and self.eof_counter_titles[client_id] == self.eof_quantity_titles and title not in self.clients_acum[client_id]:
+            if client_id in self.eof_counter_titles and self.eof_counter_titles[client_id] == self.eof_quantity_titles and title not in self.clients_acum[client_id]:
                 # If all the titles already arrived and the title of this review has been already filtered,
                 # then this review has to be ignored.
                 continue
@@ -270,6 +350,8 @@ class JoinWorker(StateWorker):
             counter[0] += 1
             counter[1] += parsed_value
             self.clients_acum[client_id][title] = counter
+    
+    ###########  END REVIEWS MESSAGES HANDLING ###########
 
     def parse_text_sentiment(self, text_sentiment):
         try:
@@ -428,6 +510,8 @@ class GlobalDecadeWorker(StateWorker):
 
         self.msg_counter = 0
         self.clients_acummulated_msgs = {}
+        self.clients_unacked_msgs = {}
+        self.last_msg = 0
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -736,14 +820,6 @@ class FilterReviewsWorker(StateWorker):
 
         # Send the EOFs to the workers on the query 4
         self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
-
-    # def manage_message(self, client_id, data, method, msg_id=NO_ID):
-    #     if client_id not in self.clients_acum:
-    #         self.clients_acum[client_id] = []
-
-    #     desired_data = review_quantity_value(data, self.minimum_quantity)
-    #     for title, counter in desired_data[0].items():
-    #         self.clients_acum[client_id].append({'Title': title, 'counter': counter})
 
 
     def _create_batches(self, batch, next_workers_quantity):

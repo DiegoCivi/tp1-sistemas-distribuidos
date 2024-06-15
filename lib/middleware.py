@@ -103,5 +103,8 @@ class Middleware:
         else:    
             self._channel.stop_consuming()
 
+    def ack_all(self, tag):
+        self._channel.basic_ack(tag, True)
+
             
         
