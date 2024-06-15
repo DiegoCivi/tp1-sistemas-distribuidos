@@ -149,7 +149,7 @@ class DataCoordinator:
         
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
-        # self.parse_and_send_q1(batch, client_id, msg_id)
+        self.parse_and_send_q1(batch, client_id, msg_id)
         self.parse_and_send_q2(batch, client_id, msg_id)
         # self.parse_and_send_q3(batch, client_id, msg_id)
         # self.parse_and_send_q5(batch, client_id, msg_id)
@@ -376,7 +376,7 @@ class ResultsCoordinator:
         for delivery_tag in unacked_eofs:
             self.middleware.ack_message(delivery_tag)
         
-        del self.clients_unacked_eofs[client_id]
+        del self.clients_unacked_eofs[client_id][query]
 
     def query_result_finished(self, client_id):
         """
@@ -390,7 +390,7 @@ class ResultsCoordinator:
         self.log.persist(curr_state)
     
     def received_all_EOFs(self, client_id):
-        return self.clients_results_counter[client_id] == 1 # Change this value according to how many queries you are running
+        return self.clients_results_counter[client_id] == 2 # Change this value according to how many queries you are running
 
     def handle_results(self, method, body, fields_to_print, query):
         if is_EOF(body):
@@ -428,24 +428,24 @@ class ResultsCoordinator:
     def manage_results(self):
     
         # # Use queues to receive the queries results
-        # q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
+        q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
         q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
         # q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
         # q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
         # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
-        # self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
+        self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
         self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
         # self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
         # self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
         # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
-        # self.middleware.consume()
+        self.middleware.consume()
 
     def assemble_results(self, client_id):
         client_results_dict = self.clients_results[client_id]
         results = []
         
-        # results1 = Q1 + client_results_dict[Q1]
-        # results.append(results1)
+        results1 = Q1 + client_results_dict[Q1]
+        results.append(results1)
         results2 = Q2 + client_results_dict[Q2]
         results.append(results2)
         # results3 = Q3 + client_results_dict[Q3]
