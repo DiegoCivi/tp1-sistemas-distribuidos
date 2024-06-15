@@ -23,9 +23,13 @@ class Worker:
     def manage_message(self, client_id, data, method, msg_id=NO_ID):
         raise Exception('Function needs to be implemented')
     
+    def ack_last_messages(self):
+        raise Exception('Function needs to be implemented')
+    
     def received_all_clients_EOFs(self, client_id):
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_quantity == self.eof_counter[client_id]:
+            self.ack_last_messages()
             return True
         return False
     
@@ -60,15 +64,6 @@ class Worker:
 
 
     def ack_EOFs(self, client_id):
-        # try:
-        #     if self.last_msg:
-        #         self.middleware.ack_all(self.last_msg)
-        #         self.last_msg = None
-        #     else:
-        #         raise Exception('si')
-        #     return
-        # except:
-
         for delivery_tag in self.clients_unacked_eofs[client_id]:
             self.middleware.ack_message(delivery_tag)
 
@@ -88,27 +83,9 @@ class Worker:
 
     def handle_data(self, method, body):       
         if is_EOF(body):
-            #############################################################
-            try:
-                if self.last_msg == 'NOSE':
-                    self.middleware.send_message('DEBUG', f'LLEGO UN EOF [{body}]')
-                else:
-                    self.middleware.send_message('DEBUG', f'LLEGO UN EOF [{body}]')
-            except:
-                pass
-            #############################################################
             worker_id = get_EOF_worker_id(body)                                 # The id of the worker that sent the EOF
             client_id = get_EOF_client_id(body)                                 # The id of the active client
             client_eof_workers_ids = self.eof_workers_ids.get(client_id, set()) # A set with the ids of the workers that already sent their EOF for this client
-
-            #############################################################
-            try:
-                if len(self.clients_unacked_msgs) > 0:
-                    self.middleware.send_message('DEBUG', 'LLEGO UN EOF, PERO QUEDABAN MENSAJES PARA ACK')
-                    self.ack_messages(client_id)
-            except:
-                pass
-            #############################################################
             
             if not self.is_EOF_repeated(worker_id, client_id, client_eof_workers_ids):
                 if self.received_all_clients_EOFs(client_id):
@@ -128,10 +105,6 @@ class Worker:
         msg_id, client_id, data = deserialize_titles_message(body)
 
         self.handle_message(method, client_id, msg_id, data)
-        # if not self.is_message_repeated(client_id, msg_id):
-        #     self.manage_message(client_id, data, method, msg_id)
-        
-        # self.middleware.ack_message(method)
             
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
@@ -150,21 +123,10 @@ class StateWorker(Worker):
     """
     This type of workers acummulate various messages for each client, creating only one big message
     """
-    def ack_EOFs(self, client_id): # TODO: Borrar estA FUNCION, YA ESTA EN Worker
-        # try:
-        #     if self.last_msg:
-        #         self.middleware.ack_all(self.last_msg)
-        #         self.last_msg = None
-        #     else:
-        #         raise Exception('si')
-        #     return
-        # except:
-
-        for delivery_tag in self.clients_unacked_eofs[client_id]:
-            self.middleware.send_message('DEBUG', f'Hago ack del tag: {delivery_tag}')
-            self.middleware.ack_message(delivery_tag)
-
-        del self.clients_unacked_eofs[client_id]
+    def ack_last_messages(self):
+        if len(self.unacked_msgs) > 0:
+            self.persist_acum()
+            self.ack_messages()
 
     def handle_message(self, method, client_id, msg_id, data):
         if not self.is_message_repeated(client_id, msg_id):
@@ -174,8 +136,6 @@ class StateWorker(Worker):
 
     def is_message_repeated(self, client_id, msg_id):
         if client_id in self.clients_acummulated_msgs:
-            # temp = msg_id in self.clients_acummulated_msgs[client_id]
-            # self.middleware.send_message("DEBUG", f'Entro al if del is repeated y dio: {temp}')
             return msg_id in self.clients_acummulated_msgs[client_id]
         return False
 
@@ -196,7 +156,8 @@ class StateWorker(Worker):
     def remove_active_client(self, client_id):
         if client_id not in self.clients_acum:
             # This is a special case. Workers may not receive any message
-            # of a client, only its EOF. 
+            # of a client, only its EOF. This can happen if there are not
+            # enough messages for all of the workers reading from the queue
             return
         del self.clients_acum[client_id]
 
@@ -206,44 +167,33 @@ class StateWorker(Worker):
         raise Exception('Function needs to be implemented')
 
     def need_to_persist(self):
-        return self.msg_counter == 150 # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefectch count
+        return len(self.unacked_msgs) == 150 # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefetch count
     
     def persist_acum(self):
         # TODO: Persist also the ids of the messages accumulated
         # self.log.persist(self.acum)
-        self.msg_counter = 0
+        pass
 
-    def ack_messages(self, client_id):
-        ########################## ACK ALL MESSAGES RECEIVED ##########################
-        # self.middleware.ack_all(self.last_msg)
-        ###############################################################################
-
-        ########################## ACK ALL MESSAGES RECEIVED FROM A CLIENT ##########################
-        # for msg_delivery_tag in self.clients_unacked_msgs[client_id]:
-        #     self.middleware.ack_message(msg_delivery_tag)
-        # self.middleware.send_message('DEBUG', f'Ya se persistio y tenemos un counter en {self.msg_counter}')
-        # self.clients_unacked_msgs[client_id] = set()
-        #############################################################################################
-
-        ########################## ACK ALL MESSAGES RECEIVED FROM ALL CLIENTS ##########################
-        for _, unacked_msgs in self.clients_unacked_msgs.items():
-            while len(unacked_msgs) > 0:
-                tag = unacked_msgs.pop()
-                self.middleware.ack_message(tag)
-
+    def ack_messages(self):
+        """
+        Acks all the messages received, processed and persisted that have not been
+        already acked.
+        """
+        for tag in self.unacked_msgs:
+            self.middleware.ack_message(tag)
+        
+        self.unacked_msgs = set()
             
-        self.middleware.send_message('DEBUG', f'Ya se persistio y tenemos un counter en {self.msg_counter}')
-        ################################################################################################
+        self.middleware.send_message('DEBUG', f'Ya se persistio')
 
     def manage_message(self, client_id, data, method, msg_id):
         self.acummulate_message(client_id, data)
 
         self.add_acummulated_msg_id(client_id, method, msg_id)
-        self.last_msg = method.delivery_tag
         if self.need_to_persist():
-            self.middleware.send_message('DEBUG', f'Hay que persistir con un counter en {self.msg_counter}')
+            self.middleware.send_message('DEBUG', f'Hay que persistir')
             self.persist_acum()
-            self.ack_messages(client_id)
+            self.ack_messages()
 
     def add_acummulated_msg_id(self, client_id, msg_method, msg_id):
         """
@@ -253,19 +203,21 @@ class StateWorker(Worker):
         """
         if client_id not in self.clients_acummulated_msgs:
             self.clients_acummulated_msgs[client_id] = set()
-            
-        if client_id not in self.clients_unacked_msgs:
-            self.clients_unacked_msgs[client_id] = set()
 
         self.clients_acummulated_msgs[client_id].add(msg_id)
-        self.clients_unacked_msgs[client_id].add(msg_method.delivery_tag)
-
-        self.msg_counter += 1
+        self.unacked_msgs.add(msg_method.delivery_tag)
 
 class NoStateWorker(Worker):
     """
     This type of workers filter each message and create one message per message receive.
     """
+
+    def ack_last_messages(self):
+        """
+        Since NoStateWorkers dont acummulate unacked messages, this
+        is not necessary.
+        """
+        pass
 
     def handle_message(self, method, client_id, msg_id, data):
         if not self.is_message_repeated(client_id, msg_id):

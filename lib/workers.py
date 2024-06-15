@@ -508,10 +508,8 @@ class GlobalDecadeWorker(StateWorker):
             raise e
         self.middleware = middleware
 
-        self.msg_counter = 0
         self.clients_acummulated_msgs = {}
-        self.clients_unacked_msgs = {}
-        self.last_msg = 0
+        self.unacked_msgs = set()
 
     def handle_signal(self, *args):
         print("Gracefully exit")

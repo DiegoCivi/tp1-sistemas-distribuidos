@@ -149,7 +149,7 @@ class DataCoordinator:
         
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
-        self.parse_and_send_q1(batch, client_id, msg_id)
+        # self.parse_and_send_q1(batch, client_id, msg_id)
         self.parse_and_send_q2(batch, client_id, msg_id)
         # self.parse_and_send_q3(batch, client_id, msg_id)
         # self.parse_and_send_q5(batch, client_id, msg_id)
