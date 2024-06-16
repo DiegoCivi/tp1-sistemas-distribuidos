@@ -44,7 +44,10 @@ class Worker:
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.health_checker = HealthCheckHandler(self.address, self.port)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         try:
@@ -167,8 +170,11 @@ class JoinWorker:
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.health_check = HealthCheckHandler(self.address, self.port)
-        self.health_check = Process(target=self.health_check.handle_health_check)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
 
         try:

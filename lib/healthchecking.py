@@ -75,43 +75,39 @@ class HealthChecker():
 
 class HealthCheckHandler():
 
-    def __init__(self, address, port, max_listen_backlog=5):
-        self.address = address
-        self.port = port
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(max_listen_backlog)
+    def __init__(self, socket, conn=None):
+        self.socket = socket
+        self.conn = conn
 
     def handle_health_check(self):
         time.sleep(1)
-        print("Listening for incoming connections on port ", self.port)
-        conn, addr = self.socket.accept()
-        print("Received connection from {addr}, beginning healthcheck handling", addr)
+        print("Listening for incoming connections")
+        if not self.conn:
+            self.conn, addr = self.socket.accept()
+            print("Received connection from {addr}, beginning healthcheck handling", addr)
         while True:
-            msg, err = read_socket(conn)
+            msg, err = read_socket(self.conn)
             if err:
                 print("Error reading from socket: ", err)
                 break
             if msg == "HEALTH_CHECK":
-                write_socket(conn, "ACK")
+                write_socket(self.conn, "ACK")
 
     def handle_health_check_with_timeout(self, timeout):
-        print("Listening for incoming connections on port ", self.port)
-        conn, addr = self.socket.accept()
-        print("Received connection from, beginning healthcheck handling", addr)
+        print("Listening for incoming connections")
+        if not self.conn:
+            self.conn, addr = self.socket.accept()
+            print("Received connection from, beginning healthcheck handling", addr)
         while True:
             try:
                 time.sleep(1)
-                self.socket.settimeout(timeout)
-                msg, err = read_socket(conn)
+                msg, err = read_socket(self.conn, timeout=timeout)
                 if err:
                     print("Error reading from socket: ", err)
-                    break
                 if msg == "HEALTH_CHECK":
-                    write_socket(conn, "ACK")
+                    write_socket(self.conn, "ACK")
             except:
-                print("Timeout occurred while reading from socket")
-                break
+                print("Error occurred, restarting loop")
 
     def close(self):
         self.socket.close()

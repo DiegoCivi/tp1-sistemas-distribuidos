@@ -37,7 +37,7 @@ class ProcessCreator:
         """
         connections[conn_identifier] = conn
     
-    def initiate_connection(self, id, port, socket, connections, leader = False):
+    def initiate_connection(self, id, port, sock, connections, leader = False, healthcheck = False):
         """
         Handler of messages of a connection. This connection can be another ContainerCoordinator
         or a worker from the system.
@@ -47,27 +47,15 @@ class ProcessCreator:
             if leader:
                 # I'm the leader, I have to send healthchecks to the workers and coordinators, if
                 # they don't respond, I have to restart them, and if I die, coordinators will
-                # notice and start a new election
+                # notice and start a new election 
                 health_checker = HealthChecker()
-                healthcheck_process = Process(target=health_checker.check_connection, args=(id, port, socket,))
-                healthcheck_process.start()
-                self.processes.append(healthcheck_process)
-            else:
+                health_checker.check_connection(id, port, sock)
+            elif healthcheck:
                 # I'm not a leader, I have to listen for healthchecks and ack them but also
                 # use a timeout to check if the leader is still alive, if not I have to start
                 # a new election
-                health_check_handler = HealthCheckHandler(id, port)
-                health_check_handler.handle_health_check(socket)
-                health_check_handler.handle_health_check_with_timeout(socket, 5)
-                # healthcheck_process = Process(target=health_check_handler.handle_health_check_with_timeout, args=(socket, 5,))
-                # healthcheck_process.start()
-                # self.processes.append(healthcheck_process)
-
-            # while True:
-            #     # do something about election
-            #     pass
-
-
+                health_check_handler = HealthCheckHandler(socket=None, conn=sock)
+                health_check_handler.handle_health_check_with_timeout(5)
 
             # while True: # TODO: Check this condition
                 # self._socket.settimeout(1)
@@ -79,7 +67,8 @@ class ProcessCreator:
             #         pass
 
             try:
-                healthcheck_process.join()
+                if healthcheck_process:
+                    healthcheck_process.join()
             except Exception as e:
                 print(f"Error joining healthcheck process: {e}")
         except Exception as e:
@@ -152,13 +141,9 @@ class Connector(ProcessCreator):
                         if err != None:
                             print('Error')
                             raise err
-                        if self.id == len(self.coordinators_list) - 1: # watch this, there's a bug about sockets
-                            p = Process(target=self.initiate_connection, args=(str(id), port, s, self.connections, True,))
-                            self.add_connection(self.connections, str(id), s)
-                        else:
-                            p = Process(target=self.initiate_connection, args=(str(self.id), port, s, self.connections, False,))
-                            self.add_connection(self.connections, str(self.id), s)
-                        
+                        print("Soy un coordinador mas, paso el id: ", host)
+                        p = Process(target=self.initiate_connection, args=(host, port, s, self.connections, False, True if id == str(len(self.coordinators_list) - 1) else False))
+                        self.add_connection(self.connections, host, s)
 
                         p.start()
                         self.processes.append(p)
@@ -265,7 +250,7 @@ class ContainerCoordinator(ProcessCreator):
         -   When everything finishes, all process are joined and closed 
         """
         # Process that will reconnect to the network if it crashed before
-        self.initiate_reconnection()
+        # self.initiate_reconnection()
 
         if not self.im_last_coord():
             # Create the process that will send the id to the other
@@ -274,7 +259,7 @@ class ContainerCoordinator(ProcessCreator):
 
         # Receive new connections and create a process that will handle them
         print("Voy a entrar al while")
-        while len(self.connections) < len(self.coordinators_list) - 1:
+        while True:
             try:
                 self._socket.settimeout(1)
                 print("Entre")
@@ -284,9 +269,12 @@ class ContainerCoordinator(ProcessCreator):
                 identifier, err = read_socket(conn)
                 if err:
                     raise err
-                print(f"Soy {self.id} y se me conecto: ", identifier)
+                print(f"Soy {self.id} y se me conecto: container_coordinator_{identifier}")
                 # Start the process responsible for receiving the data from the new connection
-                p = Process(target=self.initiate_connection, args=(self.id, self.coords_port, conn, self.connections, False,))
+                if self.im_last_coord():
+                    p = Process(target=self.initiate_connection, args=(f'container_coordinator_{identifier}', self.coords_port, conn, self.connections, True,))
+                else:
+                    p = Process(target=self.initiate_connection, args=(self.id, self.coords_port, conn, self.connections, False,))
 
                 # Put in the dict the identifier with the TCP socket
                 self.add_connection(self.connections, identifier, conn)

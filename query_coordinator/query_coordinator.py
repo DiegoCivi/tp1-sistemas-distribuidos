@@ -5,6 +5,7 @@ import queue
 from multiprocessing import Process
 from healthchecking import HealthCheckHandler
 import logging
+import socket
 
 TITLES_MODE = 'titles'
 REVIEWS_MODE = 'reviews'
@@ -40,8 +41,11 @@ class QueryCoordinator:
         self.eof_quantity = eof_quantity
 
         self.stop_coordinator = False
-        self.health_check_handler = HealthCheckHandler(address, port)
-        self.health_check_handler_p = Process(target=self.health_check_handler.handle_health_check)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((address, port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check_handler_p = Process(target=self.health_checker.handle_health_check)
         self.health_check_handler_p.start()
         self.middleware = None
         self.queue = queue.Queue()
