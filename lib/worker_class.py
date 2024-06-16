@@ -254,8 +254,8 @@ class NoStateWorker(Worker):
     def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            batch_msg_id = self.worker_id + msg_id
-            serialized_message = serialize_message(serialized_batch, client_id, batch_msg_id)
+            new_msg_id = self.worker_id + '_' + msg_id
+            serialized_message = serialize_message(serialized_batch, client_id, new_msg_id)
             worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, serialized_message)
 

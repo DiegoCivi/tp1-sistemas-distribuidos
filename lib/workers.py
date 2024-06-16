@@ -687,7 +687,7 @@ class GlobalDecadeWorker(StateWorker):
 
     def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
-            worker_queue = create_queue_name(output_queue, worker_id) 
+            worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, batch)
 
     def _create_batches(self, batch, next_workers_quantity):
@@ -838,14 +838,14 @@ class TopNWorker(StateWorker):
             if client_id in self.clients_acum:
                 self.parse_top(client_id)
                 # If the top isnt empty, then we send it
-                self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name, self.next_workers_quantity)
+                self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name, self.next_workers_quantity, '0')
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
         else:
             if client_id in self.clients_acum:
                 # Send the results to the query_coordinator
-                self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name, self.next_workers_quantity)
+                self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name, self.next_workers_quantity, '0')
 
             self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
     
@@ -862,7 +862,8 @@ class TopNWorker(StateWorker):
             # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
             # So whoever receives messages from this worker only needs to receive one message per client.
             # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
-            serialized_message = serialize_message(serialized_batch, client_id, '0')
+            new_msg_id = self.worker_id + '_' + msg_id
+            serialized_message = serialize_message(serialized_batch, client_id, new_msg_id)
             worker_queue = create_queue_name(output_queue, worker_id)
             self.middleware.send_message(worker_queue, serialized_message)
 
@@ -989,10 +990,11 @@ class FilterReviewsWorker(StateWorker):
         msg_id = 0
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
-            batch_msg_id = msg_id + worker_id
-            serialized_message = serialize_message(serialized_batch, client_id, str(batch_msg_id))
+            new_msg_id = self.worker_id + '_' + str(msg_id)
+            serialized_message = serialize_message(serialized_batch, client_id, new_msg_id)
             worker_queue = create_queue_name(output_queue, str(worker_id))
             self.middleware.send_message(worker_queue, serialized_message)
+            msg_id += 1
 
     def acummulate_message(self, client_id, data):
         if client_id not in self.clients_acum:
