@@ -184,14 +184,11 @@ class StateWorker(Worker):
         
         self.unacked_msgs = set()
             
-        self.middleware.send_message('DEBUG', f'Ya se persistio')
-
     def manage_message(self, client_id, data, method, msg_id):
         self.acummulate_message(client_id, data)
 
         self.add_acummulated_msg_id(client_id, method, msg_id)
         if self.need_to_persist():
-            self.middleware.send_message('DEBUG', f'Hay que persistir')
             self.persist_acum()
             self.ack_messages()
 
