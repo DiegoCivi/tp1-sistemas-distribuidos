@@ -1003,4 +1003,3 @@ class FilterReviewsWorker(StateWorker):
         desired_data = review_quantity_value(data, self.minimum_quantity)
         for title, counter in desired_data[0].items():
             self.clients_acum[client_id].append({'Title': title, 'counter': counter})
-        
