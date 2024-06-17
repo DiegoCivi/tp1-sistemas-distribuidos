@@ -63,7 +63,7 @@ class FilterWorker(NoStateWorker):
 
 class JoinWorker(StateWorker):
 
-    def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue, log_acum):
+    def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, iteration_queue, log):
         self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
@@ -72,7 +72,7 @@ class JoinWorker(StateWorker):
             raise Exception('Query not supported')
 
         self.worker_id = worker_id
-        self.log_acum = Logger(create_log_file_name(log_acum, worker_id))
+        self.log = Logger(create_log_file_name(log, worker_id))
         self.input_titles_name = create_queue_name(input_titles_name, worker_id)
         self.input_reviews_name = create_queue_name(input_reviews_name, worker_id) 
         self.output_name = output_name
@@ -111,9 +111,6 @@ class JoinWorker(StateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
-        
-        print("Titles: ", self.unacked_titles_msgs)
-        print("Reviews: ", self.unacked_reviews_msgs)
 
     def add_title_EOF_worker_id(self, client_id, worker_id):
         client_eof_workers_ids = self.eof_workers_ids_titles.get(client_id, set())
@@ -159,7 +156,7 @@ class JoinWorker(StateWorker):
     #     del self.clients_unacked_eofs_titles[client_id]
     #     del self.clients_unacked_eofs_reviews[client_id]
 
-    def remove_active_client(self, client_id):
+    def remove_active_client(self, client_id): # TODO: I think the msg_ids accumulated can also be erased
         if client_id in self.leftover_reviews:
             del self.leftover_reviews[client_id]
         
@@ -167,21 +164,26 @@ class JoinWorker(StateWorker):
         del self.eof_counter_titles[client_id]
         del self.eof_counter_reviews[client_id]
 
-        # # TODO: Write on disk the new acum and left_overs_dict!!!!!!!!
-        # self.log_acum.persist(self.clients_acum)
-        # # self.log_leftovers.persist(self.leftover_reviews)
+    def curr_state(self):
+        """
+        Unifies all the necessary data thats in different dictionaries
+        into one big dictionary.
+        """
+        curr_state = {}
+        curr_state['acums'] = self.clients_acum
+        curr_state['acum_titles_msgs'] = self.clients_acummulated_titles_msgs
+        curr_state['acum_reviews_msgs'] = self.clients_acummulated_review_msgs
+        curr_state['leftover_reviews'] = self.leftover_reviews
 
-    # def delete_client_EOF_counter(self, client_id):
-    #     raise Exception('Function needs to be implemented')
-    #     del self.eof_counter_reviews[client_id]
-    #     del self.eof_counter_titles[client_id]
+        return curr_state
 
     def persist_acum(self): # TODO: Implement this!!!!!!
         """
         Persists the acums of all the clients and the msg_ids received for each channel
         and the left_overs_reviews dict.
         """
-        pass
+        curr_state = self.curr_state()
+        self.log.persist(curr_state)
 
     ##########  START TITLES MESSAGES HANDLING ##########
 
@@ -605,7 +607,7 @@ class DecadeWorker(NoStateWorker):
         signal.signal(signal.SIGTERM, self.handle_signal)
         
         self.worker_id = worker_id
-        self.log = Logger(create_log_file_name(log, worker_id))
+        self.log = Logger(log, worker_id)
         self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
@@ -636,7 +638,7 @@ class DecadeWorker(NoStateWorker):
         """
         Doesnt't use the NoStateWorker's implementation of _create_batches(),
         because it handles serialization of filtered results different than the
-        other NoStateeWorkers. 
+        other NoStateWorkers. 
         """
         workers_batches = {}
         for worker_id in range(next_workers_quantity):
@@ -655,7 +657,7 @@ class GlobalDecadeWorker(StateWorker):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.worker_id = worker_id
-        self.log = Logger(create_log_file_name(log, worker_id))
+        self.log = Logger(log, worker_id)
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
@@ -665,7 +667,6 @@ class GlobalDecadeWorker(StateWorker):
         self.eof_counter = {}
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.clients_unacked_eofs = {}
-        #self.counter_dicts = {}
         self.clients_acum = {}
         self.middleware = None
         self.queue = queue.Queue()
