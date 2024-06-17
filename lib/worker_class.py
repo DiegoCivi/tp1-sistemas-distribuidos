@@ -27,6 +27,11 @@ class Worker:
         raise Exception('Function needs to be implemented')
     
     def received_all_clients_EOFs(self, client_id):
+        """
+        True if all the EOFs where received for a client. If this happens,
+        we have to check if there are messages left that we need to ack and
+        persist on disk before acking the EOFs.
+        """
         self.eof_counter[client_id] = self.eof_counter.get(client_id, 0) + 1
         if self.eof_quantity == self.eof_counter[client_id]:
             self.ack_last_messages()
@@ -170,8 +175,10 @@ class StateWorker(Worker):
         return len(self.unacked_msgs) == 150 # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefetch count
     
     def persist_acum(self):
-        # TODO: Persist also the ids of the messages accumulated
-        # self.log.persist(self.acum)
+        curr_state = {}
+        curr_state['acummulated_msgs'] = self.clients_acummulated_msgs
+        curr_state['acum'] = self.clients_acum
+        self.log.persist(curr_state)
         pass
 
     def ack_messages(self):
