@@ -1,30 +1,34 @@
 import pickle
 import os
+from serialization import create_log_file_name
 
 VOLUME_PATH = './persisted_data/'
 
 class Logger:
 
-    def __init__(self, file_name):
-        self.file_path = VOLUME_PATH + file_name
+    def __init__(self, log_name, worker_id):
+        self.log_filepath = VOLUME_PATH + create_log_file_name(log_name, worker_id, False)
+        self.temp_log_filepath = VOLUME_PATH + create_log_file_name(log_name, worker_id, True)
 
     def persist(self, content):
-        f = open(self.file_path, 'ab')
+        # First write on the temp file
+        f = open(self.temp_log_filepath, 'wb')
         pickle.dump(content, f)
-        f.write(b'\n')
         f.flush()
+        os.fsync(f.fileno()) 
         f.close()
+
+        # Then change names, so the temp file becomes the original file
+        os.replace(self.temp_log_filepath, self.log_filepath)
     
     def read_persisted_data(self):
-        f = open(self.file_path, 'ab')
-        try:  # catch OSError in case of a one line file 
-            f.seek(-2, os.SEEK_END)
-            while f.read(1) != b'\n':
-                f.seek(-2, os.SEEK_CUR)
-        except OSError:
-            f.seek(0)
-        last_line = pickle.load(f)
+        try:
+            f = open(self.log_filepath, 'rb')
+        except FileNotFoundError:
+            return None
+        
+        prev_state = pickle.load(f)
         
         f.close()
 
-        return last_line
+        return prev_state

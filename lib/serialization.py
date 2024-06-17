@@ -107,8 +107,11 @@ def hash_title(s):
 def create_queue_name(queue, client_id):
     return queue + ID_SEPARATOR + client_id
 
-def create_log_file_name(log, worker_id):
-    log_file_name = log + ID_SEPARATOR + worker_id + '.txt'
+def create_log_file_name(log, worker_id, is_temp):
+    if is_temp:
+        log_file_name = log + ID_SEPARATOR + worker_id + ID_SEPARATOR + 'temp' + '.txt'
+    else:
+        log_file_name = log + ID_SEPARATOR + worker_id + '.txt'
     return log_file_name
 
 

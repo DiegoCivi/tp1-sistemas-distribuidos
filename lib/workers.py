@@ -607,7 +607,7 @@ class DecadeWorker(NoStateWorker):
         signal.signal(signal.SIGTERM, self.handle_signal)
         
         self.worker_id = worker_id
-        self.log = Logger(create_log_file_name(log, worker_id))
+        self.log = Logger(log, worker_id)
         self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
@@ -657,7 +657,7 @@ class GlobalDecadeWorker(StateWorker):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.worker_id = worker_id
-        self.log = Logger(create_log_file_name(log, worker_id))
+        self.log = Logger(log, worker_id)
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name

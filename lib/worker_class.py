@@ -1,5 +1,7 @@
 from serialization import *
 
+ACUM_KEY = 'acum'
+ACUM_MSG_IDS = 'acummulated_msgs'
 
 class Worker:
 
@@ -86,6 +88,9 @@ class Worker:
     def handle_message(self, method, client_id, msg_id, data):
         raise Exception('Function needs to be implemented')
 
+    def initialize_state(self):
+        raise Exception('Function needs to be implemented')
+
     def handle_data(self, method, body):       
         if is_EOF(body):
             worker_id = get_EOF_worker_id(body)                                 # The id of the worker that sent the EOF
@@ -110,8 +115,9 @@ class Worker:
         msg_id, client_id, data = deserialize_titles_message(body)
 
         self.handle_message(method, client_id, msg_id, data)
-            
+
     def run(self):
+        self.initialize_state()
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
         try:
             # Read the data
@@ -126,8 +132,15 @@ class Worker:
 
 class StateWorker(Worker):
     """
-    This type of workers acummulate various messages for each client, creating only one big message
+    This type of workers acummulates various messages for each client, creating only one big message
     """
+    def initialize_state(self):
+        prev_state = self.log.read_persisted_data()
+        if prev_state != None:
+            self.clients_acum = prev_state[ACUM_KEY]
+            self.clients_acummulated_msgs = prev_state[ACUM_MSG_IDS]
+        
+
     def ack_last_messages(self):
         if len(self.unacked_msgs) > 0:
             self.persist_acum()
@@ -176,8 +189,8 @@ class StateWorker(Worker):
     
     def persist_acum(self):
         curr_state = {}
-        curr_state['acummulated_msgs'] = self.clients_acummulated_msgs
-        curr_state['acum'] = self.clients_acum
+        curr_state[ACUM_MSG_IDS] = self.clients_acummulated_msgs
+        curr_state[ACUM_KEY] = self.clients_acum
         self.log.persist(curr_state)
         pass
 
@@ -215,6 +228,11 @@ class NoStateWorker(Worker):
     """
     This type of workers filter each message and create one message per message receive.
     """
+
+    def initialize_state(self):
+        prev_state = self.log.read_persisted_data()
+        if prev_state != None:
+            self.active_clients = prev_state
 
     def ack_last_messages(self):
         """
