@@ -13,13 +13,14 @@ class HealthChecker():
     for a little bit.
     """
 
-    def check_connection(self, container_id, port, conn):
+    def check_connection(self, container_id, port, conn, coords = False):
         """
         Check the health of the connection with the container_id.
         """
         while True:
             try:
                 time.sleep(1)
+                print(f"Checking connection with container {container_id}", flush=True)
                 err = write_socket(conn, "HEALTH_CHECK")
                 if err:
                     print(f"Error in container {container_id}, err was: {err}", flush=True)
@@ -35,6 +36,8 @@ class HealthChecker():
             except:
                 print(f"REINICIO DE CONTAINER {container_id} POR TIMEOUT O ERROR", flush=True, end="\n")
                 self.restart_container(container_id)
+                if coords:
+                    break
                 conn = self.reconnect_with_backoff(container_id, port)
     
     def restart_container(self, container_id):
@@ -105,6 +108,7 @@ class HealthCheckHandler():
                 if err:
                     print("Error reading from socket: ", err)
                 if msg == "HEALTH_CHECK":
+                    print("Received health check message, sending ACK")
                     write_socket(self.conn, "ACK")
             except:
                 print("Error occurred, restarting loop")
