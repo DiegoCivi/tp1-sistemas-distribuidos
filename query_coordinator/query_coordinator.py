@@ -150,9 +150,9 @@ class DataCoordinator:
         # There isn't a parse_and_send_q4 because query 4 pipeline 
         # receives the data from the query 3 pipeline results
         # self.parse_and_send_q1(batch, client_id, msg_id)
-        self.parse_and_send_q2(batch, client_id, msg_id)
+        # self.parse_and_send_q2(batch, client_id, msg_id)
         # self.parse_and_send_q3(batch, client_id, msg_id)
-        # self.parse_and_send_q5(batch, client_id, msg_id)
+        self.parse_and_send_q5(batch, client_id, msg_id)
 
     def parse_and_send(self, batch, desired_keys, queue, query, client_id, msg_id):
         msg_id = int(msg_id)
@@ -233,12 +233,12 @@ class DataCoordinator:
         print(self.clients_parse_mode)
         if self.clients_parse_mode[client_id] == TITLES_MODE:
             # self.send_EOF(Q1_KEY, self.workers[Q1_KEY][QUEUE_INDEX], client_id)
-            self.send_EOF(Q2_KEY, self.workers[Q2_KEY][QUEUE_INDEX], client_id)
+            # self.send_EOF(Q2_KEY, self.workers[Q2_KEY][QUEUE_INDEX], client_id)
             # self.send_EOF(Q3_TITLES_KEY, self.workers[Q3_TITLES_KEY][QUEUE_INDEX], client_id)
-            # self.send_EOF(Q5_TITLES_KEY, self.workers[Q5_TITLES_KEY][QUEUE_INDEX], client_id)
+            self.send_EOF(Q5_TITLES_KEY, self.workers[Q5_TITLES_KEY][QUEUE_INDEX], client_id)
         else: 
             # self.send_EOF(Q3_REVIEWS_KEY, self.workers[Q3_REVIEWS_KEY][QUEUE_INDEX], client_id)
-            # self.send_EOF(Q5_REVIEWS_KEY, self.workers[Q5_REVIEWS_KEY][QUEUE_INDEX], client_id)
+            self.send_EOF(Q5_REVIEWS_KEY, self.workers[Q5_REVIEWS_KEY][QUEUE_INDEX], client_id)
             pass
 
     def send_EOF(self, workers_dict_key, queue, client_id):
@@ -430,15 +430,15 @@ class ResultsCoordinator:
     
         # # Use queues to receive the queries results
         # q1_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors', 'publisher'], Q1)
-        q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
+        # q2_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['authors'], Q2)
         # q3_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title', 'authors'], Q3)
         # q4_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q4)
-        # q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
+        q5_results_with_params = lambda ch, method, properties, body: self.handle_results(method, body, ['Title'], Q5)
         # self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
-        self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
+        # self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
         # self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
         # self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        # self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
         self.middleware.consume()
 
     def assemble_results(self, client_id):
@@ -447,14 +447,14 @@ class ResultsCoordinator:
         
         # results1 = Q1 + client_results_dict[Q1]
         # results.append(results1)
-        results2 = Q2 + client_results_dict[Q2]
-        results.append(results2)
+        # results2 = Q2 + client_results_dict[Q2]
+        # results.append(results2)
         # results3 = Q3 + client_results_dict[Q3]
         # results.append(results3)
         # results4 = Q4 + client_results_dict[Q4]
         # results.append(results4)
-        # results5 = Q5 + client_results_dict[Q5]
-        # results.append(results5)
+        results5 = Q5 + client_results_dict[Q5]
+        results.append(results5)
         
         results = '\n'.join(results)
         return results
