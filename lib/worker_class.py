@@ -140,7 +140,6 @@ class StateWorker(Worker):
             self.clients_acum = prev_state[ACUM_KEY]
             self.clients_acummulated_msgs = prev_state[ACUM_MSG_IDS]
         
-
     def ack_last_messages(self):
         if len(self.unacked_msgs) > 0:
             self.persist_acum()
