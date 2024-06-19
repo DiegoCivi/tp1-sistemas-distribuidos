@@ -36,7 +36,7 @@ class HealthChecker():
             except:
                 print(f"REINICIO DE CONTAINER {container_id} POR TIMEOUT O ERROR", flush=True, end="\n")
                 self.restart_container(container_id)
-                if coords:
+                if coords: # Coordinators already have their own reconnection mechanism
                     break
                 conn = self.reconnect_with_backoff(container_id, port)
     
