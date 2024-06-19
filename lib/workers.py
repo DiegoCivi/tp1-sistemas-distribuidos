@@ -269,13 +269,6 @@ class JoinWorker(StateWorker):
         is_titles_finished = titles_finished or self.eof_counter_titles[client_id] == self.eof_quantity_titles
         is_reviews_finished = reviews_finished or self.eof_counter_reviews[client_id] == self.eof_quantity_reviews
 
-        if self.worker_id == '3':
-            t = f'Para titulos: {is_titles_finished} con los msg_ids en [{titles_finished}] y el counter en [{self.eof_counter_titles[client_id] == self.eof_quantity_titles}]'
-            self.middleware.send_message('DEBUG_3', t)
-
-            r = f'Para reviews: {is_reviews_finished} con los msg_ids en [{reviews_finished}] y el counter en [{self.eof_counter_reviews[client_id] == self.eof_quantity_reviews}]'
-            self.middleware.send_message('DEBUG_3', r)
-
         return is_titles_finished and is_reviews_finished
 
     def is_titles_message_repeated(self, client_id, msg_id):
@@ -360,14 +353,10 @@ class JoinWorker(StateWorker):
                             # Ack last received messages of the queue
                             self.ack_last_reviews_messages() # TODO: change this func
                             if self.received_all_EOFs(client_id):
-                                if self.worker_id == '3':
-                                    self.middleware.send_message('DEBUG_3', 'Mando los resultados')
                                 # Send the acum of the client and the EOF
                                 self.send_results(client_id)
                                 # Remove the acum of the client since it is not 
                                 # necessary anymore
-                                if self.worker_id == '3':
-                                    self.middleware.send_message('DEBUG_3', 'Resultados enviados')
                                 self.remove_active_client(client_id)
                             else:
                                 self.finish_reviews(client_id)
@@ -520,8 +509,6 @@ class JoinWorker(StateWorker):
     def send_results(self, client_id):
         # Check if there are leftover reviews that need to be added to the counter_dict
         self.check_leftover_reviews(client_id)
-        if self.worker_id == '3':
-            self.middleware.send_message('DEBUG_3', 'Se agregaron los leftovers')
 
         # Send batch
         batch_size = 0
@@ -554,11 +541,7 @@ class JoinWorker(StateWorker):
             serialized_message = serialize_message([serialize_dict(batch)], client_id, batch_msg_id)
             self.middleware.send_message(self.output_name, serialized_message)
 
-        if self.worker_id == '3':
-            self.middleware.send_message('DEBUG_3', 'Se mandaron lo resultados')
-
         # Finally, send the EOF
-        self.middleware.send_message("DEBUG", f'[{self.worker_id}] Mande results y mando EOF')
         eof_msg = create_EOF(client_id, self.worker_id)
         self.middleware.send_message(self.output_name, eof_msg)
 

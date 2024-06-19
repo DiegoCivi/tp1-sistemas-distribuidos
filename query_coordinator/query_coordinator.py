@@ -95,6 +95,7 @@ class DataCoordinator:
         self.middleware = middleware
 
     def handle_signal(self, *args):
+        self.queue.put('SIGTERM')
         if self.middleware != None:
             self.middleware.close_connection()
     
@@ -392,9 +393,10 @@ class ResultsCoordinator:
     
     def initialize_state(self):
         prev_state = self.log.read_persisted_data()
+        print(prev_state)
         if prev_state != None:
             self.clients_results = prev_state[ACUMS_KEY]
-            self.client_acummulated_query_msgs = prev_state[ACUM_RESULT_MSGS]
+            self.client_acummulated_query_msgs = dict(self.client_acummulated_query_msgs, **prev_state[ACUM_RESULT_MSGS])
 
     def curr_state(self):
         curr_state = {}
@@ -424,6 +426,7 @@ class ResultsCoordinator:
         # quantity of different workers that have already sent their EOF
         curr_eof_quantity = len(self.eof_worker_ids[query][client_id])
 
+        print(self.eof_worker_ids)
         if query_eof_quantity == curr_eof_quantity:
             return True
         return False
@@ -449,6 +452,7 @@ class ResultsCoordinator:
                                 # necessary anymore
                                 self.remove_active_client(client_id)
                             else:
+                                self.middleware.send_message('DEBUG', f'Finish query [{query}]')
                                 self.finish_query(client_id, query)
 
                             # Update the state on disk and ack the EOFs for this channel and the client
@@ -474,7 +478,8 @@ class ResultsCoordinator:
         return False
 
     def finish_query(self, client_id, query):
-        self.client_acummulated_query_msgs[query][client_id] == 'FINISHED'
+        self.client_acummulated_query_msgs[query][client_id] = 'FINISHED'
+        print(f'Despuees de poner en finish la query [{query}]', self.client_acummulated_query_msgs)
 
     def is_query_finished(self, client_id, query):
         return self.client_acummulated_query_msgs[query][client_id] == 'FINISHED'
