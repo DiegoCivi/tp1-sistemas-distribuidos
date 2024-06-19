@@ -33,10 +33,12 @@ ID = '0'                    # WARNING: If this is changed, results will never ge
 QUERIES_QUANTITY = 5
 ACUMS_KEY = 'results'
 ACUM_RESULT_MSGS = 'results_msgs'
+PARSE_MODES = 'parse_modes'
+EOF_TYPES = 'eof_types'
 
 class QueryCoordinator:
 
-    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log):
+    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log_data, log_results):
         """
         Initializes the query coordinator with the title parse mode
         """
@@ -46,7 +48,8 @@ class QueryCoordinator:
         self.workers = {Q1_KEY: workers_q1, Q2_KEY: workers_q2, Q3_TITLES_KEY: workers_q3_titles, Q3_REVIEWS_KEY: workers_q3_reviews,
                              Q5_TITLES_KEY: workers_q5_titles, Q5_REVIEWS_KEY: workers_q5_reviews}
         self.eof_quantity = eof_quantity
-        self.log = Logger(log, ID)
+        self.log_data = Logger(log_data, ID)
+        self.log_results = Logger(log_results, ID)
         self.processes = []      
 
     def handle_signal(self, *args):
@@ -69,22 +72,23 @@ class QueryCoordinator:
         result_coordinator_p.join()
 
     def initiate_data_coordinator(self):
-        data_coordinator = DataCoordinator(self.id, self.workers)
+        data_coordinator = DataCoordinator(self.id, self.workers, self.log_data)
         data_coordinator.run()
 
     def initiate_result_coordinator(self):
-        result_coordinator = ResultsCoordinator(self.id, self.eof_quantity, self.log)
+        result_coordinator = ResultsCoordinator(self.id, self.eof_quantity, self.log_results)
         result_coordinator.run()
 
 class DataCoordinator:
 
-    def __init__(self, id, workers):
+    def __init__(self, id, workers, log):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.id = id
+        self.log = log
         self.workers = workers
         self.clients_parse_mode = {}
-        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.clients_eofs_types = {}       # This dict stores for each active client, the types of EOFs it received
         self.stop = False
         self.middleware = None
         self.queue = queue.Queue()
@@ -107,22 +111,52 @@ class DataCoordinator:
             raise Exception("Mode not supported.")
         self.clients_parse_mode[client_id] = mode
 
+    def initialize_state(self):
+        prev_state = self.log.read_persisted_data()
+        if prev_state != None:
+            self.clients_parse_mode = prev_state[PARSE_MODES]
+            self.clients_eofs_types = prev_state[EOF_TYPES] 
+
     def run(self):
+        self.initialize_state()
         self.receive_and_fordward_data()
+
+    def is_EOF_repeated(self, client_id, file_type):
+        """
+        For each client, 2 EOFs need to be received. The first one 
+        means that all the titles info was sent and that the following
+        messages will bring reviews info. The second one means that all 
+        the reviews info was sent and nthe end of the info for that client.
+        However, due to the failure of the server (which sends those messages),
+        repeated EOFs are possible.
+        Here we check if we hace already received an EOF with the same 
+        'file_identifier'. If so, the message is acked and ignored.
+        """
+        client_eof_types = self.clients_eofs_types.get(client_id, set())
+        if file_type not in client_eof_types:
+            client_eof_types.add(file_type)
+            self.clients_eofs_types[client_id] = client_eof_types
+            return False
+        return True
+    
+    def persist_state(self):
+        curr_state = {}
+        curr_state[PARSE_MODES] = self.clients_parse_mode
+        curr_state[EOF_TYPES] = self.clients_eofs_types
+
+        self.log.persist(curr_state)
+
 
     def handle_data(self, method, body):
         if is_EOF(body):
             client_id = get_EOF_client_id(body)
-            file_identifier = get_EOF_worker_id(body)
-            client_eof_workers_ids = self.eof_workers_ids.get(client_id, set())
+            file_type = get_EOF_worker_id(body)
 
-            if file_identifier not in client_eof_workers_ids:
-                # Add the identifier
-                client_eof_workers_ids.add(file_identifier)
-                self.eof_workers_ids[client_id] = client_eof_workers_ids
-                
+            if not self.is_EOF_repeated(client_id, file_type):                
                 self.manage_EOF(client_id)
                 self.change_parse_mode(REVIEWS_MODE, client_id)
+                # We received a new EOF which has changed our state. So we persit it to disk
+                self.persist_state()
             
             self.middleware.ack_message(method)
             return
@@ -131,6 +165,8 @@ class DataCoordinator:
         if client_id not in self.clients_parse_mode:
             # Since titles are always first, every new client needs to be initialized with the TITLES_MODE
             self.clients_parse_mode[client_id] = TITLES_MODE
+            # Every time a new client arrives, we persist the newe state on disk
+            self.persist_state()
 
         self.send_to_pipelines(batch, client_id, msg_id)
 
@@ -393,7 +429,6 @@ class ResultsCoordinator:
     
     def initialize_state(self):
         prev_state = self.log.read_persisted_data()
-        print(prev_state)
         if prev_state != None:
             self.clients_results = prev_state[ACUMS_KEY]
             self.client_acummulated_query_msgs = dict(self.client_acummulated_query_msgs, **prev_state[ACUM_RESULT_MSGS])
@@ -426,7 +461,6 @@ class ResultsCoordinator:
         # quantity of different workers that have already sent their EOF
         curr_eof_quantity = len(self.eof_worker_ids[query][client_id])
 
-        print(self.eof_worker_ids)
         if query_eof_quantity == curr_eof_quantity:
             return True
         return False
@@ -452,7 +486,6 @@ class ResultsCoordinator:
                                 # necessary anymore
                                 self.remove_active_client(client_id)
                             else:
-                                self.middleware.send_message('DEBUG', f'Finish query [{query}]')
                                 self.finish_query(client_id, query)
 
                             # Update the state on disk and ack the EOFs for this channel and the client
@@ -479,7 +512,6 @@ class ResultsCoordinator:
 
     def finish_query(self, client_id, query):
         self.client_acummulated_query_msgs[query][client_id] = 'FINISHED'
-        print(f'Despuees de poner en finish la query [{query}]', self.client_acummulated_query_msgs)
 
     def is_query_finished(self, client_id, query):
         return self.client_acummulated_query_msgs[query][client_id] == 'FINISHED'

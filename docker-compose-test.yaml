@@ -80,7 +80,8 @@ services:
       - WORKERS_Q5_TITLES=3,QUEUE_Q5|filter_category_worker
       - WORKERS_Q5_REVIEWS=4,QUEUE_Q5|review_sentiment_worker
       - EOF_QUANTITY=3,1,1,1,1
-      - LOG=query_coordinator_results
+      - LOG_RESULTS=query_coordinator_results
+      - LOG_DATA=query_coordinator_data
     volumes:
       - ./persisted_data:/persisted_data
 
