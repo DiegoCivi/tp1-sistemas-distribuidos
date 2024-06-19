@@ -26,6 +26,7 @@ services:
       - HOST=server
       - PORT=12345
       - LISTEN_BACKLOG=1
+      - LOG=server_log
 
   client_1:
     container_name: client_1

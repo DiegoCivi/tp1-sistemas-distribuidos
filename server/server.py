@@ -6,6 +6,7 @@ import os
 import signal
 import queue
 from multiprocessing import Process, Queue
+from logger import Logger
 
 
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
@@ -13,20 +14,39 @@ RECEIVE_COORDINATOR_QUEUE = 'server'
 EOF_MSG = "EOF"
 TITLES_FILE_IDENTIFIER = 't'
 REVIEWS_FILE_IDENTIFIER = 'r'
+CLIENTS = 'clients'
+CLIENTS_QUANTITY = 'clients_quantity'
 
 
 class Server: # TODO: Implement SIGTERM handling
 
-    def __init__(self, host, port, listen_backlog):
+    def __init__(self, host, port, listen_backlog, log):
         self.clients = {}
         self._stop_server= False
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog)
         self.clients_accepted = 1
+        self.active_clients = {}                            # Contains the id of the client and their address
         self.sockets_queue = Queue()
+        self.log = Logger(log, '0')
+
+    def persist_state(self):
+        curr_state = {}
+        curr_state[CLIENTS] = self.active_clients
+        curr_state[CLIENTS_QUANTITY] = self.clients_accepted
+        self.log.persist(curr_state)
+
+    def initialize_state(self):
+        prev_state = self.log.read_persisted_data()
+        if prev_state != None:
+            self.active_clients = prev_state[CLIENTS]
+            self.clients_accepted = prev_state[CLIENTS_QUANTITY]
 
     def run(self):
+        # Get the previous state if there was one
+        self.initialize_state()
+
         # Create a process that will be to send the results back to the client
         results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue,))
         results_p.start()
@@ -36,6 +56,9 @@ class Server: # TODO: Implement SIGTERM handling
             conn, addr = self._server_socket.accept()
 
             print("A new client has connected: ", addr)
+
+            if addr in self.active_clients.values():
+                
             
             # Send the new socket with its id through the Queue
             client_id = self.clients_accepted
@@ -201,8 +224,8 @@ class DataFordwarder:
 
 
 def main():    
-    HOST, PORT, LISTEN_BACKLOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG')
-    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG))
+    HOST, PORT, LISTEN_BACKLOG, LOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG'), os.getenv('LOG')
+    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG), LOG)
     server.run()
 
 main()
