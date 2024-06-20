@@ -1,64 +1,121 @@
 from csv import DictReader
+import socket
+import time
 from serialization import serialize_dict, serialize_message
-from communications import write_socket, sendEOF, read_socket
+from communications import write_socket, read_socket
 
 TITLES_IDENTIFIER = 't'
 REVIEWS_IDENTIFIER = 'r'
+CONNECT_TRIES = 10
+CONN_LOOP_LAPSE_START = 1
 
-########### FILE MANAGMENT FUNCTIONS ###########
 
-def create_file_reader(file_path):
-    """
-    Create a file reader object
-    """
-    try:
-        file = open(file_path, 'r')
-    except Exception as e:
-        raise e
-    
-    reader = DictReader(file)
-    return file, reader
+class BooksAnalyzer:
 
-def read_csv_batch(file_reader, threshold=200):
-    """
-    Read a batch of rows from a CSV file
-    """
-    batch = []
-    # EOF reached
-    if file_reader is None:
-        raise Exception("FileReader is None")
-    
-    for i, dictionary in enumerate(file_reader):
-        serialized_dict = serialize_dict(dictionary)
-        batch.append(serialized_dict)
-
-        if i >= threshold:
-            break
+    def __init__(self, titles_filepath, reviews_filepath, server_addr):
+        self.titles_filepath = titles_filepath
+        self.reviews_filepath = reviews_filepath
+        self.server_addr = server_addr
+        self.server_socket = None
         
-    return batch
+    def start_service(self):
+        self._connect_server()
 
-################################################
+        self.send_data()
 
-########### SEND MANAGMENT FUNCTIONS ###########
+    def _connect_server(self):
+        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        loop_lapse = CONN_LOOP_LAPSE_START
+        for i in range(CONNECT_TRIES):
+            # if self.stop_client: TODO: Add a queue so it can read if the client signaled to stop
+            #     raise OSError
+            try:
+                print("Connecting to server. Attempt: ", i)
+                conn.connect(self.server_addr)
+                break
+            except Exception as e:
+                time.sleep(loop_lapse)
+                loop_lapse = loop_lapse * 2
+                if i == CONNECT_TRIES - 1:
+                    print("Could not connect to server")
+                    raise Exception('Could not connect to server.')
+                
+        self.server_socket = conn
 
-def send_file(file_path, system_socket, file_identifier):
-    msg_id = 0
-    file, file_reader = create_file_reader(file_path)
-    file_batch = read_csv_batch(file_reader)
-    while file_batch:
-        serialized_message = serialize_message(file_batch, '', str(msg_id))
-        write_socket(system_socket, serialized_message)
-        file_batch = read_csv_batch(file_reader)
-        msg_id += 1
+    def receive_results(self):
+        # Listen the server response and print it
+        msg = None
+        while msg != "EOF":
+            msg, e = read_socket(self.server_socket)
+            if e != None:
+                # TODO: Maybe raise the exception or just print it and return
+                print(f"Hubo un error en la lectura del socket del server. El error fue: {e}")
+                return
 
-    # Send the corresponding EOF
-    eof_msg = 'EOF_' + file_identifier
-    write_socket(system_socket, eof_msg)
-    file.close()
+            print(msg)
 
-def send_data(titles_filepath, reviews_filepath, system_socket):
-    # Send the titles dataset
-    send_file(titles_filepath, system_socket, TITLES_IDENTIFIER)
+        self.server_socket.close()
 
-    # Send the reviews dataset
-    send_file(reviews_filepath, system_socket, REVIEWS_IDENTIFIER)
+
+    ########### SEND MANAGMENT FUNCTIONS ###########
+
+    def send_file(self, file_path, file_identifier):
+        msg_id = 0
+        file, file_reader = self.create_file_reader(file_path)
+        file_batch = self.read_csv_batch(file_reader)
+        while file_batch:
+            serialized_message = serialize_message(file_batch, '', str(msg_id))
+            e = write_socket(self.server_socket, serialized_message)
+            if e != None:
+                self._connect_server()
+
+            file_batch = self.read_csv_batch(file_reader)
+            msg_id += 1
+
+        # Send the corresponding EOF
+        eof_msg = 'EOF_' + file_identifier
+        write_socket(self.server_socket, eof_msg)
+        file.close()
+
+    def send_data(self):
+        # Send the titles dataset
+        self.send_file(self.titles_filepath, TITLES_IDENTIFIER)
+
+        # Send the reviews dataset
+        self.send_file(self.reviews_filepath, REVIEWS_IDENTIFIER)
+
+    ################################################
+
+    ########### FILE MANAGMENT FUNCTIONS ###########
+
+    def create_file_reader(self, file_path):
+        """
+        Create a file reader object
+        """
+        try:
+            file = open(file_path, 'r')
+        except Exception as e:
+            raise e
+        
+        reader = DictReader(file)
+        return file, reader
+
+    def read_csv_batch(self, file_reader, threshold=200):
+        """
+        Read a batch of rows from a CSV file
+        """
+        batch = []
+        # EOF reached
+        if file_reader is None:
+            raise Exception("FileReader is None")
+        
+        for i, dictionary in enumerate(file_reader):
+            serialized_dict = serialize_dict(dictionary)
+            batch.append(serialized_dict)
+
+            if i >= threshold:
+                break
+            
+        return batch
+
+    ################################################
