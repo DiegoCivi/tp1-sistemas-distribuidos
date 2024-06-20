@@ -5,7 +5,7 @@ from middleware import Middleware
 import os
 import signal
 import queue
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Lock
 from logger import Logger
 
 
@@ -30,12 +30,16 @@ class Server: # TODO: Implement SIGTERM handling
         self.active_clients = {}                            # Contains the id of the client and their address
         self.sockets_queue = Queue()
         self.log = Logger(log, '0')
+        self.log_lock = Lock()
 
     def persist_state(self):
         curr_state = {}
         curr_state[CLIENTS] = self.active_clients
         curr_state[CLIENTS_QUANTITY] = self.clients_accepted
+        
+        self.log_lock.acquire()
         self.log.persist(curr_state)
+        self.log_lock.release()
 
     def initialize_state(self):
         prev_state = self.log.read_persisted_data()
@@ -48,7 +52,7 @@ class Server: # TODO: Implement SIGTERM handling
         self.initialize_state()
 
         # Create a process that will be to send the results back to the client
-        results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue,))
+        results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue, self.log, self.log_lock,))
         results_p.start()
 
         # Receive new clients and create a process that will handle them
@@ -63,7 +67,9 @@ class Server: # TODO: Implement SIGTERM handling
             else:
                 # Send the new socket with its id through the Queue
                 client_id = self.clients_accepted
+                self.active_clients[addr] = client_id
                 self.clients_accepted += 1
+                self.persist_state()
             
             self.sockets_queue.put((conn, str(client_id)))
             # Start the process responsible for receiving the data from the client
@@ -71,7 +77,7 @@ class Server: # TODO: Implement SIGTERM handling
             p.start()
             self.clients[client_id] = p
 
-        # TODO: Put this inf a separated function
+        # TODO: Put this in a separated function
         for process in self.clients.values():
             process.join()
 
@@ -81,16 +87,18 @@ def initiate_data_fordwarder(socket, client_id):
     data_fordwarder = DataFordwarder(socket, client_id)
     data_fordwarder.handle_client()
 
-def initiate_result_fordwarder(sockets_queue):
-    result_fordwarder = ResultFordwarder(sockets_queue)
+def initiate_result_fordwarder(sockets_queue, log, log_lock):
+    result_fordwarder = ResultFordwarder(sockets_queue, log, log_lock)
     result_fordwarder.run()
 
 
 class ResultFordwarder:
 
-    def __init__(self, sockets_queue):
+    def __init__(self, sockets_queue, log, log_lock):
         self.clients = {}
         self.sockets_queue = sockets_queue
+        self.log = log
+        self.log_lock = log_lock
         self.middleware = None
         self.queue = queue.Queue()
         
@@ -140,6 +148,21 @@ class ResultFordwarder:
         client_socket.close()
         del self.clients[client_id]
 
+        self.update_state(client_id)
+    
+    def update_state(self, client_id):
+        self.log_lock.acquire()
+        prev_state = self.log.read_persisted_data()
+        addr_to_delete = None
+        for addr, id in prev_state[CLIENTS].items():
+            if id == client_id:
+                addr_to_delete = addr
+                break
+        if addr_to_delete != None:
+            del prev_state[CLIENTS][addr_to_delete]
+            self.log.persist(prev_state)
+        self.log_lock.release()
+
 class DataFordwarder:
 
     def __init__(self, socket, id):
@@ -163,10 +186,7 @@ class DataFordwarder:
         """
         Reads the client data and fordwards it to the corresponding parts of the system
         """
-        # First read the titles dataset
         self._receive_and_forward_data()
-        # # Then read the reviews dataset
-        # self._receive_and_forward_data(REVIEWS_FILE_IDENTIFIER) 
         self.middleware.close_connection()
                 
     def _receive_and_forward_data(self):
