@@ -201,6 +201,8 @@ class DataFordwarder:
                 self.message_parser.push(message)
                 self.message_parser.add_ids(self.id, msg_id)
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
+                # Send the ack
+                write_socket(self._client_socket, 'ACK')
                 # Clean it so the content of the next message doesnt mix with the current one
                 self.message_parser.clean()
             else:

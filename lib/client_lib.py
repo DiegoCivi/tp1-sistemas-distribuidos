@@ -63,14 +63,25 @@ class BooksAnalyzer:
         msg_id = 0
         file, file_reader = self.create_file_reader(file_path)
         file_batch = self.read_csv_batch(file_reader)
+
         while file_batch:
             serialized_message = serialize_message(file_batch, '', str(msg_id))
-            e = write_socket(self.server_socket, serialized_message)
-            if e != None:
+
+            try:
+                # Send the batch
+                e = write_socket(self.server_socket, serialized_message)
+                if e != None:
+                    raise e
+                # Receive the ack
+                _, e = read_socket(self.server_socket)
+                if e != None:
+                    raise e
+                file_batch = self.read_csv_batch(file_reader)
+                msg_id += 1
+            except:
+                # If there was an exception reading or writing, we need to reconnect to the server
                 self._connect_server()
 
-            file_batch = self.read_csv_batch(file_reader)
-            msg_id += 1
 
         # Send the corresponding EOF
         eof_msg = 'EOF_' + file_identifier
