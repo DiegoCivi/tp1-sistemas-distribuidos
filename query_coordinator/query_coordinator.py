@@ -581,22 +581,10 @@ class ResultsCoordinator:
         return results
 
     def send_results(self, client_id):
-        # Create the result
+        # Create the result and add the client_id
         result_msg = self.assemble_results(client_id)
+        result_msg = add_id(result_msg, client_id)
         # Send the results to the server
-        chars_sent = 0
-        chars_to_send = len(result_msg)
-        while chars_sent < chars_to_send:
-            start_index = chars_sent
-            end_idex = chars_sent + BATCH_SIZE
-            if end_idex >= len(result_msg):
-                end_idex = len(result_msg) - 1
+        self.middleware.send_message(SEND_SERVER_QUEUE, result_msg)
 
-            result_slice = result_msg[start_index: end_idex]
-            result_slice = add_id(result_slice, client_id)
-            self.middleware.send_message(SEND_SERVER_QUEUE, result_slice)
-            chars_sent += BATCH_SIZE
-
-        eof_msg = create_EOF(client_id, self.id)
-        self.middleware.send_message(SEND_SERVER_QUEUE, eof_msg)
 

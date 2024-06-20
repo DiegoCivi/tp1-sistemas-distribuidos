@@ -152,6 +152,23 @@ class Message:
         self.msg= ""
 
     def add_ids(self, client_id, msg_id):
+        """
+        Adds the client_id and the msg_id to the message
+        """
         self.msg = add_id(self.msg, client_id)
         self.msg = add_id(self.msg, msg_id)
+
+    def create_EOF(self, client_id, eof_msg):
+        file_identifier = self.get_file_identifier(eof_msg)
+        self.msg = EOF + client_id + ID_SEPARATOR + file_identifier
+
+    def is_EOF(self, msg):
+        return EOF in msg
+    
+    def contains_EOF(self):
+        return EOF in self.msg
+    
+    def get_file_identifier(self, eof_msg):
+        _, file_identifier = eof_msg.split('_')
+        return file_identifier
 

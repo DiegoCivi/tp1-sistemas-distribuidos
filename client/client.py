@@ -6,7 +6,7 @@ from serialization import serialize_message
 import os
 import time
 import signal
-from client_lib import send_file
+from client_lib import send_data
 
 CONNECT_TRIES = 10
 CONN_LOOP_LAPSE_START = 1
@@ -71,26 +71,17 @@ class Client:
 
         try:
             self._connect_server()
-            # self.file_titles, titles_file_reader = create_file_reader(self.titles_filepath) 
-            # self.file_reviews, reviews_file_reader = create_file_reader(self.reviews_filepath) 
+            # Send the files to the system
+            send_data(self.titles_filepath, self.reviews_filepath, self._server_socket)
+
             # # Send the titles dataset with its EOF
-            send_file(self.titles_filepath, self._server_socket)
-            # self.scrape_and_send_file(titles_file_reader)
-            # eof_e = sendEOF(self._server_socket)
-            # if eof_e != None:
-            #     raise eof_e
-            # self.file_titles.close()
-            print("Ya mande todo el archivo titles")
+            # send_file(self.titles_filepath, self._server_socket)
+            # print("Ya mande todo el archivo titles")
 
-            # Send the reviews dataset with its EOF
-            send_file(self.reviews_filepath, self._server_socket)
-            # self.scrape_and_send_file(reviews_file_reader)
-            # eof_e = sendEOF(self._server_socket)
-            # if eof_e != None:
-            #     raise eof_e
-            # self.file_reviews.close()
+            # # Send the reviews dataset with its EOF
+            # send_file(self.reviews_filepath, self._server_socket)
 
-            # Receice the queries results
+            # Receive the queries results
             self.receive_results()
         except (OSError, ValueError):
             print("Server socket was closed after receiving SIGTERM")
