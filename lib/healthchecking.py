@@ -102,7 +102,7 @@ class HealthCheckHandler():
             self.conn, addr = self.socket.accept()
             print("Received connection from, beginning healthcheck handling", addr)
         while True:
-            try:
+            try: 
                 time.sleep(1)
                 msg, err = read_socket(self.conn, timeout=timeout)
                 if err:
@@ -111,7 +111,7 @@ class HealthCheckHandler():
                     print("Received health check message, sending ACK")
                     write_socket(self.conn, "ACK")
             except:
-                print("Error occurred, restarting loop")
+                print("Timeout reached for the health check, beginning leader election")
 
     def close(self):
         self.socket.close()

@@ -53,7 +53,6 @@ class ProcessCreator:
                 hc_sock.close()
                 return
             
-            print(f'socket is alive: {sock.fileno()}')
             while True:
                 # Use the sock here (messages between coords)
                 if current_connection:
@@ -67,16 +66,10 @@ class ProcessCreator:
                     # Get the id
                     # Get the socket from connections with the id
                     # Send the new ELECTION message to the next through that socket
+                    # If the id is the same as mine, I will send the COORDINATOR message
+                    # If the id is bigger than mine, I will send the ELECTION message
+                    # If the id is smaller than mine, I will ignore the message
                     pass
-
-            # while True: # Use the sock here (messages between coords)
-                # self._socket.settimeout(1)
-            #     msg = read_socket(socket)
-            #     if msg.startswith('ELECTION'):
-            #         # Get the id
-            #         # Get the socket from connections with the id
-            #         # Send the new ELECTION message to the next through that socket
-            #         pass
         except Exception as e:
             print(f"Exception in initiate_connection for id {id}: {e}")
     
@@ -295,9 +288,6 @@ class ContainerCoordinator(ProcessCreator):
                 identifier, err = read_socket(conn)
                 if err:
                     raise err
-                # if identifier in self.connections:
-                #     print(f"Ya esta conectado el container_coordinator_{identifier}")
-                #     continue
                 print(f"Soy {self.id} y se me conecto: container_coordinator_{identifier}")
                 # Start the process responsible for receiving the data from the new connection
                 hc_socket = None #TODO: See where to close the socket 
@@ -316,7 +306,7 @@ class ContainerCoordinator(ProcessCreator):
                 self.processes.append(p)
             except Exception as e:
                 print("Error: ", e)
-                pass
+            
         
         # Now we have all the connections to the other coordinators, we need to connect to the workers if 
         # I am the last coordinator
