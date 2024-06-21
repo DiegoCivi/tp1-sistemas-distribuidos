@@ -94,8 +94,11 @@ class Middleware:
             self._channel.basic_ack(delivery_tag=msg_identifier.delivery_tag)
 
     def close_connection(self):
-        self._channel.stop_consuming()
+        if self._channel.is_open:
+            self._channel.stop_consuming()
+            self._channel.close()
         self._connection.close()
+
 
     def stop_consuming(self, method=None):
         if method != None:

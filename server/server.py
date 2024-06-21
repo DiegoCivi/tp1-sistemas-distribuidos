@@ -16,21 +16,45 @@ TITLES_FILE_IDENTIFIER = 't'
 REVIEWS_FILE_IDENTIFIER = 'r'
 CLIENTS = 'clients'
 CLIENTS_QUANTITY = 'clients_quantity'
+NO_STATE = -1
+SENDING_DATA_STATE = 0
+WAITING_RESULTS_STATE = 1
+IP_INDEX = 0
+ID_INDEX = 0
+STATE_INDEX = 1
 
 
-class Server: # TODO: Implement SIGTERM handling
+class Server:
 
     def __init__(self, host, port, listen_backlog, log):
+        signal.signal(signal.SIGTERM, self.handle_signal)
+
         self.clients = {}
+        self.results_p = None
         self._stop_server= False
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog)
         self.clients_accepted = 1
-        self.active_clients = {}                            # Contains the id of the client and their address
+        self.active_clients = {}                            # Key = client ip, Value = (client id, client state)
         self.sockets_queue = Queue()
         self.log = Logger(log, '0')
         self.log_lock = Lock()
+
+    def handle_signal(self, *args):
+        self._stop_server = True
+        self.join_processes()
+        self._server_socket.close()
+
+    def join_processes(self):
+        for process in self.clients.values():
+            process.terminate()
+            process.join()
+            process.close()
+
+        self.results_p.terminate()
+        self.results_p.join()
+        self.results_p.close()
 
     def persist_state(self):
         curr_state = {}
@@ -43,6 +67,7 @@ class Server: # TODO: Implement SIGTERM handling
 
     def initialize_state(self):
         prev_state = self.log.read_persisted_data()
+        print('The prev state was: ', prev_state, flush=True)
         if prev_state != None:
             self.active_clients = prev_state[CLIENTS]
             self.clients_accepted = prev_state[CLIENTS_QUANTITY]
@@ -52,49 +77,50 @@ class Server: # TODO: Implement SIGTERM handling
         self.initialize_state()
 
         # Create a process that will be to send the results back to the client
-        results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue, self.log, self.log_lock,))
-        results_p.start()
+        self.results_p = Process(target=initiate_result_fordwarder, args=(self.sockets_queue, self.log, self.log_lock,))
+        self.results_p.start()
 
         # Receive new clients and create a process that will handle them
         while not self._stop_server:
-            conn, addr = self._server_socket.accept()
+            try: 
+                conn, addr = self._server_socket.accept()
+            except OSError:
+                break
 
             print("A new client has connected: ", addr)
 
-            if addr in self.active_clients:
-                # The address was already in our state, meaning the client had been already received before
-                client_id = self.active_clients[addr]
+            if addr[IP_INDEX] in self.active_clients:
+                # The ip was already in our state, meaning the client had been already received before
+                client_id = self.active_clients[addr[IP_INDEX]][ID_INDEX]
+                client_state = self.active_clients[addr[IP_INDEX]][STATE_INDEX]
             else:
                 # Send the new socket with its id through the Queue
                 client_id = self.clients_accepted
-                self.active_clients[addr] = client_id
+                self.active_clients[addr[IP_INDEX]] = (str(client_id), SENDING_DATA_STATE)
                 self.clients_accepted += 1
                 self.persist_state()
+                client_state = NO_STATE
             
             self.sockets_queue.put((conn, str(client_id)))
-            # Start the process responsible for receiving the data from the client
-            p = Process(target=initiate_data_fordwarder, args=(conn, client_id,))
-            p.start()
-            self.clients[client_id] = p
+            if client_state != WAITING_RESULTS_STATE:
+                # Start the process responsible for receiving the data from the client
+                p = Process(target=initiate_data_fordwarder, args=(conn, client_id, self.log, self.log_lock,))
+                p.start()
+                self.clients[client_id] = p
 
-        # TODO: Put this in a separated function
-        for process in self.clients.values():
-            process.join()
-
-        results_p.join()
-
-def initiate_data_fordwarder(socket, client_id):
-    data_fordwarder = DataFordwarder(socket, client_id)
+def initiate_data_fordwarder(socket, client_id, log, log_lock):
+    data_fordwarder = DataFordwarder(socket, client_id, log, log_lock)
     data_fordwarder.handle_client()
 
 def initiate_result_fordwarder(sockets_queue, log, log_lock):
     result_fordwarder = ResultFordwarder(sockets_queue, log, log_lock)
     result_fordwarder.run()
 
-
 class ResultFordwarder:
 
     def __init__(self, sockets_queue, log, log_lock):
+        signal.signal(signal.SIGTERM, self.handle_signal)
+
         self.clients = {}
         self.sockets_queue = sockets_queue
         self.log = log
@@ -111,6 +137,14 @@ class ResultFordwarder:
 
         self.results = Message("")
 
+    def handle_signal(self, *args):
+        self.queue.put('SIGTERM')
+        try:
+            if self.middleware != None:
+                self.middleware.close_connection()
+        except OSError:
+            print("@@@@@@@@@@@@@@@@@@@@@@@", flush=True)
+
     def run(self):
         self._receive_results()
 
@@ -121,6 +155,8 @@ class ResultFordwarder:
         """
         client_id, result_msg = split_message_info(body)
         self._send_result(client_id, result_msg)
+
+        self.update_state(client_id)
 
         self.middleware.ack_message(method)
    
@@ -148,29 +184,29 @@ class ResultFordwarder:
         client_socket.close()
         del self.clients[client_id]
 
-        self.update_state(client_id)
-    
     def update_state(self, client_id):
         self.log_lock.acquire()
         prev_state = self.log.read_persisted_data()
-        addr_to_delete = None
-        for addr, id in prev_state[CLIENTS].items():
-            if id == client_id:
-                addr_to_delete = addr
+        ip_to_delete = None
+        for ip, tuple in prev_state[CLIENTS].items():
+            if tuple[ID_INDEX] == client_id:
+                ip_to_delete = ip
                 break
-        if addr_to_delete != None:
-            del prev_state[CLIENTS][addr_to_delete]
+        if ip_to_delete != None:
+            del prev_state[CLIENTS][ip_to_delete]
             self.log.persist(prev_state)
         self.log_lock.release()
 
 class DataFordwarder:
 
-    def __init__(self, socket, id):
+    def __init__(self, socket, id, log, log_lock):
         signal.signal(signal.SIGTERM, self.handle_signal)
         
         self.id = str(id)
         self._client_socket = socket
-        self._stop_server= False
+        self.log = log
+        self.log_lock = log_lock
+        self._stop_fordwarder = False
         
         self.middleware = None
         self.queue = queue.Queue()
@@ -187,10 +223,29 @@ class DataFordwarder:
         Reads the client data and fordwards it to the corresponding parts of the system
         """
         self._receive_and_forward_data()
-        self.middleware.close_connection()
-                
+        try:
+            self.middleware.close_connection()
+        except OSError:
+            pass
+
+    def update_state(self):
+        self.log_lock.acquire()
+        prev_state = self.log.read_persisted_data()
+        ip_to_update = None
+        for ip, tuple in prev_state[CLIENTS].items():
+            if tuple[ID_INDEX] == self.id:
+                ip_to_update = ip
+                break
+        if ip_to_update != None:
+            prev_value = prev_state[CLIENTS][ip_to_update]
+            new_value = (prev_value[ID_INDEX], WAITING_RESULTS_STATE) 
+            prev_state[CLIENTS][ip_to_update] = new_value
+            print(f'Updating state of client [{self.id}]: ', prev_state, flush=True)
+            self.log.persist(prev_state)
+        self.log_lock.release()
+
     def _receive_and_forward_data(self):
-        while True:
+        while not self._stop_fordwarder:
             socket_content, e = read_socket(self._client_socket)
             if e != None:
                 raise e
@@ -209,7 +264,9 @@ class DataFordwarder:
                 # Add the file identifier to the EOF and send it
                 self.message_parser.create_EOF(self.id, socket_content)
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
+                # Update the state of the active client
                 if self.message_parser.get_file_identifier(socket_content) ==  REVIEWS_FILE_IDENTIFIER:
+                    self.update_state()
                     break
         
         self.message_parser.clean()
@@ -218,13 +275,15 @@ class DataFordwarder:
     def handle_signal(self, *args):
         print("Gracefully exit")
         self.queue.put('SIGTERM')
-        self._stop_server = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+        self._stop_fordwarder = True
+        try:
+            if self.middleware != None:
+                self.middleware.stop_consuming()
+                self.middleware._connection.close()
+        except:
+            pass
         if self._client_socket != None:
             self._client_socket.close()
-        if self._server_socket != None:
-            self._server_socket.shutdown(socket.SHUT_RDWR)
 
 
 def main():    

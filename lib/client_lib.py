@@ -48,9 +48,9 @@ class BooksAnalyzer:
         while msg != "EOF":
             msg, e = read_socket(self.server_socket)
             if e != None:
-                # TODO: Maybe raise the exception or just print it and return
-                print(f"Hubo un error en la lectura del socket del server. El error fue: {e}")
-                return
+                print("Reconnecting to server...")
+                self._connect_server()
+                print("Reconnection succesful")
 
             print(msg)
 
@@ -80,7 +80,9 @@ class BooksAnalyzer:
                 msg_id += 1
             except:
                 # If there was an exception reading or writing, we need to reconnect to the server
+                print("Reconnecting to server...")
                 self._connect_server()
+                print("Reconnection succesful")
 
 
         # Send the corresponding EOF
