@@ -38,18 +38,19 @@ class ProcessCreator:
         """
         connections[conn_identifier] = conn
     
-    def initiate_connection(self, id, port, sock, hc_sock, connections, leader = False, current_connection=None):
+    def initiate_connection(self, id, port, sock, hc_sock, connections, leader, current_connection=None, coords_quantity=None):
         """
         Handler of messages of a connection. This connection can be another ContainerCoordinator
         or a worker from the system.
         """
+        health_check_handler = None
         try:
-            if leader:
+            if leader.value:
                 # I'm the leader, I have to send healthchecks to the workers and coordinators, if
                 # they don't respond, I have to restart them, and if I die, coordinators will
                 # notice and start a new election 
                 health_checker = HealthChecker()
-                health_checker.check_connection(id, HC_PORT, hc_sock, True if "container_coordinator" in id else False)
+                health_checker.check_connection(id, HC_PORT, hc_sock, False)
                 hc_sock.close()
                 return
             
@@ -59,17 +60,51 @@ class ProcessCreator:
                     sock = connections[current_connection]
                 msg, err = read_socket(sock)
                 if err != None:
-                    # print(f"Error reading from socket: {err}")
+                    print(f"Error reading from socket: {err}, the socket died")
+                    connections.pop(id)
                     break
                 print(f"Message received from {id}: {msg}")
                 if msg.startswith('ELECTION'):
-                    # Get the id
-                    # Get the socket from connections with the id
-                    # Send the new ELECTION message to the next through that socket
-                    # If the id is the same as mine, I will send the COORDINATOR message
-                    # If the id is bigger than mine, I will send the ELECTION message
-                    # If the id is smaller than mine, I will ignore the message
-                    pass
+                    # Bully leader election
+                    # Propagate the message to the other coordinators
+                    count = 0
+                    for name, conn in connections.items():
+                        if not name.isdigit() or name == id or int(name) < int(id):
+                            continue
+                        try:
+                            write_socket(conn, f"ELECTION {id}")
+                            count += 1
+                        except:
+                            print(f"Error sending election message to {name}, most probably died, skipping")
+                            continue
+                    if count == 0: # If no one could receive the message, I am the new leader
+                        # I am the last one alive 
+                        for name, conn in connections.items():
+                            if not name.isdigit() or name == id:
+                                continue
+                            try:
+                                write_socket(conn, f"COORDINATOR {id}")
+                            except:
+                                print(f"Error sending coordinator message to {name}, most probably died, skipping")
+                                continue
+                        leader.value = True
+                        break
+                elif msg.startswith('COORDINATOR'):
+                    # There is a new coordinator in the network I have to begin listening to his healthchecks
+                    new_coord_hc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    new_coord_hc.bind((f'container_coordinator_{id}', HC_PORT))
+                    new_coord_hc.listen(1)
+                    new_coord_conn, _ = new_coord_hc.accept()
+                    health_check_handler = HealthCheckHandler(socket=None, conn=new_coord_conn)
+                    health_check_process = Process(target=health_check_handler.handle_health_check_with_timeout, args=(5, id, connections))
+                    health_check_process.start()
+                    self.processes.append(health_check_process)
+                if leader:
+                    # I am the new leader, break this loop to begin healthchecking outside this connection
+                    break
+            if health_check_handler:
+                health_check_handler.close()
+                    
         except Exception as e:
             print(f"Exception in initiate_connection for id {id}: {e}")
     
@@ -210,10 +245,7 @@ class ContainerCoordinator(ProcessCreator):
         self.health_check_sockets = {}
         self.hc_socket = None
         self.hc_conn = None
-        if not self.im_last_coord():
-            health_checking_process = Process(target=self.create_health_check)
-            health_checking_process.start()
-            self.processes.append(health_checking_process)
+        self.leader = self.manager.Value('b', False)
 
     def im_last_coord(self):
         """
@@ -249,7 +281,7 @@ class ContainerCoordinator(ProcessCreator):
             conn.close()
         self._socket.close()
 
-    def create_health_check(self):
+    def create_health_check_handling(self):
         self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.hc_socket.bind((f'container_coordinator_{self.id}', HC_PORT)) 
         self.hc_socket.listen(1)
@@ -268,18 +300,37 @@ class ContainerCoordinator(ProcessCreator):
             be accepted here.
         -   When everything finishes, all process are joined and closed 
         """
-        # Process that will reconnect to the network if it crashed before
+        # Process that will reconnect to the network if it crashed before, also perform a leader election
         self.initiate_reconnection()
 
-        if not self.im_last_coord():
+        if not self.leader.value:
+            health_checking_process = Process(target=self.create_health_check_handling)
+            health_checking_process.start()
+            self.processes.append(health_checking_process)
             # Create the process that will send the id to the other
-            # This will be done by all coordinators, except for the last one
             self.initiate_connector(False)
 
         # Receive new connections and create a process that will handle them
         print("Voy a entrar al while")
         while True:
             try:
+                if self.leader.value and not self.health_check_sockets:
+                    # I just became the leader, I have to start the healthchecking process with every other coordinator
+                    if len(self.connections) == len(self.coordinators_list) - 1:
+                        print("I became the new leader, starting healthchecking with coords and workers")
+                        for name, conn in self.connections.items():
+                            if not name.isdigit() or name == str(self.id):
+                                continue
+                            hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            hc_socket.connect((f'container_coordinator_{name}', HC_PORT))
+                            self.health_check_sockets[name] = hc_socket
+                            health_checker = HealthChecker()
+                            health_checking_process = Process(target=health_checker.check_connection, args=(f'container_coordinator_{name}', HC_PORT, hc_socket, True))
+                        # Also I will connect to the workers
+                        p = Process(target=self.create_connector, args=(self.id, self.connections, [], self.containers_list, False, False))
+                        p.start()
+                        self.processes.append(p)
+
                 self._socket.settimeout(1)
                 print("Entre")
                 conn, addr = self._socket.accept()
@@ -290,14 +341,8 @@ class ContainerCoordinator(ProcessCreator):
                     raise err
                 print(f"Soy {self.id} y se me conecto: container_coordinator_{identifier}")
                 # Start the process responsible for receiving the data from the new connection
-                hc_socket = None #TODO: See where to close the socket 
-                if self.im_last_coord():
-                    hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    hc_socket.connect((f'container_coordinator_{identifier}', HC_PORT))
-                    self.health_check_sockets[identifier] = hc_socket
-                    p = Process(target=self.initiate_connection, args=(f'container_coordinator_{identifier}', self.coords_port, conn, hc_socket, self.connections, True,))
-                else:
-                    p = Process(target=self.initiate_connection, args=(self.id, self.coords_port, conn, None, self.connections, False, identifier))
+                if not self.leader.value:
+                    p = Process(target=self.initiate_connection, args=(self.id, self.coords_port, conn, None, self.connections, self.leader, identifier, len(self.coordinators_list)))
 
                 # Put in the dict the identifier with the TCP socket, if it's already added, it will be replaced
                 self.add_connection(self.connections, identifier, conn)
@@ -307,15 +352,6 @@ class ContainerCoordinator(ProcessCreator):
             except Exception as e:
                 print("Error: ", e)
             
-        
-        # Now we have all the connections to the other coordinators, we need to connect to the workers if 
-        # I am the last coordinator
-        if self.im_last_coord():
-            p = Process(target=self.create_connector, args=(self.id, self.connections, [], self.containers_list, False, False))
-            p.start()
-            self.processes.append(p)
-
-
         # We wait for the end of the children processes
         self.close_resources()
         hc_socket.close()
