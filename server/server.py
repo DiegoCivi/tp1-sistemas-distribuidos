@@ -143,7 +143,7 @@ class ResultFordwarder:
             if self.middleware != None:
                 self.middleware.close_connection()
         except OSError:
-            print("@@@@@@@@@@@@@@@@@@@@@@@", flush=True)
+            pass
 
     def run(self):
         self._receive_results()
