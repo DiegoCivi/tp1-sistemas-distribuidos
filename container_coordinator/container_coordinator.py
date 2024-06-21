@@ -78,7 +78,6 @@ class ProcessCreator:
                             print(f"Error sending election message to {name}, most probably died, skipping")
                             continue
                     if count == 0: # If no one could receive the message, I am the new leader
-                        # I am the last one alive 
                         for name, conn in connections.items():
                             if not name.isdigit() or name == id:
                                 continue
@@ -176,6 +175,8 @@ class Connector(ProcessCreator):
                             print('Error')
                             raise err
                         print("Soy un coordinador mas, paso el id: ", host)
+                        if reconnection: # If it's a reconnection, we have to begin an election
+                            write_socket(s, f"ELECTION {self.id}")
                         p = Process(target=self.initiate_connection, args=(host, port, s , None, self.connections, False))
                         self.add_connection(self.connections, str(id), s)
 
@@ -318,6 +319,10 @@ class ContainerCoordinator(ProcessCreator):
                     # I just became the leader, I have to start the healthchecking process with every other coordinator
                     if len(self.connections) == len(self.coordinators_list) - 1:
                         print("I became the new leader, starting healthchecking with coords and workers")
+                        # Close the previous health check socket from when I was a follower
+                        self.hc_socket.close()
+                        self.health_check_handler.close()
+                        # Start the healthchecking process with the other coordinators
                         for name, conn in self.connections.items():
                             if not name.isdigit() or name == str(self.id):
                                 continue
@@ -326,7 +331,10 @@ class ContainerCoordinator(ProcessCreator):
                             self.health_check_sockets[name] = hc_socket
                             health_checker = HealthChecker()
                             health_checking_process = Process(target=health_checker.check_connection, args=(f'container_coordinator_{name}', HC_PORT, hc_socket, True))
-                        # Also I will connect to the workers
+                            health_checking_process.start()
+                            self.processes.append(health_checking_process)
+
+                        # Also I will connect to the workers and start the healthchecking process with them
                         p = Process(target=self.create_connector, args=(self.id, self.connections, [], self.containers_list, False, False))
                         p.start()
                         self.processes.append(p)
