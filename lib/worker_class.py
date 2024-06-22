@@ -134,7 +134,6 @@ class Worker:
             else:
                 raise e
             
-
 class StateWorker(Worker):
     """
     This type of workers acummulates various messages for each client, creating only one big message
@@ -312,13 +311,12 @@ class NoStateWorker(Worker):
     def apply_filter(self, data):
         raise Exception('Function needs to be implemented')
     
-
 #### WORKER THAT HANDLES MULTIPLE QUEUES ####
 
 class MultipleQueueWorker:
-    # TODO:
-    # - Make the inits on RC and JoinWorker. Both should have clients_acum (RC should change his clients_results to clients_acum)
-    # - They should have: clients_unacked_queue_eofs, queue_eof_worker_ids, clients_acum, clients_acummulated_queue_msg_ids, eof_quantity_queues, unacked_queue_msgs
+    """
+    This worker receives data from more than one queue.
+    """
 
     def __init__(self): # DELETE!!!
         self.clients_unacked_queue_eofs = {}
@@ -423,7 +421,7 @@ class MultipleQueueWorker:
         return self.clients_acummulated_queue_msg_ids[queue][client_id] == 'FINISHED'
 
     def need_to_persist(self, queue):
-        return len(self.unacked_queue_msgs[queue]) == 5 # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefetch count
+        return len(self.unacked_queue_msgs[queue]) == self.max_unacked_msgs # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefetch count
     
     def add_acummulated_message(self, client_id, method, msg_id, queue):
         if client_id not in self.clients_acummulated_queue_msg_ids[queue]:

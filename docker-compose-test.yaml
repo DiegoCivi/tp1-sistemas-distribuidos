@@ -85,6 +85,7 @@ services:
       - EOF_QUANTITY=3,1,1,1,1
       - LOG_RESULTS=query_coordinator_results
       - LOG_DATA=query_coordinator_data
+      - MAX_UNACKED_MSGS=5
     volumes:
       - ./persisted_data:/persisted_data
 
@@ -404,6 +405,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
       - LOG=reviews_counter_worker_q3
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   reviews_counter_worker1:
@@ -422,6 +424,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
       - LOG=reviews_counter_worker_q3
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   reviews_counter_worker2:
@@ -440,6 +443,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
       - LOG=reviews_counter_worker_q3
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   reviews_counter_worker3:
@@ -458,6 +462,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
       - LOG=reviews_counter_worker_q3
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   reviews_counter_worker4:
@@ -476,6 +481,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
       - LOG=reviews_counter_worker_q3
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   reviews_counter_worker5:
@@ -494,6 +500,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q3|iteration_reviews_counter
       - LOG=reviews_counter_worker_q3
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   filter_review_quantity_worker0:
@@ -760,6 +767,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
       - LOG=mean_review_sentiment_worker_q5
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   mean_review_sentiment_worker1:
@@ -778,6 +786,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
       - LOG=mean_review_sentiment_worker_q5
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   mean_review_sentiment_worker2:
@@ -796,6 +805,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
       - LOG=mean_review_sentiment_worker_q5
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   mean_review_sentiment_worker3:
@@ -814,6 +824,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
       - LOG=mean_review_sentiment_worker_q5
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   mean_review_sentiment_worker4:
@@ -832,6 +843,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
       - LOG=mean_review_sentiment_worker_q5
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   mean_review_sentiment_worker5:
@@ -850,6 +862,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q5|iteration_mean_review
       - LOG=mean_review_sentiment_worker_q5
+      - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
   percentile_worker0:

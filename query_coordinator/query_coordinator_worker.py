@@ -14,8 +14,9 @@ def main():
     eof_quantity = list(map(int, eof_quantity))
     log_data = os.getenv('LOG_DATA')
     log_results = os.getenv('LOG_RESULTS')
+    max_unacked_msgs = int(os.getenv('MAX_UNACKED_MSGS'))
 
-    query_coordinator = QueryCoordinator(workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log_data, log_results)
+    query_coordinator = QueryCoordinator(workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log_data, log_results, max_unacked_msgs)
     query_coordinator.run()
 
 main()

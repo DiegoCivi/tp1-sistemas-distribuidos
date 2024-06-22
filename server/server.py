@@ -265,7 +265,7 @@ class DataFordwarder:
                 self.message_parser.create_EOF(self.id, socket_content)
                 self.middleware.send_message(SEND_COORDINATOR_QUEUE, self.message_parser.encode())
                 # Update the state of the active client
-                if self.message_parser.get_file_identifier(socket_content) ==  REVIEWS_FILE_IDENTIFIER:
+                if self.message_parser.get_file_identifier(socket_content) == REVIEWS_FILE_IDENTIFIER:
                     self.update_state()
                     break
         

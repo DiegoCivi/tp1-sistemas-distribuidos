@@ -38,7 +38,7 @@ EOF_TYPES = 'eof_types'
 
 class QueryCoordinator:
 
-    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log_data, log_results):
+    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log_data, log_results, max_unacked_msgs):
         """
         Initializes the query coordinator with the title parse mode
         """
@@ -50,7 +50,8 @@ class QueryCoordinator:
         self.eof_quantity = eof_quantity
         self.log_data = Logger(log_data, ID)
         self.log_results = Logger(log_results, ID)
-        self.processes = []      
+        self.processes = []
+        self.max_unacked_msgs = max_unacked_msgs   
 
     def handle_signal(self, *args):
         self.stop_coordinator = True
@@ -76,7 +77,7 @@ class QueryCoordinator:
         data_coordinator.run()
 
     def initiate_result_coordinator(self):
-        result_coordinator = ResultsCoordinator(self.id, self.eof_quantity, self.log_results)
+        result_coordinator = ResultsCoordinator(self.id, self.eof_quantity, self.log_results, self.max_unacked_msgs)
         result_coordinator.run()
 
 class DataCoordinator:
@@ -287,7 +288,7 @@ class DataCoordinator:
 
 class ResultsCoordinator(MultipleQueueWorker):
 
-    def __init__(self, id, eof_quantities, log):
+    def __init__(self, id, eof_quantities, log, max_unacked_msgs):
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.acum = True
         self.id = id
@@ -295,6 +296,7 @@ class ResultsCoordinator(MultipleQueueWorker):
                                         Q4: eof_quantities[Q4_EOF_QUANTITY_INDEX], Q5: eof_quantities[Q5_EOF_QUANTITY_INDEX]
                                     }
         self.clients_acum = {}                   # This dict stores for each active client, the results of each pipeline.
+        self.max_unacked_msgs = max_unacked_msgs
         self.stop = False
         self.middleware = None
         self.log = log
