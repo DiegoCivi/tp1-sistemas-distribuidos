@@ -95,6 +95,9 @@ class HealthCheckHandler():
                 break
             if msg == "HEALTH_CHECK":
                 write_socket(self.conn, "ACK")
+            elif msg == "COORDINATOR":
+                print("A new coordinator has connected")
+                self.conn, addr = self.socket.accept()
 
     def handle_health_check_with_timeout(self, timeout, self_id, connections):
         print("Listening for incoming connections")
@@ -107,17 +110,20 @@ class HealthCheckHandler():
                 msg, err = read_socket(self.conn, timeout=timeout)
                 if err:
                     print("Error reading from socket: ", err)
+                    raise err
                 if msg == "HEALTH_CHECK":
                     print("Received health check message, sending ACK")
                     write_socket(self.conn, "ACK")
             except:
                 print("Timeout reached for the health check, beginning leader election")
                 self.begin_leader_election(self_id, connections)
+                # self.conn, addr = self.socket.accept()
 
     def begin_leader_election(self, self_id, connections):
         print("Beginning leader election")
         # Bully leader election start  
         for name, conn in connections.items():
+            # name = name.split('_')[-1]
             if not name.isdigit() or name == self_id or int(name) < int(self_id):
                 continue
             try:
