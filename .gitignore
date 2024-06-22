@@ -3,3 +3,6 @@ datasets/
 
 # Ignore the file with the .txts that create the workers
 persisted_data/ 
+
+# Ignore the debug directory
+debug/

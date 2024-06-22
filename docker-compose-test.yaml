@@ -40,6 +40,7 @@ services:
     links:
       - server
     environment:
+      - ID=1
       - PYTHONUNBUFFERED=1
       - HOST=server
       - PORT=12345
@@ -47,6 +48,7 @@ services:
       - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
     volumes:
       - ./datasets:/datasets
+      - ./debug:/debug
 
   client_2:
     container_name: client_2
@@ -58,6 +60,7 @@ services:
     links:
       - server
     environment:
+      - ID=2
       - PYTHONUNBUFFERED=1
       - HOST=server
       - PORT=12345
@@ -65,6 +68,7 @@ services:
       - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
     volumes:
       - ./datasets:/datasets
+      - ./debug:/debug
 
   query_coordinator_worker:
     container_name: query_coordinator_worker
@@ -88,6 +92,7 @@ services:
       - MAX_UNACKED_MSGS=5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
 
   filter_category_computers_worker0:
     container_name: filter_category_computers_worker0
@@ -108,6 +113,7 @@ services:
       - LOG=filter_category_computers_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_category_computers_worker1:
     container_name: filter_category_computers_worker1
     build:
@@ -127,6 +133,7 @@ services:
       - LOG=filter_category_computers_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_category_computers_worker2:
     container_name: filter_category_computers_worker2
     build:
@@ -146,6 +153,7 @@ services:
       - LOG=filter_category_computers_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_title_worker0:
     container_name: filter_title_worker0
     build:
@@ -165,6 +173,7 @@ services:
       - LOG=filter_title_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_title_worker1:
     container_name: filter_title_worker1
     build:
@@ -184,6 +193,7 @@ services:
       - LOG=filter_title_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_title_worker2:
     container_name: filter_title_worker2
     build:
@@ -203,6 +213,7 @@ services:
       - LOG=filter_title_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_year_worker_q1-0:
     container_name: filter_year_worker_q1-0
     build:
@@ -223,6 +234,7 @@ services:
       - LOG=filter_year_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_year_worker_q1-1:
     container_name: filter_year_worker_q1-1
     build:
@@ -243,6 +255,7 @@ services:
       - LOG=filter_year_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_year_worker_q1-2:
     container_name: filter_year_worker_q1-2
     build:
@@ -263,6 +276,7 @@ services:
       - LOG=filter_year_worker_q1
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
 
 
   decade_counter_worker0:
@@ -280,6 +294,7 @@ services:
       - LOG=decade_counter_worker_q2
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   decade_counter_worker1:
     container_name: decade_counter_worker1
     build:
@@ -295,6 +310,7 @@ services:
       - LOG=decade_counter_worker_q2
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   decade_counter_worker2:
     container_name: decade_counter_worker2
     build:
@@ -310,6 +326,7 @@ services:
       - LOG=decade_counter_worker_q2
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   global_decade_counter_worker0:
     container_name: global_decade_counter_worker0
     build:
@@ -327,6 +344,7 @@ services:
       - LOG=global_decade_counter_worker_q2
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
 
 
   filter_year_worker_q3-0:
@@ -349,6 +367,7 @@ services:
       - LOG=filter_year_worker_q3
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_year_worker_q3-1:
     container_name: filter_year_worker_q3-1
     build:
@@ -369,6 +388,7 @@ services:
       - LOG=filter_year_worker_q3
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_year_worker_q3-2:
     container_name: filter_year_worker_q3-2
     build:
@@ -389,6 +409,7 @@ services:
       - LOG=filter_year_worker_q3
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   reviews_counter_worker0:
     container_name: reviews_counter_worker0
     build:
@@ -408,6 +429,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   reviews_counter_worker1:
     container_name: reviews_counter_worker1
     build:
@@ -427,6 +449,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   reviews_counter_worker2:
     container_name: reviews_counter_worker2
     build:
@@ -446,6 +469,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   reviews_counter_worker3:
     container_name: reviews_counter_worker3
     build:
@@ -465,6 +489,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   reviews_counter_worker4:
     container_name: reviews_counter_worker4
     build:
@@ -484,6 +509,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   reviews_counter_worker5:
     container_name: reviews_counter_worker5
     build:
@@ -503,6 +529,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_review_quantity_worker0:
     container_name: filter_review_quantity_worker0
     build:
@@ -521,6 +548,7 @@ services:
       - LOG=filter_review_quantity_worker_q3
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
 
 
   top10_worker0:
@@ -541,6 +569,7 @@ services:
       - LOG=top10_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   top10_worker1:
     container_name: top10_worker1
     build:
@@ -559,6 +588,7 @@ services:
       - LOG=top10_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   top10_worker2:
     container_name: top10_worker2
     build:
@@ -577,6 +607,7 @@ services:
       - LOG=top10_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   top10_worker3:
     container_name: top10_worker3
     build:
@@ -595,6 +626,7 @@ services:
       - LOG=top10_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   top10_worker4:
     container_name: top10_worker4
     build:
@@ -613,6 +645,7 @@ services:
       - LOG=top10_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   top_10_worker_last0:
     container_name: top_10_worker_last0
     build:
@@ -632,6 +665,7 @@ services:
       - LOG=top10_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
 
 
   review_sentiment_worker0:
@@ -649,6 +683,7 @@ services:
       - LOG=review_sentiment_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   review_sentiment_worker1:
     container_name: review_sentiment_worker1
     build:
@@ -664,6 +699,7 @@ services:
       - LOG=review_sentiment_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   review_sentiment_worker2:
     container_name: review_sentiment_worker2
     build:
@@ -679,6 +715,7 @@ services:
       - LOG=review_sentiment_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   review_sentiment_worker3:
     container_name: review_sentiment_worker3
     build:
@@ -694,6 +731,7 @@ services:
       - LOG=review_sentiment_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_category_worker0:
     container_name: filter_category_worker0
     build:
@@ -713,6 +751,7 @@ services:
       - LOG=filter_category_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_category_worker1:
     container_name: filter_category_worker1
     build:
@@ -732,6 +771,7 @@ services:
       - LOG=filter_category_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   filter_category_worker2:
     container_name: filter_category_worker2
     build:
@@ -751,6 +791,7 @@ services:
       - LOG=filter_category_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   mean_review_sentiment_worker0:
     container_name: mean_review_sentiment_worker0
     build:
@@ -770,6 +811,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   mean_review_sentiment_worker1:
     container_name: mean_review_sentiment_worker1
     build:
@@ -789,6 +831,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   mean_review_sentiment_worker2:
     container_name: mean_review_sentiment_worker2
     build:
@@ -808,6 +851,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   mean_review_sentiment_worker3:
     container_name: mean_review_sentiment_worker3
     build:
@@ -827,6 +871,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   mean_review_sentiment_worker4:
     container_name: mean_review_sentiment_worker4
     build:
@@ -846,6 +891,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   mean_review_sentiment_worker5:
     container_name: mean_review_sentiment_worker5
     build:
@@ -865,6 +911,7 @@ services:
       - MAX_UNACKED_MSGS=150
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
   percentile_worker0:
     container_name: percentile_worker0
     build:
@@ -884,3 +931,4 @@ services:
       - LOG=percentile_worker_q5
     volumes:
       - ./persisted_data:/persisted_data
+      - ./debug:/debug
