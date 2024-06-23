@@ -89,15 +89,17 @@ class HealthCheckHandler():
             self.conn, addr = self.socket.accept()
             print("Received connection from {addr}, beginning healthcheck handling", addr)
         while True:
-            msg, err = read_socket(self.conn)
-            if err:
-                print("Error reading from socket: ", err)
-                break
-            if msg == "HEALTH_CHECK":
-                write_socket(self.conn, "ACK")
-            elif msg == "COORDINATOR":
-                print("A new coordinator has connected")
+            try:
+                msg, err = read_socket(self.conn)
+                if err:
+                    print("Error reading from socket: ", err)
+                    break
+                if msg == "HEALTH_CHECK":
+                    write_socket(self.conn, "ACK")
+            except:
                 self.conn, addr = self.socket.accept()
+            
+                
 
     def handle_health_check_with_timeout(self, timeout, self_id, connections):
         print("Listening for incoming connections")
@@ -117,10 +119,11 @@ class HealthCheckHandler():
             except:
                 print("Timeout reached for the health check, beginning leader election")
                 self.begin_leader_election(self_id, connections)
-                # self.conn, addr = self.socket.accept()
+                self.conn, addr = self.socket.accept()
 
     def begin_leader_election(self, self_id, connections):
         print("Beginning leader election")
+        dead_connections = []
         # Bully leader election start  
         for name, conn in connections.items():
             # name = name.split('_')[-1]
@@ -130,7 +133,10 @@ class HealthCheckHandler():
                 write_socket(conn, f"ELECTION {self_id}")
             except:
                 print(f"Error sending election message to {name}, most probably died, skipping")
+                dead_connections.append(name)
                 continue
+        for name in dead_connections:
+            del connections[name]
 
     def close(self):
         self.socket.close()

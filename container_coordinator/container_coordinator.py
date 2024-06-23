@@ -59,10 +59,8 @@ class ProcessCreator:
                 if current_connection:
                     sock = connections[current_connection]
                 msg, err = read_socket(sock)
-                if err != None:
-                    print(f"Error reading from socket: {err}, the socket died")
-                    connections.pop(id)
-                    break
+                if err:
+                    raise err
                 print(f"Message received from {id}: {msg}")
                 if msg.startswith('ELECTION'):
                     # Bully leader election
@@ -110,6 +108,7 @@ class ProcessCreator:
                     
         except Exception as e:
             print(f"Exception in initiate_connection for id {id}: {e}")
+            connections.pop(current_connection)
     
 
     def join_processes(self):
@@ -189,18 +188,6 @@ class Connector(ProcessCreator):
                         print(f"No se pudo conectar al coordinator {id}. Error: ", e)
                         time.sleep(LOOP_CONNECTION_PERIOD)
                         continue
-        if len(self.connections) == len(self.coordinators_list) - 1:
-            print(f"Connections: {self.connections}")
-            print(f"Coordinators list: {self.coordinators_list}")
-            for name, conn in self.connections.items():
-                if not name.isdigit() or name == str(self.id):
-                    continue
-                try:
-                    print(self.id)
-                    write_socket(conn, f"ELECTION {self.id}")
-                except:
-                    print(f"Error sending election message to {name}, most probably died, skipping")
-                    continue
         self.join_processes()
 
     def connect_to_workers(self, port):
@@ -217,7 +204,7 @@ class Connector(ProcessCreator):
                     s.connect((container, port))
                     print(f'Soy {self.id} y me conecte a: ', container)
 
-                    p = Process(target=self.initiate_connection, args=(container, port, None, s, self.connections, True,))
+                    p = Process(target=self.initiate_connection, args=(container, port, None, s, self.connections, True, container))
                     
                     self.add_connection(self.connections, self.id, container, s)
 
@@ -374,12 +361,28 @@ class ContainerCoordinator(ProcessCreator):
                 else:
                     self.create_health_check(identifier)
 
+
                 # Put in the dict the identifier with the TCP socket, if it's already added, it will be replaced
                 self.add_connection(self.connections, identifier, conn)
                 if not self.leader.value:
                     p.start()
                     self.processes.append(p)
                 self.processes.append(p)
+                
+                if int(identifier) > self.id:
+                    # If the new connection has a bigger id I have to begin a new election
+                    print("I have to begin a new election, because a new coordinator with a bigger id connected")
+                    print(f"Connections: {self.connections}")
+                    print(f"Coordinators list: {self.coordinators_list}")
+                    for name, conn in self.connections.items():
+                        if not name.isdigit():
+                            continue
+                        try:
+                            print(self.id)
+                            write_socket(conn, f"ELECTION {self.id}")
+                        except:
+                            print(f"Error sending election message to {name}, most probably died, skipping")
+                            continue
             except Exception as e:
                 print("Error: ", e)
             
