@@ -1,0 +1,2170 @@
+#0 building with "default" instance using docker driver
+
+#1 [filter_title_worker1 internal] load build definition from filter_title_worker.dockerfile
+#1 transferring dockerfile: 483B done
+#1 DONE 0.0s
+
+#2 [mean_review_sentiment_worker1 internal] load build definition from mean_review_sentiment_worker.dockerfile
+#2 transferring dockerfile: 518B done
+#2 DONE 0.0s
+
+#3 [global_decade_counter_worker0 internal] load build definition from global_decade_counter_worker.dockerfile
+#3 transferring dockerfile: 518B done
+#3 DONE 0.0s
+
+#4 [rabbitmq internal] load build definition from rabbitmq.dockerfile
+#4 transferring dockerfile: 115B done
+#4 DONE 0.0s
+
+#5 [decade_counter_worker2 internal] load build definition from decade_counter_worker.dockerfile
+#5 transferring dockerfile: 489B done
+#5 DONE 0.0s
+
+#6 [filter_year_worker_q3-1 internal] load build definition from filter_year_worker.dockerfile
+#6 transferring dockerfile: 477B done
+#6 DONE 0.0s
+
+#7 [review_sentiment_worker1 internal] load build definition from review_sentiment_worker.dockerfile
+#7 transferring dockerfile: 498B done
+#7 DONE 0.0s
+
+#8 [filter_category_computers_worker1 internal] load build definition from filter_category_worker.dockerfile
+#8 transferring dockerfile: 494B done
+#8 DONE 0.0s
+
+#9 [filter_review_quantity_worker0 internal] load build definition from filter_review_quantity_worker.dockerfile
+#9 transferring dockerfile: 522B done
+#9 DONE 0.0s
+
+#10 [filter_category_computers_worker1 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#11 [top_10_worker_last0 internal] load build definition from top_10_worker.dockerfile
+#11 transferring dockerfile: 458B done
+#11 DONE 0.0s
+
+#12 [mean_review_sentiment_worker0 internal] load build definition from mean_review_sentiment_worker.dockerfile
+#12 transferring dockerfile: 518B done
+#12 DONE 0.0s
+
+#13 [mean_review_sentiment_worker3 internal] load build definition from mean_review_sentiment_worker.dockerfile
+#13 transferring dockerfile: 518B done
+#13 DONE 0.0s
+
+#14 [filter_category_computers_worker2 internal] load build definition from filter_category_worker.dockerfile
+#14 transferring dockerfile: 494B done
+#14 DONE 0.0s
+
+#15 [filter_year_worker_q1-1 internal] load build definition from filter_year_worker.dockerfile
+#15 transferring dockerfile: 477B done
+#15 DONE 0.0s
+
+#10 [mean_review_sentiment_worker3 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#16 [filter_title_worker0 internal] load build definition from filter_title_worker.dockerfile
+#16 transferring dockerfile: 483B done
+#16 DONE 0.0s
+
+#17 [reviews_counter_worker1 internal] load build definition from reviews_counter_worker.dockerfile
+#17 transferring dockerfile: 494B done
+#17 DONE 0.0s
+
+#18 [filter_year_worker_q3-0 internal] load build definition from filter_year_worker.dockerfile
+#18 transferring dockerfile: 477B done
+#18 DONE 0.0s
+
+#19 [reviews_counter_worker0 internal] load build definition from reviews_counter_worker.dockerfile
+#19 transferring dockerfile: 494B done
+#19 DONE 0.0s
+
+#20 [filter_year_worker_q3-2 internal] load build definition from filter_year_worker.dockerfile
+#20 transferring dockerfile: 477B done
+#20 DONE 0.0s
+
+#10 [filter_year_worker_q3-2 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#21 [decade_counter_worker1 internal] load build definition from decade_counter_worker.dockerfile
+#21 transferring dockerfile: 489B done
+#21 DONE 0.0s
+
+#22 [top10_worker2 internal] load build definition from top_10_worker.dockerfile
+#22 transferring dockerfile: 458B done
+#22 DONE 0.0s
+
+#23 [review_sentiment_worker3 internal] load build definition from review_sentiment_worker.dockerfile
+#23 transferring dockerfile: 498B done
+#23 DONE 0.0s
+
+#24 [reviews_counter_worker4 internal] load build definition from reviews_counter_worker.dockerfile
+#24 transferring dockerfile: 494B done
+#24 DONE 0.0s
+
+#25 [filter_category_worker0 internal] load build definition from filter_category_worker.dockerfile
+#25 transferring dockerfile: 494B done
+#25 DONE 0.0s
+
+#10 [reviews_counter_worker4 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#26 [filter_year_worker_q1-2 internal] load build definition from filter_year_worker.dockerfile
+#26 transferring dockerfile: 477B done
+#26 DONE 0.0s
+
+#27 [decade_counter_worker0 internal] load build definition from decade_counter_worker.dockerfile
+#27 transferring dockerfile: 489B done
+#27 DONE 0.0s
+
+#28 [filter_year_worker_q1-2 internal] load .dockerignore
+#28 transferring context: 2B done
+#28 DONE 0.0s
+
+#29 [mean_review_sentiment_worker0 internal] load .dockerignore
+#29 transferring context: 2B done
+#29 DONE 0.0s
+
+#30 [mean_review_sentiment_worker0  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#31 [mean_review_sentiment_worker0 internal] load build context
+#31 DONE 0.0s
+
+#32 [top_10_worker_last0 internal] load .dockerignore
+#32 transferring context: 2B done
+#32 DONE 0.0s
+
+#33 [filter_category_computers_worker1 internal] load .dockerignore
+#33 transferring context: 2B done
+#33 DONE 0.0s
+
+#34 [filter_review_quantity_worker0 internal] load .dockerignore
+#34 transferring context: 2B done
+#34 DONE 0.0s
+
+#10 [filter_year_worker_q1-2 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#35 [reviews_counter_worker4 internal] load .dockerignore
+#35 transferring context: 2B done
+#35 DONE 0.1s
+
+#36 [filter_category_worker0 internal] load .dockerignore
+#36 transferring context: 2B done
+#36 DONE 0.1s
+
+#37 [decade_counter_worker1 internal] load .dockerignore
+#37 transferring context: 2B done
+#37 DONE 0.1s
+
+#38 [filter_title_worker0 internal] load .dockerignore
+#38 transferring context: 2B done
+#38 DONE 0.1s
+
+#39 [filter_year_worker_q3-0 internal] load .dockerignore
+#39 transferring context: 2B done
+#39 DONE 0.1s
+
+#40 [mean_review_sentiment_worker3 internal] load .dockerignore
+#40 transferring context: 2B done
+#40 DONE 0.1s
+
+#30 [filter_year_worker_q3-1  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#41 [review_sentiment_worker1 internal] load .dockerignore
+#41 transferring context: 2B done
+#41 DONE 0.1s
+
+#42 [filter_year_worker_q3-1 internal] load .dockerignore
+#42 transferring context: 2B done
+#42 DONE 0.1s
+
+#43 [rabbitmq internal] load metadata for docker.io/library/rabbitmq:3.9.16-management-alpine
+#43 DONE 0.6s
+
+#44 [mean_review_sentiment_worker4 internal] load build definition from mean_review_sentiment_worker.dockerfile
+#44 transferring dockerfile: 518B done
+#44 DONE 0.0s
+
+#45 [review_sentiment_worker0 internal] load build definition from review_sentiment_worker.dockerfile
+#45 transferring dockerfile: 498B done
+#45 DONE 0.1s
+
+#46 [filter_category_worker0 internal] load build context
+#46 transferring context: 324B done
+#46 DONE 0.1s
+
+#47 [filter_year_worker_q1-2 internal] load build context
+#47 transferring context: 1.24kB done
+#47 DONE 0.1s
+
+#48 [filter_category_computers_worker2 internal] load .dockerignore
+#48 transferring context: 2B done
+#48 DONE 0.2s
+
+#31 [mean_review_sentiment_worker0 internal] load build context
+#31 transferring context: 1.06kB done
+#31 DONE 0.1s
+
+#30 [filter_category_computers_worker2  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#49 [filter_category_computers_worker1 internal] load build context
+#49 transferring context: 1.22kB done
+#49 DONE 0.1s
+
+#50 [mean_review_sentiment_worker1 internal] load .dockerignore
+#50 transferring context: 2B done
+#50 DONE 0.2s
+
+#10 [review_sentiment_worker0 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 DONE 0.6s
+
+#51 [reviews_counter_worker4 internal] load build context
+#51 transferring context: 324B done
+#51 DONE 0.2s
+
+#52 [decade_counter_worker1 internal] load build context
+#52 transferring context: 835B done
+#52 DONE 0.2s
+
+#53 [review_sentiment_worker3 internal] load .dockerignore
+#53 transferring context: 2B done
+#53 DONE 0.3s
+
+#54 [top10_worker2 internal] load .dockerignore
+#54 transferring context: 2B done
+#54 DONE 0.3s
+
+#55 [filter_year_worker_q3-2 internal] load .dockerignore
+#55 transferring context: 2B done
+#55 DONE 0.3s
+
+#56 [reviews_counter_worker0 internal] load .dockerignore
+#56 transferring context: 2B done
+#56 DONE 0.3s
+
+#57 [filter_year_worker_q1-1 internal] load .dockerignore
+#57 transferring context: 2B done
+#57 DONE 0.3s
+
+#58 [mean_review_sentiment_worker3 internal] load build context
+#58 transferring context: 1.06kB done
+#58 DONE 0.2s
+
+#59 [top_10_worker_last0 internal] load build context
+#59 transferring context: 1.01kB done
+#59 DONE 0.2s
+
+#60 [filter_review_quantity_worker0 internal] load build context
+#60 transferring context: 1.05kB done
+#60 DONE 0.2s
+
+#61 [review_sentiment_worker1 internal] load build context
+#61 transferring context: 926B done
+#61 DONE 0.2s
+
+#62 [filter_year_worker_q3-1 internal] load build context
+#62 transferring context: 1.24kB done
+#62 DONE 0.2s
+
+#63 [global_decade_counter_worker0 internal] load .dockerignore
+#63 transferring context: 2B done
+#63 DONE 0.3s
+
+#64 [filter_year_worker_q3-0 internal] load build context
+#64 transferring context: 1.24kB 0.0s done
+#64 DONE 0.2s
+
+#65 [top10_worker4 internal] load build definition from top_10_worker.dockerfile
+#65 transferring dockerfile: 458B 0.0s done
+#65 DONE 0.3s
+
+#66 [mean_review_sentiment_worker5 internal] load build definition from mean_review_sentiment_worker.dockerfile
+#66 transferring dockerfile: 518B 0.0s done
+#66 DONE 0.3s
+
+#67 [top10_worker3 internal] load build definition from top_10_worker.dockerfile
+#67 transferring dockerfile: 458B 0.0s done
+#67 DONE 0.4s
+
+#68 [filter_category_worker0  4/10] COPY ./lib/serialization.py serialization.py
+#68 CACHED
+
+#69 [filter_category_worker0  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#70 [filter_category_worker0  6/10] COPY ./lib/filters.py filters.py
+#70 CACHED
+
+#71 [filter_category_worker0  5/10] COPY ./lib/middleware.py middleware.py
+#71 CACHED
+
+#72 [filter_category_worker0  8/10] COPY ./lib/logger.py logger.py
+#72 CACHED
+
+#73 [filter_category_worker0  3/10] RUN python3 -m pip install textblob
+#73 CACHED
+
+#74 [filter_category_worker0  9/10] COPY ./lib/worker_class.py worker_class.py
+#74 CACHED
+
+#75 [filter_category_worker0  7/10] COPY ./lib/workers.py workers.py
+#75 CACHED
+
+#76 [reviews_counter_worker1 internal] load .dockerignore
+#76 transferring context: 2B 0.0s done
+#76 DONE 0.4s
+
+#30 [filter_title_worker1  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#77 [filter_category_computers_worker1 10/10] COPY ./workers/filter_category_worker.py filter_category_worker.py
+#77 CACHED
+
+#78 [decade_counter_worker2 internal] load .dockerignore
+#78 transferring context: 2B done
+#78 DONE 0.4s
+
+#79 [rabbitmq internal] load .dockerignore
+#79 transferring context: 2B 0.0s done
+#79 DONE 0.3s
+
+#80 [filter_title_worker1 internal] load .dockerignore
+#80 transferring context: 2B 0.0s done
+#80 DONE 0.4s
+
+#10 [top10_worker4 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#81 [filter_year_worker_q1-2  8/10] COPY ./lib/logger.py logger.py
+#81 CACHED
+
+#82 [filter_year_worker_q1-2  7/10] COPY ./lib/workers.py workers.py
+#82 CACHED
+
+#83 [filter_year_worker_q1-2  4/10] COPY ./lib/serialization.py serialization.py
+#83 CACHED
+
+#84 [filter_year_worker_q1-2  5/10] COPY ./lib/middleware.py middleware.py
+#84 CACHED
+
+#85 [filter_year_worker_q1-2  9/10] COPY ./lib/worker_class.py worker_class.py
+#85 CACHED
+
+#86 [filter_year_worker_q1-2  6/10] COPY ./lib/filters.py filters.py
+#86 CACHED
+
+#87 [reviews_counter_worker4  4/10] COPY ./lib/serialization.py serialization.py
+#87 CACHED
+
+#88 [reviews_counter_worker4  7/10] COPY ./lib/workers.py workers.py
+#88 CACHED
+
+#89 [reviews_counter_worker4  5/10] COPY ./lib/middleware.py middleware.py
+#89 CACHED
+
+#90 [reviews_counter_worker4  6/10] COPY ./lib/filters.py filters.py
+#90 CACHED
+
+#91 [reviews_counter_worker4  8/10] COPY ./lib/logger.py logger.py
+#91 CACHED
+
+#92 [reviews_counter_worker4  9/10] COPY ./lib/worker_class.py worker_class.py
+#92 CACHED
+
+#93 [reviews_counter_worker4 10/10] COPY ./workers/reviews_counter_worker.py reviews_counter_worker.py
+#93 CACHED
+
+#94 [filter_category_worker0] exporting to image
+#94 exporting layers done
+#94 writing image sha256:c604eeff06ea7d2eb2001b66661d28c1fca28203e6e618697769a06bead16d03 done
+#94 naming to docker.io/library/tp2-sistemas-distribuidos-filter_category_worker0 done
+#94 DONE 0.0s
+
+#95 [filter_year_worker_q1-2] exporting to image
+#95 exporting layers done
+#95 writing image sha256:ca23f20b1e19b5108dd4a03ca0df15c9d276d27a9481a57a86c4207627294a85 0.0s done
+#95 naming to docker.io/library/tp2-sistemas-distribuidos-filter_year_worker_q1-2 0.0s done
+#95 DONE 0.1s
+
+#96 [decade_counter_worker1  7/10] COPY ./lib/workers.py workers.py
+#96 CACHED
+
+#97 [decade_counter_worker1  9/10] COPY ./lib/worker_class.py worker_class.py
+#97 CACHED
+
+#98 [decade_counter_worker1  8/10] COPY ./lib/logger.py logger.py
+#98 CACHED
+
+#99 [decade_counter_worker1  6/10] COPY ./lib/filters.py filters.py
+#99 CACHED
+
+#100 [decade_counter_worker1  5/10] COPY ./lib/middleware.py middleware.py
+#100 CACHED
+
+#101 [decade_counter_worker1  4/10] COPY ./lib/serialization.py serialization.py
+#101 CACHED
+
+#102 [decade_counter_worker1 10/10] COPY ./workers/decade_counter_worker.py decade_counter_worker.py
+#102 CACHED
+
+#103 [filter_year_worker_q3-2 internal] load build context
+#103 transferring context: 1.24kB 0.0s done
+#103 DONE 0.0s
+
+#104 [filter_title_worker0 internal] load build context
+#104 transferring context: 1.21kB done
+#104 DONE 0.0s
+
+#105 [mean_review_sentiment_worker0  5/10] COPY ./lib/middleware.py middleware.py
+#105 CACHED
+
+#106 [mean_review_sentiment_worker0  9/10] COPY ./lib/worker_class.py worker_class.py
+#106 CACHED
+
+#107 [mean_review_sentiment_worker0  7/10] COPY ./lib/workers.py workers.py
+#107 CACHED
+
+#108 [mean_review_sentiment_worker0  6/10] COPY ./lib/filters.py filters.py
+#108 CACHED
+
+#109 [mean_review_sentiment_worker0  4/10] COPY ./lib/serialization.py serialization.py
+#109 CACHED
+
+#110 [mean_review_sentiment_worker0  8/10] COPY ./lib/logger.py logger.py
+#110 CACHED
+
+#111 [mean_review_sentiment_worker3 10/10] COPY ./workers/mean_review_sentiment_worker.py mean_review_sentiment_worker.py
+#111 CACHED
+
+#112 [top_10_worker_last0  5/10] COPY ./lib/middleware.py middleware.py
+#112 CACHED
+
+#113 [top_10_worker_last0  8/10] COPY ./lib/logger.py logger.py
+#113 CACHED
+
+#114 [top_10_worker_last0  6/10] COPY ./lib/filters.py filters.py
+#114 CACHED
+
+#115 [top_10_worker_last0  9/10] COPY ./lib/worker_class.py worker_class.py
+#115 CACHED
+
+#116 [top_10_worker_last0  7/10] COPY ./lib/workers.py workers.py
+#116 CACHED
+
+#117 [top_10_worker_last0  4/10] COPY ./lib/serialization.py serialization.py
+#117 CACHED
+
+#118 [top_10_worker_last0 10/10] COPY ./workers/top_10_worker.py top_10_worker.py
+#118 CACHED
+
+#119 [top_10_worker_last0] exporting to image
+#119 exporting layers done
+#119 writing image sha256:b3a580b8ddb6dd2c519ec5adf28a372ced08f831fe98c957d45f7d5c6a542ec9 done
+#119 naming to docker.io/library/tp2-sistemas-distribuidos-top_10_worker_last0 done
+#119 DONE 0.0s
+
+#120 [filter_category_computers_worker1] exporting to image
+#120 exporting layers done
+#120 writing image sha256:92812cef8db4e10e7c981dabe77221a8f6acfe2d94a5e9c4a1974139fc57a8e9 0.0s done
+#120 naming to docker.io/library/tp2-sistemas-distribuidos-filter_category_computers_worker1 0.0s done
+#120 DONE 0.0s
+
+#121 [filter_review_quantity_worker0  7/10] COPY ./lib/workers.py workers.py
+#121 CACHED
+
+#122 [filter_review_quantity_worker0  8/10] COPY ./lib/logger.py logger.py
+#122 CACHED
+
+#123 [filter_review_quantity_worker0  6/10] COPY ./lib/filters.py filters.py
+#123 CACHED
+
+#124 [filter_review_quantity_worker0  5/10] COPY ./lib/middleware.py middleware.py
+#124 CACHED
+
+#125 [filter_review_quantity_worker0  9/10] COPY ./lib/worker_class.py worker_class.py
+#125 CACHED
+
+#126 [filter_review_quantity_worker0  4/10] COPY ./lib/serialization.py serialization.py
+#126 CACHED
+
+#127 [filter_review_quantity_worker0 10/10] COPY ./workers/filter_review_quantity_worker.py filter_review_quantity_worker.py
+#127 CACHED
+
+#128 [review_sentiment_worker1  5/10] COPY ./lib/middleware.py middleware.py
+#128 CACHED
+
+#69 [filter_review_quantity_worker0  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#129 [review_sentiment_worker1  7/10] COPY ./lib/workers.py workers.py
+#129 CACHED
+
+#130 [review_sentiment_worker1  6/10] COPY ./lib/filters.py filters.py
+#130 CACHED
+
+#131 [review_sentiment_worker1  9/10] COPY ./lib/worker_class.py worker_class.py
+#131 CACHED
+
+#132 [review_sentiment_worker1  4/10] COPY ./lib/serialization.py serialization.py
+#132 CACHED
+
+#133 [review_sentiment_worker1  8/10] COPY ./lib/logger.py logger.py
+#133 CACHED
+
+#73 [filter_review_quantity_worker0  3/10] RUN python3 -m pip install textblob
+#73 CACHED
+
+#134 [review_sentiment_worker1 10/10] COPY ./workers/review_sentiment_worker.py review_sentiment_worker.py
+#134 CACHED
+
+#135 [filter_year_worker_q3-1 10/10] COPY ./workers/filter_year_worker.py filter_year_worker.py
+#135 CACHED
+
+#136 [filter_year_worker_q3-1] exporting to image
+#136 exporting layers done
+#136 writing image sha256:c0cbfea6400c3c952ef87a2f1a53ada35540383e8e2c3c070f89897a1671da2d done
+#136 naming to docker.io/library/tp2-sistemas-distribuidos-filter_year_worker_q3-1 done
+#136 DONE 0.0s
+
+#137 [decade_counter_worker2 internal] load build context
+#137 DONE 0.0s
+
+#138 [rabbitmq 1/2] FROM docker.io/library/rabbitmq:3.9.16-management-alpine@sha256:3126a9d84c6061b21cc17531f1d417dbab3840158a5718c5c2ed17ddbab173c2
+#138 DONE 0.0s
+
+#139 [filter_title_worker1 internal] load build context
+#139 DONE 0.0s
+
+#140 [reviews_counter_worker4] exporting to image
+#140 exporting layers done
+#140 writing image sha256:f4b91dfd39edf9913693002d84e8a400bbcf096c631790415b3c5060207c56e6 0.0s done
+#140 naming to docker.io/library/tp2-sistemas-distribuidos-reviews_counter_worker4 0.0s done
+#140 DONE 0.1s
+
+#141 [decade_counter_worker1] exporting to image
+#141 exporting layers done
+#141 writing image sha256:dd4bb10908637b63328b540b9ed3503293904c6aea4236363edb5d9f341cd727 0.0s done
+#141 naming to docker.io/library/tp2-sistemas-distribuidos-decade_counter_worker1 done
+#141 DONE 0.1s
+
+#142 [filter_title_worker0  6/10] COPY ./lib/filters.py filters.py
+#142 CACHED
+
+#143 [filter_title_worker0  5/10] COPY ./lib/middleware.py middleware.py
+#143 CACHED
+
+#144 [filter_title_worker0  7/10] COPY ./lib/workers.py workers.py
+#144 CACHED
+
+#145 [filter_title_worker0  9/10] COPY ./lib/worker_class.py worker_class.py
+#145 CACHED
+
+#146 [filter_title_worker0  4/10] COPY ./lib/serialization.py serialization.py
+#146 CACHED
+
+#147 [filter_title_worker0  8/10] COPY ./lib/logger.py logger.py
+#147 CACHED
+
+#148 [filter_year_worker_q3-0] exporting to image
+#148 exporting layers done
+#148 writing image sha256:3174d8b0b2a3e8dd3495fb825c0861bdec1a2a0a5ff6cf7a76e6a9245b6bacc1 0.0s done
+#148 naming to docker.io/library/tp2-sistemas-distribuidos-filter_year_worker_q3-0 0.0s done
+#148 DONE 0.1s
+
+#149 [review_sentiment_worker3 internal] load build context
+#149 transferring context: 926B 0.1s done
+#149 DONE 0.2s
+
+#150 [mean_review_sentiment_worker3] exporting to image
+#150 exporting layers done
+#150 writing image sha256:03ea7ae19c67351ded3b9fc9e13207fa72d66ed2dd9b31e564988109b97481f1 0.0s done
+#150 naming to docker.io/library/tp2-sistemas-distribuidos-mean_review_sentiment_worker3 0.0s done
+#150 DONE 0.1s
+
+#151 [mean_review_sentiment_worker0] exporting to image
+#151 exporting layers done
+#151 writing image sha256:e51dc983be9ed6dcd60566b418f8911e56bd700b6ce41819a54efdffb54758f3 0.0s done
+#151 naming to docker.io/library/tp2-sistemas-distribuidos-mean_review_sentiment_worker0 0.0s done
+#151 DONE 0.1s
+
+#152 [filter_category_computers_worker2 internal] load build context
+#152 transferring context: 1.22kB done
+#152 DONE 0.1s
+
+#73 [filter_title_worker0  3/10] RUN python3 -m pip install textblob
+#73 CACHED
+
+#69 [filter_title_worker0  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#153 [review_sentiment_worker1] exporting to image
+#153 exporting layers done
+#153 writing image sha256:b137d1b3645f484d9b10bceac76c32867f92713b7e10cd902936fd10131846fa done
+#153 naming to docker.io/library/tp2-sistemas-distribuidos-review_sentiment_worker1 0.0s done
+#153 DONE 0.1s
+
+#154 [filter_review_quantity_worker0] exporting to image
+#154 exporting layers done
+#154 writing image sha256:837eb146c4afc1a8206e40ad61146cebc0513d379968aba5059e1f23b5e9e9bd 0.0s done
+#154 naming to docker.io/library/tp2-sistemas-distribuidos-filter_review_quantity_worker0 0.0s done
+#154 DONE 0.1s
+
+#155 [rabbitmq 2/2] RUN apk update && apk add curl
+#155 CACHED
+
+#156 [mean_review_sentiment_worker1 internal] load build context
+#156 transferring context: 1.06kB done
+#156 DONE 0.1s
+
+#157 [top10_worker0 internal] load build definition from top_10_worker.dockerfile
+#157 transferring dockerfile: 458B done
+#157 DONE 0.2s
+
+#10 [mean_review_sentiment_worker5 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 DONE 0.8s
+
+#158 [top10_worker4 internal] load .dockerignore
+#158 DONE 0.0s
+
+#159 [filter_title_worker0 10/10] COPY ./workers/filter_title_worker.py filter_title_worker.py
+#159 CACHED
+
+#160 [rabbitmq] exporting to image
+#160 exporting layers done
+#160 writing image sha256:be7e11c00553e11aaa16a50e6d851eb01935a0b87775d411345f04aec35ebf60 done
+#160 naming to docker.io/library/tp2-sistemas-distribuidos-rabbitmq done
+#160 DONE 0.2s
+
+#161 [filter_title_worker0] exporting to image
+#161 exporting layers done
+#161 writing image sha256:dbf9db844c78a6301603981d78aea87f6231df1c8a8a840aa37cb36b72075615 done
+#161 naming to docker.io/library/tp2-sistemas-distribuidos-filter_title_worker0 done
+#161 DONE 0.1s
+
+#77 [filter_category_computers_worker2 10/10] COPY ./workers/filter_category_worker.py filter_category_worker.py
+#77 CACHED
+
+#135 [filter_year_worker_q3-2 10/10] COPY ./workers/filter_year_worker.py filter_year_worker.py
+#135 CACHED
+
+#10 [top10_worker0 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#162 [filter_year_worker_q1-0 internal] load build definition from filter_year_worker.dockerfile
+#162 transferring dockerfile: 477B 0.2s done
+#162 DONE 0.5s
+
+#163 [review_sentiment_worker2 internal] load build definition from review_sentiment_worker.dockerfile
+#163 transferring dockerfile: 498B 0.4s done
+#163 DONE 0.5s
+
+#164 [reviews_counter_worker3 internal] load build definition from reviews_counter_worker.dockerfile
+#164 transferring dockerfile: 494B 0.4s done
+#164 DONE 0.5s
+
+#165 [filter_category_computers_worker0 internal] load build definition from filter_category_worker.dockerfile
+#165 transferring dockerfile: 494B 0.4s done
+#165 DONE 0.5s
+
+#166 [filter_title_worker2 internal] load build definition from filter_title_worker.dockerfile
+#166 transferring dockerfile: 483B 0.4s done
+#166 DONE 0.6s
+
+#30 [review_sentiment_worker0  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#93 [reviews_counter_worker1 10/10] COPY ./workers/reviews_counter_worker.py reviews_counter_worker.py
+#93 CACHED
+
+#167 [review_sentiment_worker0 internal] load .dockerignore
+#167 transferring context: 2B 0.3s done
+#167 DONE 0.4s
+
+#168 [mean_review_sentiment_worker4 internal] load .dockerignore
+#168 transferring context: 2B 0.3s done
+#168 DONE 0.5s
+
+#134 [review_sentiment_worker3 10/10] COPY ./workers/review_sentiment_worker.py review_sentiment_worker.py
+#134 CACHED
+
+#111 [mean_review_sentiment_worker1 10/10] COPY ./workers/mean_review_sentiment_worker.py mean_review_sentiment_worker.py
+#111 CACHED
+
+#169 [decade_counter_worker0 internal] load .dockerignore
+#169 transferring context: 2B 0.3s done
+#169 DONE 0.5s
+
+#170 [filter_year_worker_q3-2] exporting to image
+#170 exporting layers done
+#170 writing image sha256:2aec7acce49cb0118b6b89e483283e594c6fdb150a9a72a8f89c530d72595c87 done
+#170 naming to docker.io/library/tp2-sistemas-distribuidos-filter_year_worker_q3-2 done
+#170 DONE 0.0s
+
+#171 [reviews_counter_worker1 internal] load build context
+#171 transferring context: 1.05kB 0.4s done
+#171 DONE 0.5s
+
+#172 [reviews_counter_worker0 internal] load build context
+#172 transferring context: 1.05kB 0.4s done
+#172 DONE 0.5s
+
+#173 [review_sentiment_worker3] exporting to image
+#173 exporting layers done
+#173 writing image sha256:facd0b238a86cbbce20f80f778bfe7863c9eb8ea8f85a30ace1a6807c1825385 done
+#173 naming to docker.io/library/tp2-sistemas-distribuidos-review_sentiment_worker3 done
+#173 DONE 0.1s
+
+#174 [filter_category_computers_worker2] exporting to image
+#174 exporting layers done
+#174 writing image sha256:7b6711921263dea8a290a7acfd663b5f8cf7e16b956e2d36544e681e6acfb87e done
+#174 naming to docker.io/library/tp2-sistemas-distribuidos-filter_category_computers_worker2 done
+#174 DONE 0.0s
+
+#175 [mean_review_sentiment_worker1] exporting to image
+#175 exporting layers done
+#175 writing image sha256:6a2aa356b7c8b0c0b14ed4f6a78b187ba4a842f105da1148c1251b346ec637db done
+#175 naming to docker.io/library/tp2-sistemas-distribuidos-mean_review_sentiment_worker1 done
+#175 DONE 0.0s
+
+#10 [review_sentiment_worker2 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#30 [decade_counter_worker0  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#176 [percentile_worker0 internal] load build definition from percentile_worker.dockerfile
+#176 transferring dockerfile: 473B 0.4s done
+#176 DONE 0.7s
+
+#177 [filter_category_worker2 internal] load build definition from filter_category_worker.dockerfile
+#177 transferring dockerfile: 494B 0.5s done
+#177 DONE 0.7s
+
+#178 [reviews_counter_worker2 internal] load build definition from reviews_counter_worker.dockerfile
+#178 transferring dockerfile: 494B 0.4s done
+#178 DONE 0.7s
+
+#158 [top10_worker4 internal] load .dockerignore
+#158 transferring context: 2B 0.3s done
+#158 DONE 0.3s
+
+#179 [filter_year_worker_q1-1 internal] load build context
+#179 transferring context: 1.24kB 0.4s done
+#179 DONE 0.7s
+
+#137 [decade_counter_worker2 internal] load build context
+#137 transferring context: 835B 0.3s done
+#137 DONE 0.6s
+
+#139 [filter_title_worker1 internal] load build context
+#139 transferring context: 1.21kB 0.3s done
+#139 DONE 0.6s
+
+#180 [mean_review_sentiment_worker2 internal] load build definition from mean_review_sentiment_worker.dockerfile
+#180 transferring dockerfile: 518B 0.4s done
+#180 DONE 0.7s
+
+#181 [filter_category_worker1 internal] load build definition from filter_category_worker.dockerfile
+#181 transferring dockerfile: 494B 0.3s done
+#181 DONE 0.7s
+
+#182 [reviews_counter_worker5 internal] load build definition from reviews_counter_worker.dockerfile
+#182 transferring dockerfile: 494B 0.3s done
+#182 DONE 0.8s
+
+#183 [mean_review_sentiment_worker5 internal] load .dockerignore
+#183 transferring context: 2B 0.3s done
+#183 DONE 0.3s
+
+#184 [top10_worker3 internal] load .dockerignore
+#184 transferring context: 2B 0.3s done
+#184 DONE 0.3s
+
+#185 [top10_worker2 internal] load build context
+#185 transferring context: 1.01kB 0.5s done
+#185 DONE 0.7s
+
+#186 [reviews_counter_worker1] exporting to image
+#186 exporting layers done
+#186 writing image sha256:2180d17d118f07d7d1d4ceff95fef9fac215490dabcb93f6a728ae1b77c0b4c9 done
+#186 naming to docker.io/library/tp2-sistemas-distribuidos-reviews_counter_worker1 done
+#186 DONE 0.2s
+
+#187 [global_decade_counter_worker0 internal] load build context
+#187 transferring context: 925B 0.4s done
+#187 DONE 0.7s
+
+#10 [reviews_counter_worker2 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#30 [mean_review_sentiment_worker4  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#188 [top10_worker1 internal] load build definition from top_10_worker.dockerfile
+#188 transferring dockerfile: 458B 0.4s done
+#188 DONE 0.8s
+
+#102 [decade_counter_worker2 10/10] COPY ./workers/decade_counter_worker.py decade_counter_worker.py
+#102 CACHED
+
+#10 [mean_review_sentiment_worker2 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#93 [reviews_counter_worker0 10/10] COPY ./workers/reviews_counter_worker.py reviews_counter_worker.py
+#93 CACHED
+
+#118 [top10_worker2 10/10] COPY ./workers/top_10_worker.py top_10_worker.py
+#118 CACHED
+
+#135 [filter_year_worker_q1-1 10/10] COPY ./workers/filter_year_worker.py filter_year_worker.py
+#135 CACHED
+
+#189 [filter_category_worker1 internal] load .dockerignore
+#189 transferring context: 2B 0.0s done
+#189 DONE 0.0s
+
+#159 [filter_title_worker1 10/10] COPY ./workers/filter_title_worker.py filter_title_worker.py
+#159 CACHED
+
+#190 [global_decade_counter_worker0  9/10] COPY ./lib/worker_class.py worker_class.py
+#190 CACHED
+
+#191 [global_decade_counter_worker0  4/10] COPY ./lib/serialization.py serialization.py
+#191 CACHED
+
+#192 [global_decade_counter_worker0  6/10] COPY ./lib/filters.py filters.py
+#192 CACHED
+
+#193 [global_decade_counter_worker0  7/10] COPY ./lib/workers.py workers.py
+#193 CACHED
+
+#73 [global_decade_counter_worker0  3/10] RUN python3 -m pip install textblob
+#73 CACHED
+
+#194 [global_decade_counter_worker0  8/10] COPY ./lib/logger.py logger.py
+#194 CACHED
+
+#69 [global_decade_counter_worker0  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#195 [global_decade_counter_worker0  5/10] COPY ./lib/middleware.py middleware.py
+#195 CACHED
+
+#196 [global_decade_counter_worker0 10/10] COPY ./workers/global_decade_counter_worker.py global_decade_counter_worker.py
+#196 CACHED
+
+#10 [reviews_counter_worker5 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#197 [percentile_worker0 internal] load .dockerignore
+#197 transferring context: 2B 0.1s done
+#197 DONE 0.1s
+
+#198 [filter_title_worker2 internal] load .dockerignore
+#198 transferring context: 2B 0.1s done
+#198 DONE 0.1s
+
+#199 [reviews_counter_worker2 internal] load .dockerignore
+#199 transferring context: 2B 0.1s done
+#199 DONE 0.1s
+
+#200 [global_decade_counter_worker0] exporting to image
+#200 exporting layers done
+#200 writing image sha256:6b0f525beb5f76dc076d8477204a7fb24e402bb0fa01a7277d1c20b315075c8c 0.0s done
+#200 naming to docker.io/library/tp2-sistemas-distribuidos-global_decade_counter_worker0 done
+#200 DONE 0.0s
+
+#30 [filter_title_worker2  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#201 [filter_category_worker1 internal] load build context
+#201 DONE 0.0s
+
+#202 [filter_category_computers_worker0 internal] load .dockerignore
+#202 transferring context: 2B 0.2s done
+#202 DONE 0.3s
+
+#203 [reviews_counter_worker0] exporting to image
+#203 exporting layers done
+#203 writing image sha256:2dc10f5b7001d2b03a6611940d757503fbca7dfd5d273479dadc1623e4ec57f4 done
+#203 naming to docker.io/library/tp2-sistemas-distribuidos-reviews_counter_worker0 done
+#203 DONE 0.0s
+
+#204 [filter_title_worker1] exporting to image
+#204 exporting layers done
+#204 writing image sha256:05bbb04847da0941eb2c1ed9fdaf578122cdba87319e8c1815f9469a9590ac13 done
+#204 naming to docker.io/library/tp2-sistemas-distribuidos-filter_title_worker1 done
+#204 DONE 0.2s
+
+#205 [top10_worker4 internal] load build context
+#205 transferring context: 315B 0.0s done
+#205 DONE 0.1s
+
+#30 [percentile_worker0  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#206 [review_sentiment_worker2 internal] load .dockerignore
+#206 transferring context: 2B 0.2s done
+#206 DONE 0.3s
+
+#207 [filter_year_worker_q1-0 internal] load .dockerignore
+#207 transferring context: 2B 0.0s done
+#207 DONE 0.3s
+
+#10 [mean_review_sentiment_worker2 internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 DONE 1.4s
+
+#208 [review_sentiment_worker0 internal] load build context
+#208 transferring context: 926B 0.0s done
+#208 DONE 0.3s
+
+#209 [mean_review_sentiment_worker5 internal] load build context
+#209 transferring context: 1.06kB 0.0s done
+#209 DONE 0.2s
+
+#210 [top10_worker2] exporting to image
+#210 exporting layers done
+#210 writing image sha256:b5b4d6c595b4d7459022c04d606abb708d5e81212c48f4ea335718fb33e2228f done
+#210 naming to docker.io/library/tp2-sistemas-distribuidos-top10_worker2 done
+#210 DONE 0.3s
+
+#211 [filter_year_worker_q1-1] exporting to image
+#211 exporting layers done
+#211 writing image sha256:8ceed790fad96a73f65de89aee7d895ecac79fab0c590de0fb6648505e20c0ec done
+#211 naming to docker.io/library/tp2-sistemas-distribuidos-filter_year_worker_q1-1 done
+#211 DONE 0.3s
+
+#212 [server internal] load build definition from server.dockerfile
+#212 transferring dockerfile: 328B 0.0s done
+#212 DONE 0.3s
+
+#213 [mean_review_sentiment_worker4 internal] load build context
+#213 transferring context: 1.06kB 0.3s done
+#213 ...
+
+#214 [reviews_counter_worker2 internal] load build context
+#214 DONE 0.0s
+
+#215 [decade_counter_worker0 internal] load build context
+#215 transferring context: 835B 0.1s done
+#215 DONE 0.5s
+
+#30 [review_sentiment_worker2  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#213 [mean_review_sentiment_worker4 internal] load build context
+#213 DONE 0.7s
+
+#216 [top10_worker3 internal] load build context
+#216 transferring context: 315B 0.3s done
+#216 DONE 0.5s
+
+#217 [percentile_worker0 internal] load build context
+#217 ...
+
+#118 [top10_worker4 10/10] COPY ./workers/top_10_worker.py top_10_worker.py
+#118 CACHED
+
+#134 [review_sentiment_worker0 10/10] COPY ./workers/review_sentiment_worker.py review_sentiment_worker.py
+#134 CACHED
+
+#102 [decade_counter_worker0 10/10] COPY ./workers/decade_counter_worker.py decade_counter_worker.py
+#102 CACHED
+
+#111 [mean_review_sentiment_worker5 10/10] COPY ./workers/mean_review_sentiment_worker.py mean_review_sentiment_worker.py
+#111 CACHED
+
+#218 [top10_worker0 internal] load .dockerignore
+#218 transferring context: 2B 0.1s done
+#218 DONE 0.9s
+
+#219 [filter_category_worker2 internal] load .dockerignore
+#219 transferring context: 2B 0.1s done
+#219 DONE 1.0s
+
+#220 [reviews_counter_worker3 internal] load .dockerignore
+#220 transferring context: 2B 0.1s done
+#220 DONE 1.0s
+
+#217 [percentile_worker0 internal] load build context
+#217 transferring context: 963B 0.3s done
+#217 DONE 0.3s
+
+#221 [query_coordinator_worker internal] load build definition from query_coordinator_worker.dockerfile
+#221 transferring dockerfile: 521B 0.1s done
+#221 DONE 1.0s
+
+#222 [reviews_counter_worker5 internal] load .dockerignore
+#222 ...
+
+#201 [filter_category_worker1 internal] load build context
+#201 transferring context: 1.22kB 0.3s done
+#201 DONE 0.7s
+
+#10 [server internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 DONE 1.9s
+
+#222 [reviews_counter_worker5 internal] load .dockerignore
+#222 transferring context: 2B 0.3s done
+#222 ...
+
+#118 [top10_worker3 10/10] COPY ./workers/top_10_worker.py top_10_worker.py
+#118 CACHED
+
+#111 [mean_review_sentiment_worker4 10/10] COPY ./workers/mean_review_sentiment_worker.py mean_review_sentiment_worker.py
+#111 CACHED
+
+#223 [filter_category_computers_worker0 internal] load build context
+#223 DONE 0.0s
+
+#224 [top10_worker4] exporting to image
+#224 exporting layers done
+#224 writing image sha256:49fa162d2b1b05eb553504ffc27a2b04f6d03374e3a919ad8ee06d518b6d34dd done
+#224 naming to docker.io/library/tp2-sistemas-distribuidos-top10_worker4 done
+#224 DONE 0.0s
+
+#225 [review_sentiment_worker0] exporting to image
+#225 exporting layers done
+#225 writing image sha256:b4c1671d3d819c6ea9a76c28946f12ab2aa56830bb880e2f70c0968ec4366e1f done
+#225 naming to docker.io/library/tp2-sistemas-distribuidos-review_sentiment_worker0 done
+#225 DONE 0.0s
+
+#226 [decade_counter_worker2] exporting to image
+#226 exporting layers done
+#226 writing image sha256:74201bc4167c4bb0952e8fd19a512ff7f0d9f06d1d300372121c14e7211f198a 0.0s done
+#226 naming to docker.io/library/tp2-sistemas-distribuidos-decade_counter_worker2 done
+#226 DONE 1.2s
+
+#227 [server internal] load .dockerignore
+#227 DONE 0.0s
+
+#30 [reviews_counter_worker3  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#222 [reviews_counter_worker5 internal] load .dockerignore
+#222 DONE 0.8s
+
+#214 [reviews_counter_worker2 internal] load build context
+#214 transferring context: 1.05kB 0.4s done
+#214 DONE 0.8s
+
+#228 [filter_year_worker_q1-0 internal] load build context
+#228 DONE 0.0s
+
+#229 [review_sentiment_worker2 internal] load build context
+#229 DONE 0.0s
+
+#230 [mean_review_sentiment_worker5] exporting to image
+#230 exporting layers done
+#230 writing image sha256:8d50318631a7902c1771cc38c03d34b2d7ba6e170322d64668fda2e3bf50ee4c 0.1s done
+#230 naming to docker.io/library/tp2-sistemas-distribuidos-mean_review_sentiment_worker5 done
+#230 DONE 0.3s
+
+#231 [mean_review_sentiment_worker4] exporting to image
+#231 exporting layers done
+#231 ...
+
+#77 [filter_category_worker1 10/10] COPY ./workers/filter_category_worker.py filter_category_worker.py
+#77 CACHED
+
+#232 [mean_review_sentiment_worker2 internal] load .dockerignore
+#232 transferring context: 2B 0.4s done
+#232 DONE 1.2s
+
+#231 [mean_review_sentiment_worker4] exporting to image
+#231 writing image sha256:1a0029da63ce1698d2fce0190006cac60cfb9daae75b27a6bcabaf548f1770de done
+#231 naming to docker.io/library/tp2-sistemas-distribuidos-mean_review_sentiment_worker4 done
+#231 ...
+
+#30 [reviews_counter_worker5  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#233 [percentile_worker0  6/10] COPY ./lib/filters.py filters.py
+#233 CACHED
+
+#73 [percentile_worker0  3/10] RUN python3 -m pip install textblob
+#73 CACHED
+
+#234 [percentile_worker0  4/10] COPY ./lib/serialization.py serialization.py
+#234 CACHED
+
+#235 [percentile_worker0  7/10] COPY ./lib/workers.py workers.py
+#235 CACHED
+
+#236 [percentile_worker0  5/10] COPY ./lib/middleware.py middleware.py
+#236 CACHED
+
+#69 [percentile_worker0  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#237 [percentile_worker0  8/10] COPY ./lib/logger.py logger.py
+#237 CACHED
+
+#238 [percentile_worker0  9/10] COPY ./lib/worker_class.py worker_class.py
+#238 CACHED
+
+#239 [percentile_worker0 10/10] COPY ./workers/percentile_worker.py percentile_worker.py
+#239 CACHED
+
+#240 [filter_category_worker2 internal] load build context
+#240 DONE 0.0s
+
+#241 [top10_worker1 internal] load .dockerignore
+#241 transferring context: 2B 0.4s done
+#241 DONE 1.2s
+
+#242 [top10_worker0 internal] load build context
+#242 ...
+
+#30 [top10_worker1  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#93 [reviews_counter_worker2 10/10] COPY ./workers/reviews_counter_worker.py reviews_counter_worker.py
+#93 CACHED
+
+#243 [filter_title_worker2 internal] load build context
+#243 transferring context: 1.21kB 0.9s done
+#243 DONE 1.4s
+
+#228 [filter_year_worker_q1-0 internal] load build context
+#228 transferring context: 1.24kB 0.1s done
+#228 DONE 0.1s
+
+#244 [reviews_counter_worker5 internal] load build context
+#244 transferring context: 1.05kB 0.3s done
+#244 DONE 0.4s
+
+#229 [review_sentiment_worker2 internal] load build context
+#229 transferring context: 926B 0.4s done
+#229 DONE 0.5s
+
+#223 [filter_category_computers_worker0 internal] load build context
+#223 transferring context: 1.22kB 0.4s done
+#223 DONE 0.8s
+
+#245 [reviews_counter_worker3 internal] load build context
+#245 transferring context: 1.05kB 0.4s done
+#245 DONE 0.4s
+
+#240 [filter_category_worker2 internal] load build context
+#240 transferring context: 1.22kB 0.4s done
+#240 DONE 0.4s
+
+#246 [decade_counter_worker0] exporting to image
+#246 exporting layers done
+#246 writing image sha256:9d9c6021f14708229952b76793e91302dd1adc628d71715d09ef82d7efdeff95 0.1s done
+#246 naming to docker.io/library/tp2-sistemas-distribuidos-decade_counter_worker0 done
+#246 DONE 0.8s
+
+#247 [percentile_worker0] exporting to image
+#247 exporting layers done
+#247 writing image sha256:9a2c131294b3eb024ea25dda465b7ca40c6ba257f3486393de81906344aedc79 done
+#247 naming to docker.io/library/tp2-sistemas-distribuidos-percentile_worker0 done
+#247 DONE 0.5s
+
+#248 [filter_category_worker1] exporting to image
+#248 exporting layers done
+#248 writing image sha256:e6777362cb15a027c95c3c4aaa4a2d7fb92778b311fcab2869cd8870c5017a81 done
+#248 naming to docker.io/library/tp2-sistemas-distribuidos-filter_category_worker1 done
+#248 DONE 0.5s
+
+#242 [top10_worker0 internal] load build context
+#242 transferring context: 1.01kB 0.4s done
+#242 DONE 0.5s
+
+#231 [mean_review_sentiment_worker4] exporting to image
+#231 DONE 0.8s
+
+#249 [top10_worker3] exporting to image
+#249 exporting layers done
+#249 writing image sha256:07ceaeb0e76c4891dff7fa258704c0865ba1d0adb50dc5b3ea583eabd487b28a done
+#249 naming to docker.io/library/tp2-sistemas-distribuidos-top10_worker3 done
+#249 DONE 0.8s
+
+#250 [reviews_counter_worker2] exporting to image
+#250 exporting layers done
+#250 writing image sha256:b7a45deb715975cbf9863bfb0a253ecbc1f877d08e0e0f141c23f5098f478b77 done
+#250 naming to docker.io/library/tp2-sistemas-distribuidos-reviews_counter_worker2 done
+#250 DONE 0.4s
+
+#227 [server internal] load .dockerignore
+#227 transferring context: 2B 0.2s done
+#227 DONE 0.6s
+
+#10 [query_coordinator_worker internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 ...
+
+#159 [filter_title_worker2 10/10] COPY ./workers/filter_title_worker.py filter_title_worker.py
+#159 CACHED
+
+#30 [server  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#10 [query_coordinator_worker internal] load metadata for docker.io/library/python:3.9.7-slim
+#10 DONE 2.8s
+
+#251 [mean_review_sentiment_worker2 internal] load build context
+#251 DONE 0.0s
+
+#252 [filter_title_worker2] exporting to image
+#252 exporting layers done
+#252 ...
+
+#135 [filter_year_worker_q1-0 10/10] COPY ./workers/filter_year_worker.py filter_year_worker.py
+#135 CACHED
+
+#252 [filter_title_worker2] exporting to image
+#252 writing image sha256:573451ac012642328bbe85f0865ab974d4f3b387dc2dfa29bc280e8e9a705a5c 0.0s done
+#252 naming to docker.io/library/tp2-sistemas-distribuidos-filter_title_worker2 done
+#252 DONE 0.2s
+
+#253 [server internal] load build context
+#253 ...
+
+#251 [mean_review_sentiment_worker2 internal] load build context
+#251 transferring context: 330B 0.2s done
+#251 DONE 0.4s
+
+#254 [reviews_counter_worker3] exporting to image
+#254 exporting layers done
+#254 writing image sha256:1a428fdebdb586d0b373ce496d5ebb13830a329c088b5bb065a586652bee16c6 done
+#254 naming to docker.io/library/tp2-sistemas-distribuidos-reviews_counter_worker3 0.0s done
+#254 DONE 0.4s
+
+#255 [query_coordinator_worker internal] load .dockerignore
+#255 transferring context: 2B 0.1s done
+#255 DONE 0.4s
+
+#253 [server internal] load build context
+#253 ...
+
+#30 [query_coordinator_worker  1/10] FROM docker.io/library/python:3.9.7-slim@sha256:aef632387d994b410de020dfd08fb1d9b648fc8a5a44f332f7ee326c8e170dba
+#30 DONE 0.0s
+
+#256 [filter_category_worker2] exporting to image
+#256 exporting layers done
+#256 writing image sha256:60dcd1b2834b6851b5bc395c264b854f94f53e4e7fd0cc2b522f7ee8ead738e9 done
+#256 naming to docker.io/library/tp2-sistemas-distribuidos-filter_category_worker2 done
+#256 DONE 0.5s
+
+#257 [top10_worker0] exporting to image
+#257 exporting layers done
+#257 writing image sha256:77e86e91763a844e76488524f28ca773cd5b29de6a7bfd6b665398b94f8f0fd0 0.2s done
+#257 naming to docker.io/library/tp2-sistemas-distribuidos-top10_worker0 done
+#257 DONE 0.6s
+
+#253 [server internal] load build context
+#253 transferring context: 13.26kB 0.3s done
+#253 DONE 0.6s
+
+#258 [filter_year_worker_q1-0] exporting to image
+#258 exporting layers done
+#258 writing image sha256:e6005d0ab9364b3bb30af35e0782cae4057068b86f82dce4c48b671c03ea15d7 done
+#258 naming to docker.io/library/tp2-sistemas-distribuidos-filter_year_worker_q1-0 done
+#258 DONE 0.6s
+
+#259 [reviews_counter_worker5] exporting to image
+#259 exporting layers done
+#259 writing image sha256:7d56cfdc7d9aa2c72d545310ed807b1327fb1f8e7c73a4fdf89eca7ccf219546 done
+#259 naming to docker.io/library/tp2-sistemas-distribuidos-reviews_counter_worker5 done
+#259 DONE 0.6s
+
+#260 [mean_review_sentiment_worker2] exporting to image
+#260 exporting layers done
+#260 writing image sha256:8902829dc3e6e8f0184ef6c1e02e4c519d87f63a9958c7f1c91bdcbdc2a57239 0.1s done
+#260 naming to docker.io/library/tp2-sistemas-distribuidos-mean_review_sentiment_worker2 0.0s done
+#260 DONE 0.1s
+
+#261 [review_sentiment_worker2] exporting to image
+#261 exporting layers done
+#261 writing image sha256:f4d47e9066946afaa46bd8c54a4327e2f9cfb0f475ae3b502f34ffd92ba003fd 0.0s done
+#261 naming to docker.io/library/tp2-sistemas-distribuidos-review_sentiment_worker2 done
+#261 DONE 0.6s
+
+#262 [top10_worker1 internal] load build context
+#262 transferring context: 1.01kB 0.3s done
+#262 DONE 0.6s
+
+#263 [query_coordinator_worker internal] load build context
+#263 transferring context: 23.08kB 0.3s done
+#263 ...
+
+#264 [server 4/7] COPY ./lib/communications.py communications.py
+#264 CACHED
+
+#265 [server 5/7] COPY ./lib/serialization.py serialization.py
+#265 CACHED
+
+#69 [server  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#266 [server 6/7] COPY ./lib/logger.py logger.py
+#266 CACHED
+
+#267 [server 3/7] COPY ./lib/middleware.py middleware.py
+#267 CACHED
+
+#268 [filter_category_computers_worker0] exporting to image
+#268 exporting layers done
+#268 writing image sha256:315e8df0ef4072f0045e309f64341b044a0e5b226a7306ece5faf72b3fc7a38f 0.1s done
+#268 naming to docker.io/library/tp2-sistemas-distribuidos-filter_category_computers_worker0 done
+#268 DONE 0.8s
+
+#269 [server 7/7] COPY ./server/server.py server.py
+#269 CACHED
+
+#263 [query_coordinator_worker internal] load build context
+#263 DONE 0.4s
+
+#270 [top10_worker1] exporting to image
+#270 exporting layers done
+#270 writing image sha256:f2301dd8d6e6fac5c69799d86812e59f358148ec387b3a82087d56a466d0acaa done
+#270 naming to docker.io/library/tp2-sistemas-distribuidos-top10_worker1 done
+#270 DONE 0.0s
+
+#271 [query_coordinator_worker 3/9] COPY ./lib/middleware.py middleware.py
+#271 CACHED
+
+#272 [query_coordinator_worker 4/9] COPY ./lib/communications.py communications.py
+#272 CACHED
+
+#273 [query_coordinator_worker 6/9] COPY ./lib/logger.py logger.py
+#273 CACHED
+
+#69 [query_coordinator_worker  2/10] RUN python3 -m pip install pika
+#69 CACHED
+
+#274 [query_coordinator_worker 7/9] COPY ./lib/worker_class.py worker_class.py
+#274 CACHED
+
+#275 [query_coordinator_worker 5/9] COPY ./lib/serialization.py serialization.py
+#275 CACHED
+
+#276 [query_coordinator_worker 8/9] COPY ./query_coordinator/query_coordinator.py query_coordinator.py
+#276 CACHED
+
+#277 [query_coordinator_worker 9/9] COPY ./query_coordinator/query_coordinator_worker.py query_coordinator_worker.py
+#277 CACHED
+
+#278 [query_coordinator_worker] exporting to image
+#278 exporting layers done
+#278 writing image sha256:3e92d0ffa7091f1045bb4a476f5a4580649bd8566334c030c7991d0eb2d3bb8b done
+#278 naming to docker.io/library/tp2-sistemas-distribuidos-query_coordinator_worker done
+#278 DONE 0.0s
+
+#279 [server] exporting to image
+#279 exporting layers done
+#279 writing image sha256:80235b71604c584bc282ca71cbc261b73456e2c6b3fa3abfde25185649acae4a done
+#279 naming to docker.io/library/tp2-sistemas-distribuidos-server done
+#279 DONE 0.0s
+
+#280 [client_1 internal] load build definition from client.dockerfile
+#280 transferring dockerfile: 292B 0.1s done
+#280 DONE 0.1s
+
+#281 [client_2 internal] load build definition from client.dockerfile
+#281 transferring dockerfile: 292B 0.4s done
+#281 DONE 0.5s
+
+#282 [client_1 internal] load metadata for docker.io/library/python:latest
+#282 DONE 0.5s
+
+#283 [client_1 internal] load .dockerignore
+#283 transferring context: 2B 0.2s done
+#283 DONE 0.2s
+
+#282 [client_2 internal] load metadata for docker.io/library/python:latest
+#282 ...
+
+#284 [client_1 internal] load build context
+#284 transferring context: 7.09kB 0.1s done
+#284 DONE 0.1s
+
+#285 [client_1 1/6] FROM docker.io/library/python:latest@sha256:f6d04873f0a67146854270e5f6513ed5e0165557c1b10689f1a20e9e65c8fe8e
+#285 resolve docker.io/library/python:latest@sha256:f6d04873f0a67146854270e5f6513ed5e0165557c1b10689f1a20e9e65c8fe8e
+#285 resolve docker.io/library/python:latest@sha256:f6d04873f0a67146854270e5f6513ed5e0165557c1b10689f1a20e9e65c8fe8e 0.4s done
+#285 resolve docker.io/library/python:latest@sha256:f6d04873f0a67146854270e5f6513ed5e0165557c1b10689f1a20e9e65c8fe8e 0.4s done
+#285 DONE 0.5s
+
+#286 [client_1 3/6] COPY ./client/files.py files.py
+#286 CACHED
+
+#287 [client_1 4/6] COPY ./client/client.py client.py
+#287 CACHED
+
+#288 [client_1 5/6] COPY ./lib/serialization.py serialization.py
+#288 CACHED
+
+#289 [client_1 2/6] COPY ./lib/communications.py communications.py
+#289 CACHED
+
+#290 [client_1] exporting to image
+#290 exporting layers done
+#290 writing image sha256:db5194f6ce5c59ba86f195690bb1fc59899e78970bd3a05d65db1d3e5475f8f4 done
+#290 naming to docker.io/library/tp2-sistemas-distribuidos-client_1 done
+#290 DONE 0.0s
+
+#291 [client_2 6/6] COPY ./lib/client_lib.py client_lib.py
+#291 CACHED
+
+#282 [client_2 internal] load metadata for docker.io/library/python:latest
+#282 DONE 1.1s
+
+#292 [client_2 internal] load .dockerignore
+#292 transferring context: 2B done
+#292 DONE 0.0s
+
+#293 [client_2 internal] load build context
+#293 transferring context: 9.56kB done
+#293 DONE 0.0s
+
+#294 [client_2] exporting to image
+#294 exporting layers done
+#294 writing image sha256:86c422379e7fce7cae7f1695d74f51db3bc8e4da25586e0c49e00139ded1c7e4 done
+#294 naming to docker.io/library/tp2-sistemas-distribuidos-client_2 done
+#294 DONE 0.0s
+ Network tp2-sistemas-distribuidos_default  Creating
+ Network tp2-sistemas-distribuidos_default  Created
+ Container mean_review_sentiment_worker3  Creating
+ Container top10_worker1  Creating
+ Container mean_review_sentiment_worker1  Creating
+ Container reviews_counter_worker0  Creating
+ Container filter_year_worker_q1-0  Creating
+ Container reviews_counter_worker2  Creating
+ Container filter_review_quantity_worker0  Creating
+ Container filter_year_worker_q1-1  Creating
+ Container reviews_counter_worker5  Creating
+ Container filter_year_worker_q1-2  Creating
+ Container review_sentiment_worker0  Creating
+ Container filter_year_worker_q3-2  Creating
+ Container filter_category_worker1  Creating
+ Container decade_counter_worker1  Creating
+ Container top10_worker4  Creating
+ Container filter_year_worker_q3-1  Creating
+ Container percentile_worker0  Creating
+ Container mean_review_sentiment_worker5  Creating
+ Container reviews_counter_worker4  Creating
+ Container filter_title_worker0  Creating
+ Container mean_review_sentiment_worker2  Creating
+ Container filter_category_computers_worker2  Creating
+ Container global_decade_counter_worker0  Creating
+ Container mean_review_sentiment_worker4  Creating
+ Container top10_worker0  Creating
+ Container rabbit  Creating
+ Container top10_worker2  Creating
+ Container reviews_counter_worker1  Creating
+ Container decade_counter_worker2  Creating
+ Container filter_category_worker2  Creating
+ Container top10_worker3  Creating
+ Container review_sentiment_worker3  Creating
+ Container reviews_counter_worker3  Creating
+ Container mean_review_sentiment_worker0  Creating
+ Container review_sentiment_worker1  Creating
+ Container filter_category_computers_worker0  Creating
+ Container review_sentiment_worker2  Creating
+ Container decade_counter_worker0  Creating
+ Container filter_year_worker_q3-0  Creating
+ Container filter_title_worker2  Creating
+ Container top_10_worker_last0  Creating
+ Container filter_category_computers_worker1  Creating
+ Container filter_category_worker0  Creating
+ Container filter_title_worker1  Creating
+ Container filter_category_computers_worker1  Created
+ Container decade_counter_worker0  Created
+ Container mean_review_sentiment_worker3  Created
+ Container filter_category_worker2  Created
+ Container top10_worker4  Created
+ Container mean_review_sentiment_worker5  Created
+ Container top10_worker2  Created
+ Container mean_review_sentiment_worker2  Created
+ Container filter_category_computers_worker0  Created
+ Container filter_title_worker2  Created
+ Container percentile_worker0  Created
+ Container review_sentiment_worker3  Created
+ Container top10_worker1  Created
+ Container filter_year_worker_q1-0  Created
+ Container filter_year_worker_q1-2  Created
+ Container filter_title_worker1  Created
+ Container mean_review_sentiment_worker1  Created
+ Container filter_year_worker_q3-0  Created
+ Container rabbit  Created
+ Container query_coordinator_worker  Creating
+ Container mean_review_sentiment_worker0  Created
+ Container filter_year_worker_q3-1  Created
+ Container top10_worker3  Created
+ Container decade_counter_worker1  Created
+ Container server  Creating
+ Container top10_worker0  Created
+ Container review_sentiment_worker1  Created
+ Container reviews_counter_worker1  Created
+ Container reviews_counter_worker0  Created
+ Container filter_category_worker1  Created
+ Container reviews_counter_worker4  Created
+ Container mean_review_sentiment_worker4  Created
+ Container filter_category_computers_worker2  Created
+ Container reviews_counter_worker5  Created
+ Container filter_year_worker_q3-2  Created
+ Container review_sentiment_worker2  Created
+ Container reviews_counter_worker3  Created
+ Container filter_category_worker0  Created
+ Container global_decade_counter_worker0  Created
+ Container reviews_counter_worker2  Created
+ Container filter_title_worker0  Created
+ Container decade_counter_worker2  Created
+ Container filter_review_quantity_worker0  Created
+ Container filter_year_worker_q1-1  Created
+ Container top_10_worker_last0  Created
+ Container review_sentiment_worker0  Created
+ Container server  Created
+ Container client_1  Creating
+ Container client_2  Creating
+ Container query_coordinator_worker  Created
+ Container client_1  Created
+ Container client_2  Created
+Attaching to client_1, client_2, decade_counter_worker0, decade_counter_worker1, decade_counter_worker2, filter_category_computers_worker0, filter_category_computers_worker1, filter_category_computers_worker2, filter_category_worker0, filter_category_worker1, filter_category_worker2, filter_review_quantity_worker0, filter_title_worker0, filter_title_worker1, filter_title_worker2, filter_year_worker_q1-0, filter_year_worker_q1-1, filter_year_worker_q1-2, filter_year_worker_q3-0, filter_year_worker_q3-1, filter_year_worker_q3-2, global_decade_counter_worker0, mean_review_sentiment_worker0, mean_review_sentiment_worker1, mean_review_sentiment_worker2, mean_review_sentiment_worker3, mean_review_sentiment_worker4, mean_review_sentiment_worker5, percentile_worker0, query_coordinator_worker, rabbit, review_sentiment_worker0, review_sentiment_worker1, review_sentiment_worker2, review_sentiment_worker3, reviews_counter_worker0, reviews_counter_worker1, reviews_counter_worker2, reviews_counter_worker3, reviews_counter_worker4, reviews_counter_worker5, server, top10_worker0, top10_worker1, top10_worker2, top10_worker3, top10_worker4, top_10_worker_last0
+server                             | The prev state was:  None
+client_2                           | Connecting to server. Attempt:  0
+server                             | A new client has connected:  ('192.168.48.49', 45358)
+client_1                           | Connecting to server. Attempt:  0
+server                             | A new client has connected:  ('192.168.48.48', 38936)
+rabbit                             | 2024-06-23 02:03:28.413415+00:00 [info] <0.228.0> Feature flags: list of feature flags found:
+rabbit                             | 2024-06-23 02:03:28.422594+00:00 [info] <0.228.0> Feature flags:   [ ] implicit_default_bindings
+rabbit                             | 2024-06-23 02:03:28.422644+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status
+rabbit                             | 2024-06-23 02:03:28.422661+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue
+rabbit                             | 2024-06-23 02:03:28.422680+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue
+rabbit                             | 2024-06-23 02:03:28.422752+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits
+rabbit                             | 2024-06-23 02:03:28.422770+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata
+rabbit                             | 2024-06-23 02:03:28.422784+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes
+rabbit                             | 2024-06-23 02:03:28.753166+00:00 [noti] <0.44.0> Application syslog exited with reason: stopped
+rabbit                             | 2024-06-23 02:03:28.753286+00:00 [noti] <0.228.0> Logging: switching to configured handler(s); following messages may not be visible in this log output
+rabbit                             | [38;5;87m2024-06-23 02:03:28.768280+00:00 [notice] <0.228.0> Logging: configured log handlers are now ACTIVE[0m
+rabbit                             | 2024-06-23 02:03:28.959728+00:00 [info] <0.228.0> ra: starting system quorum_queues[0m
+rabbit                             | 2024-06-23 02:03:28.959810+00:00 [info] <0.228.0> starting Ra system: quorum_queues in directory: /var/lib/rabbitmq/mnesia/rabbit@ab716b058fe0/quorum/rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:29.026402+00:00 [info] <0.264.0> ra system 'quorum_queues' running pre init for 0 registered servers[0m
+rabbit                             | 2024-06-23 02:03:29.034078+00:00 [info] <0.265.0> ra: meta data store initialised for system quorum_queues. 0 record(s) recovered[0m
+rabbit                             | [38;5;87m2024-06-23 02:03:29.048188+00:00 [notice] <0.270.0> WAL: ra_log_wal init, open tbls: ra_log_open_mem_tables, closed tbls: ra_log_closed_mem_tables[0m
+rabbit                             | 2024-06-23 02:03:29.053756+00:00 [info] <0.228.0> ra: starting system coordination[0m
+rabbit                             | 2024-06-23 02:03:29.053808+00:00 [info] <0.228.0> starting Ra system: coordination in directory: /var/lib/rabbitmq/mnesia/rabbit@ab716b058fe0/coordination/rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:29.054728+00:00 [info] <0.277.0> ra system 'coordination' running pre init for 0 registered servers[0m
+rabbit                             | 2024-06-23 02:03:29.055273+00:00 [info] <0.278.0> ra: meta data store initialised for system coordination. 0 record(s) recovered[0m
+rabbit                             | [38;5;87m2024-06-23 02:03:29.055450+00:00 [notice] <0.283.0> WAL: ra_coordination_log_wal init, open tbls: ra_coordination_log_open_mem_tables, closed tbls: ra_coordination_log_closed_mem_tables[0m
+rabbit                             | 2024-06-23 02:03:29.057960+00:00 [info] <0.228.0> [0m
+rabbit                             | 2024-06-23 02:03:29.057960+00:00 [info] <0.228.0>  Starting RabbitMQ 3.9.16 on Erlang 24.3.4 [jit][0m
+rabbit                             | 2024-06-23 02:03:29.057960+00:00 [info] <0.228.0>  Copyright (c) 2007-2022 VMware, Inc. or its affiliates.[0m
+rabbit                             | 2024-06-23 02:03:29.057960+00:00 [info] <0.228.0>  Licensed under the MPL 2.0. Website: https://rabbitmq.com[0m
+rabbit                             | 
+rabbit                             |   ##  ##      RabbitMQ 3.9.16
+rabbit                             |   ##  ##
+rabbit                             |   ##########  Copyright (c) 2007-2022 VMware, Inc. or its affiliates.
+rabbit                             |   ######  ##
+rabbit                             |   ##########  Licensed under the MPL 2.0. Website: https://rabbitmq.com
+rabbit                             | 
+rabbit                             |   Erlang:      24.3.4 [jit]
+rabbit                             |   TLS Library: OpenSSL - OpenSSL 1.1.1o  3 May 2022
+rabbit                             | 
+rabbit                             |   Doc guides:  https://rabbitmq.com/documentation.html
+rabbit                             |   Support:     https://rabbitmq.com/contact.html
+rabbit                             |   Tutorials:   https://rabbitmq.com/getstarted.html
+rabbit                             |   Monitoring:  https://rabbitmq.com/monitoring.html
+rabbit                             | 
+rabbit                             |   Logs: /var/log/rabbitmq/rabbit@ab716b058fe0_upgrade.log
+rabbit                             |         <stdout>
+rabbit                             | 
+rabbit                             |   Config file(s): /etc/rabbitmq/conf.d/10-defaults.conf
+rabbit                             | 
+rabbit                             |   Starting broker...2024-06-23 02:03:29.058862+00:00 [info] <0.228.0> [0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>  node           : rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>  home dir       : /var/lib/rabbitmq[0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>  config file(s) : /etc/rabbitmq/conf.d/10-defaults.conf[0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>  cookie hash    : 74eg+I/RKra0Sngmb5HS1Q==[0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>  log(s)         : /var/log/rabbitmq/rabbit@ab716b058fe0_upgrade.log[0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>                 : <stdout>[0m
+rabbit                             | 2024-06-23 02:03:29.058862+00:00 [info] <0.228.0>  database dir   : /var/lib/rabbitmq/mnesia/rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:29.340006+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:29.340071+00:00 [info] <0.228.0> Feature flags:   [ ] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:29.340105+00:00 [info] <0.228.0> Feature flags:   [ ] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:29.340124+00:00 [info] <0.228.0> Feature flags:   [ ] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:29.340140+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:29.340155+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:29.340169+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:29.340186+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:29.340200+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:29.340234+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.232260+00:00 [info] <0.228.0> Running boot step pre_boot defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.232332+00:00 [info] <0.228.0> Running boot step rabbit_global_counters defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.232564+00:00 [info] <0.228.0> Running boot step rabbit_osiris_metrics defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.232670+00:00 [info] <0.228.0> Running boot step rabbit_core_metrics defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.233123+00:00 [info] <0.228.0> Running boot step rabbit_alarm defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.235847+00:00 [info] <0.295.0> Memory high watermark set to 6354 MiB (6663151616 bytes) of 15886 MiB (16657879040 bytes) total[0m
+rabbit                             | 2024-06-23 02:03:31.238266+00:00 [info] <0.297.0> Enabling free disk space monitoring[0m
+rabbit                             | 2024-06-23 02:03:31.238315+00:00 [info] <0.297.0> Disk free limit set to 50MB[0m
+rabbit                             | 2024-06-23 02:03:31.240177+00:00 [info] <0.228.0> Running boot step code_server_cache defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.240278+00:00 [info] <0.228.0> Running boot step file_handle_cache defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.240458+00:00 [info] <0.302.0> Limiting to approx 1048479 file handles (943629 sockets)[0m
+rabbit                             | 2024-06-23 02:03:31.240553+00:00 [info] <0.303.0> FHC read buffering: OFF[0m
+rabbit                             | 2024-06-23 02:03:31.240585+00:00 [info] <0.303.0> FHC write buffering: ON[0m
+rabbit                             | 2024-06-23 02:03:31.240914+00:00 [info] <0.228.0> Running boot step worker_pool defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.240981+00:00 [info] <0.285.0> Will use 4 processes for default worker pool[0m
+rabbit                             | 2024-06-23 02:03:31.241015+00:00 [info] <0.285.0> Starting worker pool 'worker_pool' with 4 processes in it[0m
+rabbit                             | 2024-06-23 02:03:31.241283+00:00 [info] <0.228.0> Running boot step database defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.241603+00:00 [info] <0.228.0> Node database directory at /var/lib/rabbitmq/mnesia/rabbit@ab716b058fe0 is empty. Assuming we need to join an existing cluster or initialise from scratch...[0m
+rabbit                             | 2024-06-23 02:03:31.241659+00:00 [info] <0.228.0> Configured peer discovery backend: rabbit_peer_discovery_classic_config[0m
+rabbit                             | 2024-06-23 02:03:31.241689+00:00 [info] <0.228.0> Will try to lock with peer discovery backend rabbit_peer_discovery_classic_config[0m
+rabbit                             | 2024-06-23 02:03:31.241752+00:00 [info] <0.228.0> All discovered existing cluster peers:[0m
+rabbit                             | 2024-06-23 02:03:31.241777+00:00 [info] <0.228.0> Discovered no peer nodes to cluster with. Some discovery backends can filter nodes out based on a readiness criteria. Enabling debug logging might help troubleshoot.[0m
+rabbit                             | [38;5;87m2024-06-23 02:03:31.243482+00:00 [notice] <0.44.0> Application mnesia exited with reason: stopped[0m
+rabbit                             | 2024-06-23 02:03:31.294757+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.294864+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.303583+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.303693+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.303734+00:00 [info] <0.228.0> Feature flag `drop_unroutable_metric`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.303812+00:00 [info] <0.228.0> Feature flag `drop_unroutable_metric`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.304670+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.304709+00:00 [info] <0.228.0> Feature flags:   [~] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.304726+00:00 [info] <0.228.0> Feature flags:   [ ] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.304766+00:00 [info] <0.228.0> Feature flags:   [ ] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.304784+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.304799+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.304820+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.304856+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.304872+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.304886+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.311987+00:00 [info] <0.228.0> Feature flag `drop_unroutable_metric`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.313164+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.313214+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.313242+00:00 [info] <0.228.0> Feature flags:   [ ] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.313259+00:00 [info] <0.228.0> Feature flags:   [ ] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.313310+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.313328+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.313342+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.313382+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.313399+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.313434+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.320584+00:00 [info] <0.228.0> Feature flag `empty_basic_get_metric`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.320663+00:00 [info] <0.228.0> Feature flag `empty_basic_get_metric`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.321510+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.321537+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.321587+00:00 [info] <0.228.0> Feature flags:   [~] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.321606+00:00 [info] <0.228.0> Feature flags:   [ ] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.321622+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.321637+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.321678+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.321695+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.321709+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.321748+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.328595+00:00 [info] <0.228.0> Feature flag `empty_basic_get_metric`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.330180+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.330226+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.330253+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.330270+00:00 [info] <0.228.0> Feature flags:   [ ] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.330314+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.330330+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.330345+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.330379+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.330396+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.330431+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.339129+00:00 [info] <0.228.0> Feature flag `implicit_default_bindings`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.339194+00:00 [info] <0.228.0> Feature flag `implicit_default_bindings`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.340083+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.340124+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.340154+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.340173+00:00 [info] <0.228.0> Feature flags:   [~] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.340189+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.340204+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.340222+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.340237+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.340251+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.340282+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.346994+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 0 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.347091+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.347134+00:00 [info] <0.228.0> Feature flag `implicit_default_bindings`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.348802+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.348866+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.348886+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.348902+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.348942+00:00 [info] <0.228.0> Feature flags:   [ ] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.348960+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.348975+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.348989+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.349019+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.349035+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.357033+00:00 [info] <0.228.0> Feature flag `maintenance_mode_status`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.357099+00:00 [info] <0.228.0> Feature flag `maintenance_mode_status`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.358101+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.358167+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.358208+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.358225+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.358240+00:00 [info] <0.228.0> Feature flags:   [~] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.358255+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.358276+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.358291+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.358305+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.358334+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.367543+00:00 [info] <0.228.0> Creating table rabbit_node_maintenance_states for feature flag `maintenance_mode_status`[0m
+rabbit                             | 2024-06-23 02:03:31.370362+00:00 [info] <0.228.0> Feature flag `maintenance_mode_status`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.371905+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.371975+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.371998+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.372014+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.372032+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.372065+00:00 [info] <0.228.0> Feature flags:   [ ] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.372081+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.372097+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.372150+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.372173+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.379110+00:00 [info] <0.228.0> Feature flag `quorum_queue`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.379174+00:00 [info] <0.228.0> Feature flag `quorum_queue`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.380107+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.380156+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.380190+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.380218+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.380238+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.380257+00:00 [info] <0.228.0> Feature flags:   [~] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.380279+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.380297+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.380314+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.380361+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.388622+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.388706+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.388738+00:00 [info] <0.228.0> Feature flag `quorum_queue`:   migrating Mnesia table rabbit_queue...[0m
+rabbit                             | 2024-06-23 02:03:31.395551+00:00 [info] <0.228.0> Feature flag `quorum_queue`:   migrating Mnesia table rabbit_durable_queue...[0m
+rabbit                             | 2024-06-23 02:03:31.405169+00:00 [info] <0.228.0> Feature flag `quorum_queue`:   Mnesia tables migration done[0m
+rabbit                             | 2024-06-23 02:03:31.405219+00:00 [info] <0.228.0> Feature flag `quorum_queue`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.407128+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.407176+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.407195+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.407211+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.407276+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.407295+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.407309+00:00 [info] <0.228.0> Feature flags:   [ ] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.407323+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.407356+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.407371+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.415294+00:00 [info] <0.228.0> Feature flag `stream_queue`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.415379+00:00 [info] <0.228.0> Feature flag `stream_queue`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.416554+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.416620+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.416643+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.416665+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.416685+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.416703+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.416731+00:00 [info] <0.228.0> Feature flags:   [~] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.416774+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.416795+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.416815+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.425748+00:00 [info] <0.228.0> Feature flag `stream_queue`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.460403+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.460470+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.460508+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.460530+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.460552+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.460571+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.460592+00:00 [info] <0.228.0> Feature flags:   [x] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.460623+00:00 [info] <0.228.0> Feature flags:   [ ] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.460642+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.460688+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.470824+00:00 [info] <0.228.0> Feature flag `user_limits`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.470904+00:00 [info] <0.228.0> Feature flag `user_limits`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.471936+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.471990+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.472025+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.472052+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.472072+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.472091+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.472113+00:00 [info] <0.228.0> Feature flags:   [x] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.472131+00:00 [info] <0.228.0> Feature flags:   [~] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.472148+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.472197+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.479152+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.479233+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.488993+00:00 [info] <0.228.0> Feature flag `user_limits`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.490444+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.490501+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.490520+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.490536+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.490580+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.490597+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.490611+00:00 [info] <0.228.0> Feature flags:   [x] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.490625+00:00 [info] <0.228.0> Feature flags:   [x] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.490689+00:00 [info] <0.228.0> Feature flags:   [ ] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.490706+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.497702+00:00 [info] <0.228.0> Feature flag `virtual_host_metadata`: supported, attempt to enable...[0m
+rabbit                             | 2024-06-23 02:03:31.497823+00:00 [info] <0.228.0> Feature flag `virtual_host_metadata`: mark as enabled=state_changing[0m
+rabbit                             | 2024-06-23 02:03:31.498818+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.498866+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.498905+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.498926+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.498947+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.498966+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.498988+00:00 [info] <0.228.0> Feature flags:   [x] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.499006+00:00 [info] <0.228.0> Feature flags:   [x] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.499024+00:00 [info] <0.228.0> Feature flags:   [~] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.499073+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.506002+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.506081+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.514620+00:00 [info] <0.228.0> Feature flag `virtual_host_metadata`: mark as enabled=true[0m
+rabbit                             | 2024-06-23 02:03:31.516058+00:00 [info] <0.228.0> Feature flags: list of feature flags found:[0m
+rabbit                             | 2024-06-23 02:03:31.516151+00:00 [info] <0.228.0> Feature flags:   [x] drop_unroutable_metric[0m
+rabbit                             | 2024-06-23 02:03:31.516176+00:00 [info] <0.228.0> Feature flags:   [x] empty_basic_get_metric[0m
+rabbit                             | 2024-06-23 02:03:31.516199+00:00 [info] <0.228.0> Feature flags:   [x] implicit_default_bindings[0m
+rabbit                             | 2024-06-23 02:03:31.516260+00:00 [info] <0.228.0> Feature flags:   [x] maintenance_mode_status[0m
+rabbit                             | 2024-06-23 02:03:31.516285+00:00 [info] <0.228.0> Feature flags:   [x] quorum_queue[0m
+rabbit                             | 2024-06-23 02:03:31.516306+00:00 [info] <0.228.0> Feature flags:   [x] stream_queue[0m
+rabbit                             | 2024-06-23 02:03:31.516327+00:00 [info] <0.228.0> Feature flags:   [x] user_limits[0m
+rabbit                             | 2024-06-23 02:03:31.516389+00:00 [info] <0.228.0> Feature flags:   [x] virtual_host_metadata[0m
+rabbit                             | 2024-06-23 02:03:31.516419+00:00 [info] <0.228.0> Feature flags: feature flag states written to disk: yes[0m
+rabbit                             | 2024-06-23 02:03:31.524058+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.524159+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.534046+00:00 [info] <0.228.0> Waiting for Mnesia tables for 30000 ms, 9 retries left[0m
+rabbit                             | 2024-06-23 02:03:31.534164+00:00 [info] <0.228.0> Successfully synced tables from a peer[0m
+rabbit                             | 2024-06-23 02:03:31.534205+00:00 [info] <0.228.0> Peer discovery backend rabbit_peer_discovery_classic_config does not support registration, skipping registration.[0m
+rabbit                             | 2024-06-23 02:03:31.534243+00:00 [info] <0.228.0> Will try to unlock with peer discovery backend rabbit_peer_discovery_classic_config[0m
+rabbit                             | 2024-06-23 02:03:31.534321+00:00 [info] <0.228.0> Running boot step database_sync defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.534415+00:00 [info] <0.228.0> Running boot step feature_flags defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.534760+00:00 [info] <0.228.0> Running boot step codec_correctness_check defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.534825+00:00 [info] <0.228.0> Running boot step external_infrastructure defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.534845+00:00 [info] <0.228.0> Running boot step rabbit_registry defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.534976+00:00 [info] <0.228.0> Running boot step rabbit_auth_mechanism_cr_demo defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535067+00:00 [info] <0.228.0> Running boot step rabbit_queue_location_random defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535114+00:00 [info] <0.228.0> Running boot step rabbit_event defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535231+00:00 [info] <0.228.0> Running boot step rabbit_auth_mechanism_amqplain defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535327+00:00 [info] <0.228.0> Running boot step rabbit_auth_mechanism_plain defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535382+00:00 [info] <0.228.0> Running boot step rabbit_exchange_type_direct defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535593+00:00 [info] <0.228.0> Running boot step rabbit_exchange_type_fanout defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535669+00:00 [info] <0.228.0> Running boot step rabbit_exchange_type_headers defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535720+00:00 [info] <0.228.0> Running boot step rabbit_exchange_type_topic defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535766+00:00 [info] <0.228.0> Running boot step rabbit_mirror_queue_mode_all defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535815+00:00 [info] <0.228.0> Running boot step rabbit_mirror_queue_mode_exactly defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535861+00:00 [info] <0.228.0> Running boot step rabbit_mirror_queue_mode_nodes defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535943+00:00 [info] <0.228.0> Running boot step rabbit_priority_queue defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.535982+00:00 [info] <0.228.0> Priority queues enabled, real BQ is rabbit_variable_queue[0m
+rabbit                             | 2024-06-23 02:03:31.536035+00:00 [info] <0.228.0> Running boot step rabbit_queue_location_client_local defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.536092+00:00 [info] <0.228.0> Running boot step rabbit_queue_location_min_masters defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.536132+00:00 [info] <0.228.0> Running boot step kernel_ready defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.536150+00:00 [info] <0.228.0> Running boot step rabbit_sysmon_minder defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.536286+00:00 [info] <0.228.0> Running boot step rabbit_epmd_monitor defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.536763+00:00 [info] <0.564.0> epmd monitor knows us, inter-node communication (distribution) port: 25672[0m
+rabbit                             | 2024-06-23 02:03:31.536859+00:00 [info] <0.228.0> Running boot step guid_generator defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.538544+00:00 [info] <0.228.0> Running boot step rabbit_node_monitor defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.538705+00:00 [info] <0.568.0> Starting rabbit_node_monitor[0m
+rabbit                             | 2024-06-23 02:03:31.538778+00:00 [info] <0.228.0> Running boot step delegate_sup defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.539180+00:00 [info] <0.228.0> Running boot step rabbit_memory_monitor defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.539348+00:00 [info] <0.228.0> Running boot step core_initialized defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.539384+00:00 [info] <0.228.0> Running boot step upgrade_queues defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.546482+00:00 [info] <0.228.0> message_store upgrades: 1 to apply[0m
+rabbit                             | 2024-06-23 02:03:31.546577+00:00 [info] <0.228.0> message_store upgrades: Applying rabbit_variable_queue:move_messages_to_vhost_store[0m
+rabbit                             | 2024-06-23 02:03:31.546688+00:00 [info] <0.228.0> message_store upgrades: No durable queues found. Skipping message store migration[0m
+rabbit                             | 2024-06-23 02:03:31.546725+00:00 [info] <0.228.0> message_store upgrades: Removing the old message store data[0m
+rabbit                             | 2024-06-23 02:03:31.547167+00:00 [info] <0.228.0> message_store upgrades: All upgrades applied successfully[0m
+rabbit                             | 2024-06-23 02:03:31.555384+00:00 [info] <0.228.0> Running boot step channel_tracking defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.558222+00:00 [info] <0.228.0> Setting up a table for channel tracking on this node: tracked_channel_on_node_rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:31.560499+00:00 [info] <0.228.0> Setting up a table for channel tracking on this node: tracked_channel_table_per_user_on_node_rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:31.560704+00:00 [info] <0.228.0> Running boot step rabbit_channel_tracking_handler defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.560959+00:00 [info] <0.228.0> Running boot step connection_tracking defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.563780+00:00 [info] <0.228.0> Setting up a table for connection tracking on this node: tracked_connection_on_node_rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:31.566526+00:00 [info] <0.228.0> Setting up a table for per-vhost connection counting on this node: tracked_connection_per_vhost_on_node_rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:31.569194+00:00 [info] <0.228.0> Setting up a table for per-user connection counting on this node: tracked_connection_table_per_user_on_node_rabbit@ab716b058fe0[0m
+rabbit                             | 2024-06-23 02:03:31.569416+00:00 [info] <0.228.0> Running boot step rabbit_connection_tracking_handler defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.569479+00:00 [info] <0.228.0> Running boot step rabbit_exchange_parameters defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.569697+00:00 [info] <0.228.0> Running boot step rabbit_mirror_queue_misc defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.569952+00:00 [info] <0.228.0> Running boot step rabbit_policies defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.570283+00:00 [info] <0.228.0> Running boot step rabbit_policy defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.570338+00:00 [info] <0.228.0> Running boot step rabbit_queue_location_validator defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.570420+00:00 [info] <0.228.0> Running boot step rabbit_quorum_memory_manager defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.570520+00:00 [info] <0.228.0> Running boot step rabbit_stream_coordinator defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.570661+00:00 [info] <0.228.0> Running boot step rabbit_vhost_limit defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.570907+00:00 [info] <0.228.0> Running boot step rabbit_mgmt_reset_handler defined by app rabbitmq_management[0m
+rabbit                             | 2024-06-23 02:03:31.570960+00:00 [info] <0.228.0> Running boot step rabbit_mgmt_db_handler defined by app rabbitmq_management_agent[0m
+rabbit                             | 2024-06-23 02:03:31.571001+00:00 [info] <0.228.0> Management plugin: using rates mode 'basic'[0m
+rabbit                             | 2024-06-23 02:03:31.571454+00:00 [info] <0.228.0> Running boot step recovery defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.572534+00:00 [info] <0.228.0> Running boot step empty_db_check defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.572602+00:00 [info] <0.228.0> Will seed default virtual host and user...[0m
+rabbit                             | 2024-06-23 02:03:31.572736+00:00 [info] <0.228.0> Adding vhost '/' (description: 'Default virtual host', tags: [])[0m
+rabbit                             | 2024-06-23 02:03:31.586116+00:00 [info] <0.629.0> Making sure data directory '/var/lib/rabbitmq/mnesia/rabbit@ab716b058fe0/msg_stores/vhosts/628WB79CIFDYO9LJI6DKMI09L' for vhost '/' exists[0m
+rabbit                             | 2024-06-23 02:03:31.586784+00:00 [info] <0.629.0> Setting segment_entry_count for vhost '/' with 0 queues to '2048'[0m
+rabbit                             | 2024-06-23 02:03:31.588626+00:00 [info] <0.629.0> Starting message stores for vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:31.588790+00:00 [info] <0.633.0> Message store "628WB79CIFDYO9LJI6DKMI09L/msg_store_transient": using rabbit_msg_store_ets_index to provide index[0m
+rabbit                             | 2024-06-23 02:03:31.589682+00:00 [info] <0.629.0> Started message store of type transient for vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:31.589845+00:00 [info] <0.637.0> Message store "628WB79CIFDYO9LJI6DKMI09L/msg_store_persistent": using rabbit_msg_store_ets_index to provide index[0m
+rabbit                             | [38;5;214m2024-06-23 02:03:31.590445+00:00 [warning] <0.637.0> Message store "628WB79CIFDYO9LJI6DKMI09L/msg_store_persistent": rebuilding indices from scratch[0m
+rabbit                             | 2024-06-23 02:03:31.591026+00:00 [info] <0.629.0> Started message store of type persistent for vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:31.591132+00:00 [info] <0.629.0> Recovering 0 queues of type rabbit_classic_queue took 4ms[0m
+rabbit                             | 2024-06-23 02:03:31.591159+00:00 [info] <0.629.0> Recovering 0 queues of type rabbit_quorum_queue took 0ms[0m
+rabbit                             | 2024-06-23 02:03:31.591196+00:00 [info] <0.629.0> Recovering 0 queues of type rabbit_stream_queue took 0ms[0m
+rabbit                             | 2024-06-23 02:03:31.593639+00:00 [info] <0.228.0> Created user 'guest'[0m
+rabbit                             | 2024-06-23 02:03:31.594665+00:00 [info] <0.228.0> Successfully set user tags for user 'guest' to [administrator][0m
+rabbit                             | 2024-06-23 02:03:31.595795+00:00 [info] <0.228.0> Successfully set permissions for 'guest' in virtual host '/' to '.*', '.*', '.*'[0m
+rabbit                             | 2024-06-23 02:03:31.595849+00:00 [info] <0.228.0> Running boot step rabbit_looking_glass defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.595872+00:00 [info] <0.228.0> Running boot step rabbit_core_metrics_gc defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.595972+00:00 [info] <0.228.0> Running boot step background_gc defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596109+00:00 [info] <0.228.0> Running boot step routing_ready defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596149+00:00 [info] <0.228.0> Running boot step pre_flight defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596165+00:00 [info] <0.228.0> Running boot step notify_cluster defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596183+00:00 [info] <0.228.0> Running boot step networking defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596206+00:00 [info] <0.228.0> Running boot step definition_import_worker_pool defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596248+00:00 [info] <0.285.0> Starting worker pool 'definition_import_pool' with 4 processes in it[0m
+rabbit                             | 2024-06-23 02:03:31.596476+00:00 [info] <0.228.0> Running boot step cluster_name defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.596549+00:00 [info] <0.228.0> Initialising internal cluster ID to 'rabbitmq-cluster-id-ZaAFS9dn6STXw6Tu4TQvwQ'[0m
+rabbit                             | 2024-06-23 02:03:31.597927+00:00 [info] <0.228.0> Running boot step direct_client defined by app rabbit[0m
+rabbit                             | 2024-06-23 02:03:31.598057+00:00 [info] <0.228.0> Running boot step rabbit_management_load_definitions defined by app rabbitmq_management[0m
+rabbit                             | 2024-06-23 02:03:31.598134+00:00 [info] <0.670.0> Resetting node maintenance status[0m
+rabbit                             | 2024-06-23 02:03:31.608314+00:00 [info] <0.729.0> Management plugin: HTTP (non-TLS) listener started on port 15672[0m
+rabbit                             | 2024-06-23 02:03:31.608439+00:00 [info] <0.757.0> Statistics database started.[0m
+rabbit                             | 2024-06-23 02:03:31.608512+00:00 [info] <0.756.0> Starting worker pool 'management_worker_pool' with 3 processes in it[0m
+rabbit                             | 2024-06-23 02:03:31.616838+00:00 [info] <0.771.0> Prometheus metrics: HTTP (non-TLS) listener started on port 15692[0m
+rabbit                             | 2024-06-23 02:03:31.616955+00:00 [info] <0.670.0> Ready to start client connection listeners[0m
+rabbit                             | 2024-06-23 02:03:31.618506+00:00 [info] <0.815.0> started TCP listener on [::]:5672[0m
+rabbit                             |  completed with 4 plugins.
+rabbit                             | 2024-06-23 02:03:31.665106+00:00 [info] <0.670.0> Server startup complete; 4 plugins started.[0m
+rabbit                             | 2024-06-23 02:03:31.665106+00:00 [info] <0.670.0>  * rabbitmq_prometheus[0m
+rabbit                             | 2024-06-23 02:03:31.665106+00:00 [info] <0.670.0>  * rabbitmq_management[0m
+rabbit                             | 2024-06-23 02:03:31.665106+00:00 [info] <0.670.0>  * rabbitmq_web_dispatch[0m
+rabbit                             | 2024-06-23 02:03:31.665106+00:00 [info] <0.670.0>  * rabbitmq_management_agent[0m
+rabbit                             | 2024-06-23 02:03:31.811331+00:00 [info] <0.818.0> accepting AMQP connection <0.818.0> (192.168.48.36:38918 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:31.814790+00:00 [info] <0.818.0> connection <0.818.0> (192.168.48.36:38918 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:31.823350+00:00 [info] <0.836.0> accepting AMQP connection <0.836.0> (192.168.48.2:53602 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:31.825959+00:00 [info] <0.836.0> connection <0.836.0> (192.168.48.2:53602 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:32.067184+00:00 [info] <0.854.0> accepting AMQP connection <0.854.0> (192.168.48.3:58054 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:32.069631+00:00 [info] <0.854.0> connection <0.854.0> (192.168.48.3:58054 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:32.800296+00:00 [info] <0.878.0> accepting AMQP connection <0.878.0> (192.168.48.35:34546 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:32.804303+00:00 [info] <0.878.0> connection <0.878.0> (192.168.48.35:34546 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:32.841271+00:00 [info] <0.896.0> accepting AMQP connection <0.896.0> (192.168.48.46:51530 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:32.845528+00:00 [info] <0.896.0> connection <0.896.0> (192.168.48.46:51530 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+server                             | Middleware established the connection
+rabbit                             | 2024-06-23 02:03:32.929497+00:00 [info] <0.914.0> accepting AMQP connection <0.914.0> (192.168.48.34:54360 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:32.940064+00:00 [info] <0.914.0> connection <0.914.0> (192.168.48.34:54360 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.053416+00:00 [info] <0.934.0> accepting AMQP connection <0.934.0> (192.168.48.38:35578 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.057058+00:00 [info] <0.934.0> connection <0.934.0> (192.168.48.38:35578 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.072783+00:00 [info] <0.952.0> accepting AMQP connection <0.952.0> (192.168.48.42:41372 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.076201+00:00 [info] <0.952.0> connection <0.952.0> (192.168.48.42:41372 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.084194+00:00 [info] <0.970.0> accepting AMQP connection <0.970.0> (192.168.48.39:35486 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.087974+00:00 [info] <0.970.0> connection <0.970.0> (192.168.48.39:35486 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.091481+00:00 [info] <0.988.0> accepting AMQP connection <0.988.0> (192.168.48.40:46188 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.094638+00:00 [info] <0.988.0> connection <0.988.0> (192.168.48.40:46188 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.151840+00:00 [info] <0.1011.0> accepting AMQP connection <0.1011.0> (192.168.48.41:55492 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.155093+00:00 [info] <0.1011.0> connection <0.1011.0> (192.168.48.41:55492 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.260638+00:00 [info] <0.1034.0> accepting AMQP connection <0.1034.0> (192.168.48.45:47126 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.263401+00:00 [info] <0.1034.0> connection <0.1034.0> (192.168.48.45:47126 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.301632+00:00 [info] <0.1052.0> accepting AMQP connection <0.1052.0> (192.168.48.37:56270 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.306081+00:00 [info] <0.1052.0> connection <0.1052.0> (192.168.48.37:56270 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.626495+00:00 [info] <0.1075.0> accepting AMQP connection <0.1075.0> (192.168.48.47:57140 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.627253+00:00 [info] <0.1078.0> accepting AMQP connection <0.1078.0> (192.168.48.47:57156 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.631938+00:00 [info] <0.1075.0> connection <0.1075.0> (192.168.48.47:57140 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.631932+00:00 [info] <0.1078.0> connection <0.1078.0> (192.168.48.47:57156 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:33.956776+00:00 [info] <0.1132.0> accepting AMQP connection <0.1132.0> (192.168.48.43:51130 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:33.960609+00:00 [info] <0.1132.0> connection <0.1132.0> (192.168.48.43:51130 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:34.066359+00:00 [info] <0.1150.0> accepting AMQP connection <0.1150.0> (192.168.48.44:56260 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:34.070623+00:00 [info] <0.1150.0> connection <0.1150.0> (192.168.48.44:56260 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:34.099526+00:00 [info] <0.1168.0> accepting AMQP connection <0.1168.0> (192.168.48.46:51546 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:34.102646+00:00 [info] <0.1168.0> connection <0.1168.0> (192.168.48.46:51546 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+server                             | Middleware established the connection
+rabbit                             | 2024-06-23 02:03:34.188050+00:00 [info] <0.1241.0> accepting AMQP connection <0.1241.0> (192.168.48.46:51554 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:34.192456+00:00 [info] <0.1241.0> connection <0.1241.0> (192.168.48.46:51554 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+server                             | Middleware established the connection
+rabbit                             | 2024-06-23 02:03:34.440215+00:00 [info] <0.1254.0> accepting AMQP connection <0.1254.0> (192.168.48.13:58126 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:34.444004+00:00 [info] <0.1257.0> accepting AMQP connection <0.1257.0> (192.168.48.10:41552 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:34.446599+00:00 [info] <0.1254.0> connection <0.1254.0> (192.168.48.13:58126 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:34.453953+00:00 [info] <0.1257.0> connection <0.1257.0> (192.168.48.10:41552 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:34.858134+00:00 [info] <0.1295.0> accepting AMQP connection <0.1295.0> (192.168.48.14:37958 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:34.861113+00:00 [info] <0.1295.0> connection <0.1295.0> (192.168.48.14:37958 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:34.992767+00:00 [info] <0.1313.0> accepting AMQP connection <0.1313.0> (192.168.48.4:35974 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.011351+00:00 [info] <0.1313.0> connection <0.1313.0> (192.168.48.4:35974 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.023336+00:00 [info] <0.1331.0> accepting AMQP connection <0.1331.0> (192.168.48.8:36422 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.032406+00:00 [info] <0.1331.0> connection <0.1331.0> (192.168.48.8:36422 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.065013+00:00 [info] <0.1344.0> accepting AMQP connection <0.1344.0> (192.168.48.15:60224 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.078392+00:00 [info] <0.1344.0> connection <0.1344.0> (192.168.48.15:60224 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.148637+00:00 [info] <0.1362.0> accepting AMQP connection <0.1362.0> (192.168.48.5:38510 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.151266+00:00 [info] <0.1362.0> connection <0.1362.0> (192.168.48.5:38510 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.249222+00:00 [info] <0.1380.0> accepting AMQP connection <0.1380.0> (192.168.48.9:42690 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.252516+00:00 [info] <0.1380.0> connection <0.1380.0> (192.168.48.9:42690 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.272998+00:00 [info] <0.1398.0> accepting AMQP connection <0.1398.0> (192.168.48.16:41528 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.322603+00:00 [info] <0.1401.0> accepting AMQP connection <0.1401.0> (192.168.48.7:49382 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.322886+00:00 [info] <0.1404.0> accepting AMQP connection <0.1404.0> (192.168.48.6:38190 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.325043+00:00 [info] <0.1398.0> connection <0.1398.0> (192.168.48.16:41528 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.332730+00:00 [info] <0.1404.0> connection <0.1404.0> (192.168.48.6:38190 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.343725+00:00 [info] <0.1436.0> accepting AMQP connection <0.1436.0> (192.168.48.11:60956 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.344464+00:00 [info] <0.1401.0> connection <0.1401.0> (192.168.48.7:49382 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.356144+00:00 [info] <0.1436.0> connection <0.1436.0> (192.168.48.11:60956 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.373572+00:00 [info] <0.1460.0> accepting AMQP connection <0.1460.0> (192.168.48.12:52014 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.410825+00:00 [info] <0.1460.0> connection <0.1460.0> (192.168.48.12:52014 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.512785+00:00 [info] <0.1483.0> accepting AMQP connection <0.1483.0> (192.168.48.17:40408 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.523357+00:00 [info] <0.1483.0> connection <0.1483.0> (192.168.48.17:40408 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:35.598885+00:00 [info] <0.1501.0> accepting AMQP connection <0.1501.0> (192.168.48.18:57428 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:35.602126+00:00 [info] <0.1501.0> connection <0.1501.0> (192.168.48.18:57428 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:36.704660+00:00 [info] <0.1519.0> accepting AMQP connection <0.1519.0> (192.168.48.19:45628 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:36.712906+00:00 [info] <0.1519.0> connection <0.1519.0> (192.168.48.19:45628 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:37.206248+00:00 [info] <0.1538.0> accepting AMQP connection <0.1538.0> (192.168.48.20:38652 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:37.213034+00:00 [info] <0.1538.0> connection <0.1538.0> (192.168.48.20:38652 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:37.410123+00:00 [info] <0.1558.0> accepting AMQP connection <0.1558.0> (192.168.48.22:43626 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:37.414040+00:00 [info] <0.1558.0> connection <0.1558.0> (192.168.48.22:43626 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:37.489943+00:00 [info] <0.1576.0> accepting AMQP connection <0.1576.0> (192.168.48.21:60408 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:37.511058+00:00 [info] <0.1576.0> connection <0.1576.0> (192.168.48.21:60408 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+server                             | Updating state of client [1]:  {'clients': {'192.168.48.49': ('1', 1), '192.168.48.48': ('2', 0)}, 'clients_quantity': 3}
+server                             | CLIENT_1 HAS FINISHED
+rabbit                             | 2024-06-23 02:03:38.271993+00:00 [info] <0.1168.0> closing AMQP connection <0.1168.0> (192.168.48.46:51546 -> 192.168.48.24:5672, vhost: '/', user: 'guest')[0m
+rabbit                             | 2024-06-23 02:03:38.321877+00:00 [info] <0.1603.0> accepting AMQP connection <0.1603.0> (192.168.48.29:43318 -> 192.168.48.24:5672)[0m
+server                             | Updating state of client [2]:  {'clients': {'192.168.48.49': ('1', 1), '192.168.48.48': ('2', 1)}, 'clients_quantity': 3}
+server                             | CLIENT_2 HAS FINISHED
+rabbit                             | 2024-06-23 02:03:38.329309+00:00 [info] <0.1241.0> closing AMQP connection <0.1241.0> (192.168.48.46:51554 -> 192.168.48.24:5672, vhost: '/', user: 'guest')[0m
+rabbit                             | 2024-06-23 02:03:38.331909+00:00 [info] <0.1603.0> connection <0.1603.0> (192.168.48.29:43318 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:38.462812+00:00 [info] <0.1625.0> accepting AMQP connection <0.1625.0> (192.168.48.33:53502 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:38.465722+00:00 [info] <0.1625.0> connection <0.1625.0> (192.168.48.33:53502 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:38.541132+00:00 [info] <0.1638.0> accepting AMQP connection <0.1638.0> (192.168.48.31:42770 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:38.547355+00:00 [info] <0.1638.0> connection <0.1638.0> (192.168.48.31:42770 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:38.690549+00:00 [info] <0.1656.0> accepting AMQP connection <0.1656.0> (192.168.48.27:49200 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:38.716914+00:00 [info] <0.1656.0> connection <0.1656.0> (192.168.48.27:49200 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:38.820773+00:00 [info] <0.1675.0> accepting AMQP connection <0.1675.0> (192.168.48.26:44602 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:38.824051+00:00 [info] <0.1675.0> connection <0.1675.0> (192.168.48.26:44602 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:38.957616+00:00 [info] <0.1693.0> accepting AMQP connection <0.1693.0> (192.168.48.23:58252 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:38.961582+00:00 [info] <0.1693.0> connection <0.1693.0> (192.168.48.23:58252 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:38.996287+00:00 [info] <0.1706.0> accepting AMQP connection <0.1706.0> (192.168.48.32:45572 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:39.012752+00:00 [info] <0.1706.0> connection <0.1706.0> (192.168.48.32:45572 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:39.069032+00:00 [info] <0.1724.0> accepting AMQP connection <0.1724.0> (192.168.48.28:42148 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:39.077396+00:00 [info] <0.1724.0> connection <0.1724.0> (192.168.48.28:42148 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:39.116756+00:00 [info] <0.1742.0> accepting AMQP connection <0.1742.0> (192.168.48.30:46666 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:39.120751+00:00 [info] <0.1742.0> connection <0.1742.0> (192.168.48.30:46666 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+rabbit                             | 2024-06-23 02:03:39.283206+00:00 [info] <0.1755.0> accepting AMQP connection <0.1755.0> (192.168.48.25:60230 -> 192.168.48.24:5672)[0m
+rabbit                             | 2024-06-23 02:03:39.289964+00:00 [info] <0.1755.0> connection <0.1755.0> (192.168.48.25:60230 -> 192.168.48.24:5672): user 'guest' authenticated and granted access to vhost '/'[0m
+percentile_worker0                 | 124
+client_2                           | [QUERY 1]
+client_2                           | TITLE: Malware: Fighting Malicious Code (Prentice Hall Series in Computer Networking and Distributed) - AUTHORS: ['Ed Skoudis', 'Lenny Zeltser'] - PUBLISHER: Prentice Hall Professional
+client_2                           | TITLE: Inside Distributed COM (Mps) - AUTHORS: ['Intermational Conference Ifip Tcs 200', 'International Federation for Information Processing', 'Springer-verlag'] - PUBLISHER: Springer Science & Business Media
+client_2                           | TITLE: ASP.NET Distributed Data Applications - AUTHORS: ['Alex Homer', 'David Sussman'] - PUBLISHER: Apress
+client_2                           | TITLE: Holographic Reduced Representation: Distributed Representation for Cognitive Structures (Center for the Study of Language and Information - Lecture Notes) - AUTHORS: ['Ignacio Rojas', 'Gonzalo Joya', 'Andreu Català'] - PUBLISHER: Springer Nature
+client_2                           | TITLE: Parallel and Distributed Programming Using C++ - AUTHORS: ['Cameron Hughes', 'Tracey Hughes'] - PUBLISHER: Addison-Wesley Professional
+client_2                           | TITLE: Open Source Network Administration (Prentice Hall Series in Computer Networking and Distributed Systems) - AUTHORS: ['James M. Kretchmar'] - PUBLISHER: Prentice Hall Professional
+client_2                           | TITLE: Distributed Systems Architecture: A Middleware Approach - AUTHORS: ['Arno Puder', 'Kay Römer', 'Frank Pilhofer'] - PUBLISHER: Elsevier
+client_2                           | TITLE: Elements of Distributed Computing - AUTHORS: ['Vijay K. Garg'] - PUBLISHER: John Wiley & Sons
+client_2                           | TITLE: Enterprise Linux at Work: How to Build 10 Distributed Applications for Your Organization - AUTHORS: ['Stephen Asbury'] - PUBLISHER: John Wiley & Sons Incorporated
+client_2                           | TITLE: Engineering Distributed Objects: Second International Workshop, EDO 2000 Davis, CA, USA, November 2-3, 2000 Revised Papers (Lecture Notes in Computer Science) - AUTHORS: ['Wolfgang Emmerich', 'Stefan Tai'] - PUBLISHER: Springer
+client_2                           | TITLE: Replication Techniques in Distributed Systems (Advances in Database Systems) - AUTHORS: ['Abdelsalam A. Helal', 'Abdelsalam A. Heddaya', 'Bharat B. Bhargava'] - PUBLISHER: Springer Science & Business Media
+client_2                           | [QUERY 2]
+client_2                           | Erle Stanley Gardner,Rudyard Kipling,William Shakespeare,Henry James,Zane Grey,Mark Twain,Charles Dickens,Bertrand Russell
+client_2                           | [QUERY 3]
+client_2                           | [QUERY 4]
+client_2                           | [QUERY 5]
+client_2                           | Cry of the Peacock,The Penalty Box (New York Blades),GLORY, GLORY,When Hope Springs New (Canadian West #4),A Time to Kill (John Grisham),Record Time,Daring to Dream (Dream Series),Still Sheisty: Part 2,TARZAN ALIVE - A Definitive Biography of Lord Greystoke,The Edge (G K Hall Large Print Book Series),The Bastard,Playing the Jack,The Dowry of Miss Lydia Clark (The Gresham Chronicles, Book 3),The Thackery T. Lambshead Pocket Guide to Eccentric and Discredited Diseases,The Hunchback of Notre Dame (Signet Classics),Whitney, My Love,The Key to Rebecca,ALICE'S ADVENTURES IN WONDERLAND & THROUGH THE LOOKING GLASS and What Alice Found There (2 volumes),THE MASTER AND MARGARITA,Summer of Roses (Random House Large Print),Maisie Dobbs,Death By Dickens,A Land Remembered,Echo Park (SIGNED),The Year of the Death of Ricardo Reis,The Inn at Lake Devine: A Novel,The Perfect Bride,One,The Valley of Horses (Earth's Children Series),Alice's Adventures in Wonderland and Through the Looking Glass,Escape Clause,Flowers in the Blood: 2,Cat's paw,Star,The Annotated Wizard of Oz. The Wonderful Wizard of Oz,The Hammer of God,When Angels Fall,Identity Crisis,The Ezekiel Option (Political Thrillers Option #3),Tea Rose,Sisters and Lovers,Sojourn: The Dark Elf Trilogy, Part 3 (Forgotten Realms: The Legend of Drizzt, Book III),The Dead Zone,Vanishing Act,After the Abduction (Swanlea Spinsters),Peach,Hoopi Shoopi Donna,Under Fire - A Corps Novel,The Bell Jar (Great Books of the 20th Century),Tennis Shoe Adventure series: Tennis Shoes Among the Nephites,The Winter Mantle,Middle Passage,Ham on Rye,On a Wicked Dawn (Cynster Novels),The enchanted castle,,Amish Children,The Invoker (Lawson Vampire Novels),Between Friends,Better Than I Know Myself,Man Who Was Thursday a Nightmare,Night, Mother,Cien Anos De Soledad,Jim Carrey -,The Last Juror,The devil's dictionary,,The Enduring Hemingway: An Anthology of a Lifetime in Literature.,Dragons of Winter Night :Dlance Chronicl,The Ghost of Hannah Mendes,If Nobody Speaks of Remarkable Things,The Golden Notebook,The King's Coat,The General's Daughter,The Sunne in Splendour,Cobra Event,The Reluctant Widow,The Book of Mirdad: The Strange Story of a Monastery Which Was Once Called the Ark,Round Robin (Elm Creek Quilts Series #2),Persuasion (Penguin Audio Classics),Meca and the Black Oracle,BEACH ROAD,Two From Galilee.,,Five Children and It,The Persian Boy,Japan Eow2 (Enchantment of the World, Second),Poltergeist: The Legacy 01: The Hidden Saint,Crooked House,LifeSupport,The Scarlet Pimpernel,Fortune's Wheel (Sholan Alliance),The Lost World,Pharaoh (Kleopatra, Volume II),Playing Easy to Get,Black Girl Lost,The Last of the Honky-tonk Angels,Hot in the City 2: Sin City,Secret Place,Mojave Crossing (Book 6 in the Sacketts Series),What Maisie Knew,Rough Wrangler, Tender Kisses,Always Outnumbered, Always Outgunned,Story of O,Temple of the Winds (Sword of Truth, Book 4),England's Perfect Hero (Lessons in Love),When Calls the Heart (Canadian West #1),ABC Murders,Horseplay: A Novel,Another View,G is for Gumshoe,Champagne for one: A Nero Wolfe mystery,Except for Me and Thee: A Companion to the Friendly Persuasion,Of Human Bondage,Source of Magic (Xanth Novels (Paperback)),Hunky: The Immigrant Experience,The Magic Barrel,Claudius, the god and his wife Messalina,Demian,Illusions: The Adventures of a Reluctant Messiah,Cracks in My Foundation: Bags, Trips, Make-up Tips, Charity, Glory, and the Darker Side of the Story,COURAGE TREE,Mystery Walk,Two's Enough Three's A Crowd,The Baby on the Way,Up Jumped the Devil (Darryl Billups Mystery),Postmortem
+client_2                           | EOF
+[Kclient_2 exited with code 0
+percentile_worker0                 | 124
+client_1                           | [QUERY 1]
+client_1                           | TITLE: Malware: Fighting Malicious Code (Prentice Hall Series in Computer Networking and Distributed) - AUTHORS: ['Ed Skoudis', 'Lenny Zeltser'] - PUBLISHER: Prentice Hall Professional
+client_1                           | TITLE: Inside Distributed COM (Mps) - AUTHORS: ['Intermational Conference Ifip Tcs 200', 'International Federation for Information Processing', 'Springer-verlag'] - PUBLISHER: Springer Science & Business Media
+client_1                           | TITLE: ASP.NET Distributed Data Applications - AUTHORS: ['Alex Homer', 'David Sussman'] - PUBLISHER: Apress
+client_1                           | TITLE: Holographic Reduced Representation: Distributed Representation for Cognitive Structures (Center for the Study of Language and Information - Lecture Notes) - AUTHORS: ['Ignacio Rojas', 'Gonzalo Joya', 'Andreu Català'] - PUBLISHER: Springer Nature
+client_1                           | TITLE: Parallel and Distributed Programming Using C++ - AUTHORS: ['Cameron Hughes', 'Tracey Hughes'] - PUBLISHER: Addison-Wesley Professional
+client_1                           | TITLE: Open Source Network Administration (Prentice Hall Series in Computer Networking and Distributed Systems) - AUTHORS: ['James M. Kretchmar'] - PUBLISHER: Prentice Hall Professional
+client_1                           | TITLE: Distributed Systems Architecture: A Middleware Approach - AUTHORS: ['Arno Puder', 'Kay Römer', 'Frank Pilhofer'] - PUBLISHER: Elsevier
+client_1                           | TITLE: Elements of Distributed Computing - AUTHORS: ['Vijay K. Garg'] - PUBLISHER: John Wiley & Sons
+client_1                           | TITLE: Enterprise Linux at Work: How to Build 10 Distributed Applications for Your Organization - AUTHORS: ['Stephen Asbury'] - PUBLISHER: John Wiley & Sons Incorporated
+client_1                           | TITLE: Engineering Distributed Objects: Second International Workshop, EDO 2000 Davis, CA, USA, November 2-3, 2000 Revised Papers (Lecture Notes in Computer Science) - AUTHORS: ['Wolfgang Emmerich', 'Stefan Tai'] - PUBLISHER: Springer
+client_1                           | TITLE: Replication Techniques in Distributed Systems (Advances in Database Systems) - AUTHORS: ['Abdelsalam A. Helal', 'Abdelsalam A. Heddaya', 'Bharat B. Bhargava'] - PUBLISHER: Springer Science & Business Media
+client_1                           | [QUERY 2]
+client_1                           | Erle Stanley Gardner,Rudyard Kipling,William Shakespeare,Zane Grey,Mark Twain,Charles Dickens,Henry James,Bertrand Russell
+client_1                           | [QUERY 3]
+client_1                           | [QUERY 4]
+client_1                           | [QUERY 5]
+client_1                           | Cry of the Peacock,The Penalty Box (New York Blades),GLORY, GLORY,When Hope Springs New (Canadian West #4),A Time to Kill (John Grisham),Record Time,Daring to Dream (Dream Series),Still Sheisty: Part 2,TARZAN ALIVE - A Definitive Biography of Lord Greystoke,The Edge (G K Hall Large Print Book Series),The Bastard,Playing the Jack,The Dowry of Miss Lydia Clark (The Gresham Chronicles, Book 3),The Thackery T. Lambshead Pocket Guide to Eccentric and Discredited Diseases,The Hunchback of Notre Dame (Signet Classics),Whitney, My Love,ABC Murders,Horseplay: A Novel,Another View,G is for Gumshoe,Champagne for one: A Nero Wolfe mystery,Except for Me and Thee: A Companion to the Friendly Persuasion,Of Human Bondage,Source of Magic (Xanth Novels (Paperback)),Hunky: The Immigrant Experience,The Magic Barrel,Claudius, the god and his wife Messalina,Demian,The Scarlet Pimpernel,Fortune's Wheel (Sholan Alliance),The Lost World,Pharaoh (Kleopatra, Volume II),Playing Easy to Get,Black Girl Lost,The Last of the Honky-tonk Angels,On a Wicked Dawn (Cynster Novels),The enchanted castle,,Amish Children,The Invoker (Lawson Vampire Novels),Between Friends,Better Than I Know Myself,Man Who Was Thursday a Nightmare,Night, Mother,Cien Anos De Soledad,Jim Carrey -,The Last Juror,The devil's dictionary,,The Enduring Hemingway: An Anthology of a Lifetime in Literature.,Dragons of Winter Night :Dlance Chronicl,The Ghost of Hannah Mendes,If Nobody Speaks of Remarkable Things,The Golden Notebook,The King's Coat,The General's Daughter,The Sunne in Splendour,Cobra Event,The Reluctant Widow,The Book of Mirdad: The Strange Story of a Monastery Which Was Once Called the Ark,Round Robin (Elm Creek Quilts Series #2),Persuasion (Penguin Audio Classics),Meca and the Black Oracle,BEACH ROAD,Two From Galilee.,,Five Children and It,The Persian Boy,Japan Eow2 (Enchantment of the World, Second),Poltergeist: The Legacy 01: The Hidden Saint,Crooked House,LifeSupport,Hot in the City 2: Sin City,Secret Place,Mojave Crossing (Book 6 in the Sacketts Series),What Maisie Knew,Rough Wrangler, Tender Kisses,Always Outnumbered, Always Outgunned,Story of O,Temple of the Winds (Sword of Truth, Book 4),England's Perfect Hero (Lessons in Love),When Calls the Heart (Canadian West #1),Illusions: The Adventures of a Reluctant Messiah,Cracks in My Foundation: Bags, Trips, Make-up Tips, Charity, Glory, and the Darker Side of the Story,COURAGE TREE,Mystery Walk,Two's Enough Three's A Crowd,The Baby on the Way,Up Jumped the Devil (Darryl Billups Mystery),Postmortem,When Angels Fall,Identity Crisis,The Ezekiel Option (Political Thrillers Option #3),Tea Rose,Sisters and Lovers,Sojourn: The Dark Elf Trilogy, Part 3 (Forgotten Realms: The Legend of Drizzt, Book III),The Dead Zone,Vanishing Act,After the Abduction (Swanlea Spinsters),Peach,Hoopi Shoopi Donna,Under Fire - A Corps Novel,The Bell Jar (Great Books of the 20th Century),Tennis Shoe Adventure series: Tennis Shoes Among the Nephites,The Winter Mantle,Middle Passage,Ham on Rye,The Key to Rebecca,ALICE'S ADVENTURES IN WONDERLAND & THROUGH THE LOOKING GLASS and What Alice Found There (2 volumes),THE MASTER AND MARGARITA,Summer of Roses (Random House Large Print),Maisie Dobbs,Death By Dickens,A Land Remembered,Echo Park (SIGNED),The Year of the Death of Ricardo Reis,The Inn at Lake Devine: A Novel,The Perfect Bride,One,The Valley of Horses (Earth's Children Series),Alice's Adventures in Wonderland and Through the Looking Glass,Escape Clause,Flowers in the Blood: 2,Cat's paw,Star,The Annotated Wizard of Oz. The Wonderful Wizard of Oz,The Hammer of God
+client_1                           | EOF
+[Kclient_1 exited with code 0
+Gracefully stopping... (press Ctrl+C again to force)
+ Container filter_year_worker_q1-1  Stopping
+ Container reviews_counter_worker1  Stopping
+ Container filter_category_computers_worker1  Stopping
+ Container reviews_counter_worker4  Stopping
+ Container filter_year_worker_q3-0  Stopping
+ Container filter_year_worker_q3-1  Stopping
+ Container reviews_counter_worker5  Stopping
+ Container filter_category_worker2  Stopping
+ Container review_sentiment_worker3  Stopping
+ Container mean_review_sentiment_worker4  Stopping
+ Container mean_review_sentiment_worker0  Stopping
+ Container top10_worker4  Stopping
+ Container reviews_counter_worker2  Stopping
+ Container decade_counter_worker2  Stopping
+ Container filter_category_computers_worker2  Stopping
+ Container reviews_counter_worker3  Stopping
+ Container query_coordinator_worker  Stopping
+ Container filter_year_worker_q3-2  Stopping
+ Container decade_counter_worker1  Stopping
+ Container mean_review_sentiment_worker2  Stopping
+ Container filter_year_worker_q1-2  Stopping
+ Container review_sentiment_worker2  Stopping
+ Container top10_worker1  Stopping
+ Container top10_worker0  Stopping
+ Container filter_title_worker0  Stopping
+ Container filter_category_computers_worker0  Stopping
+ Container client_2  Stopping
+ Container review_sentiment_worker1  Stopping
+ Container top_10_worker_last0  Stopping
+ Container filter_review_quantity_worker0  Stopping
+ Container mean_review_sentiment_worker5  Stopping
+ Container mean_review_sentiment_worker1  Stopping
+ Container filter_year_worker_q1-0  Stopping
+ Container filter_title_worker1  Stopping
+ Container reviews_counter_worker0  Stopping
+ Container review_sentiment_worker0  Stopping
+ Container mean_review_sentiment_worker3  Stopping
+ Container decade_counter_worker0  Stopping
+ Container top10_worker3  Stopping
+ Container top10_worker2  Stopping
+ Container client_1  Stopping
+ Container percentile_worker0  Stopping
+ Container filter_category_worker0  Stopping
+ Container filter_title_worker2  Stopping
+ Container global_decade_counter_worker0  Stopping
+ Container filter_category_worker1  Stopping
+ Container client_1  Stopped
+ Container client_2  Stopped
+ Container server  Stopping
+ Container top10_worker2  Stopped
+ Container mean_review_sentiment_worker2  Stopped
+ Container filter_year_worker_q3-0  Stopped
+ Container reviews_counter_worker5  Stopped
+ Container reviews_counter_worker1  Stopped
+ Container review_sentiment_worker2  Stopped
+ Container reviews_counter_worker0  Stopped
+ Container filter_year_worker_q3-1  Stopped
+ Container reviews_counter_worker4  Stopped
+ Container review_sentiment_worker3  Stopped
+ Container top_10_worker_last0  Stopped
+ Container filter_title_worker2  Stopped
+ Container filter_category_computers_worker1  Stopped
+ Container mean_review_sentiment_worker4  Stopped
+ Container global_decade_counter_worker0  Stopped
+ Container review_sentiment_worker0  Stopped
+ Container filter_category_worker1  Stopped
+ Container filter_title_worker0  Stopped
+ Container decade_counter_worker1  Stopped
+ Container top10_worker1  Stopped
+ Container server  Stopped
+ Container filter_year_worker_q1-2  Stopped
+ Container decade_counter_worker0  Stopped
+ Container filter_year_worker_q1-0  Stopped
+ Container decade_counter_worker2  Stopped
+ Container filter_year_worker_q3-2  Stopped
+ Container mean_review_sentiment_worker3  Stopped
+ Container query_coordinator_worker  Stopped
+ Container rabbit  Stopping
+ Container percentile_worker0  Stopped
+ Container mean_review_sentiment_worker0  Stopped
+ Container mean_review_sentiment_worker1  Stopped
+ Container filter_review_quantity_worker0  Stopped
+ Container top10_worker4  Stopped
+ Container filter_category_computers_worker0  Stopped
+ Container filter_title_worker1  Stopped
+ Container top10_worker0  Stopped
+ Container filter_year_worker_q1-1  Stopped
+ Container mean_review_sentiment_worker5  Stopped
+ Container reviews_counter_worker2  Stopped
+ Container filter_category_worker2  Stopped
+ Container filter_category_computers_worker2  Stopped
+ Container review_sentiment_worker1  Stopped
+ Container filter_category_worker0  Stopped
+ Container reviews_counter_worker3  Stopped
+ Container top10_worker3  Stopped
+ Container rabbit  Stopped
+canceled

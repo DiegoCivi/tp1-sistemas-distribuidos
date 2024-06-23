@@ -418,6 +418,12 @@ class MultipleQueueWorker:
         If True, means that the EOF that arrived is a repeated EOF because
         that client already finished in the queue.
         """
+        if client_id not in self.clients_acummulated_queue_msg_ids[queue]:
+            # If we havent received any messages from the queue for that client
+            # and we reeceeive an EOF. It means that there where no results for
+            # thhat client in the query
+            return True
+        
         return self.clients_acummulated_queue_msg_ids[queue][client_id] == 'FINISHED'
 
     def need_to_persist(self, queue):
@@ -456,6 +462,7 @@ class MultipleQueueWorker:
 
             if self.client_is_active(client_id):
                 if not self.is_EOF_repeated(client_id, worker_id, queue):
+                    print(f'Me llego el mensaje [{body}] por la queue [{queue}]')
                     if not self.is_queue_finished(client_id, queue):
                         self.add_unacked_queue_EOF(client_id, method, queue)
                         if self.received_all_client_queue_EOFs(client_id, queue):

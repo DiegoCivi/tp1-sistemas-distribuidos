@@ -1,6 +1,7 @@
 import docker
 import time
-import os
+import subprocess
+from threading import Thread
 
 class BugFinder:
 
@@ -11,25 +12,49 @@ class BugFinder:
         self.q4_res = []
         self.q5_res = 0
 
+        self.containers = []
+        self.curr_thread = []
+
+
+    def run(self):
+        self.get_state()
+        for i in range(5):
+            self.run_iteration(i)
+    
+    def run_compose(self):
+        subprocess.run(["docker", "compose", "-f", "docker-compose-test.yaml", "up", "--build", "--remove-orphans"], check=True)
+
     def start_system(self):
-        os.system('bash run.sh')
+        # self.curr_thread = Thread(target=self.run_compose)
+        # self.curr_thread.start()
+        subprocess.run(["bash", "docker", "compose", "-f", "docker-compose-test.yaml", "up", "--build", "--remove-orphans", "&"], check=True)
+        
+        while not self.is_container_running('rabbit'):
+            time.sleep(2)
+
+    def stop_system(self):
+        subprocess.run(['bash', 'stop.sh'], check=True)
         time.sleep(30)
 
-
-    def run_iteration(self):
+    def run_iteration(self, id):
+        
         self.start_system()
 
-        self.get_results()
-
         while self.is_container_running('client_1') or self.is_container_running('client_2'):
+            for container in self.containers:
+                if not container.startswith('client') and not self.is_container_running(container):
+                    subprocess.run(['docker', 'restart', container])
             time.sleep(5)
 
         cl_q1, cl_q2, cl_q3, cl_q4, cl_q5 = self.get_client_results(1)
-        self.check_client_results(cl_q1, cl_q2, cl_q3, cl_q4, cl_q5)
+        ok = self.check_client_results(cl_q1, cl_q2, cl_q3, cl_q4, cl_q5)
 
         cl_q1, cl_q2, cl_q3, cl_q4, cl_q5 = self.get_client_results(2)
-        self.check_client_results(cl_q1, cl_q2, cl_q3, cl_q4, cl_q5)
+        ok = self.check_client_results(cl_q1, cl_q2, cl_q3, cl_q4, cl_q5)
 
+        self.curr_thread.join()
+        print(f"Iteration [{id}] OK")
+        self.stop_system()
     
     def is_container_running(self, container_name):
         """Verify the status of a container by it's name
@@ -46,24 +71,25 @@ class BugFinder:
             container = docker_client.containers.get(container_name)
         except docker.errors.NotFound as exc:
             print(f"Check container name!\n{exc.explanation}")
+            return False
         else:
             container_state = container.attrs["State"]
             return container_state["Status"] == RUNNING
 
-    def get_results(self):
+    def get_state(self):
         with open(f'./debug/results.txt', 'r') as f:
             lines = f.readlines()
             curr_q = 1
             for line in lines:
-                if line == '[QUERY 1]':
+                if line == '[QUERY 1]\n':
                     curr_q = 1
-                elif line == '[QUERY 2]':
+                elif line == '[QUERY 2]\n':
                     curr_q = 2
-                elif line == '[QUERY 3]':
+                elif line == '[QUERY 3]\n':
                     curr_q = 3
-                elif line == '[QUERY 4]':
+                elif line == '[QUERY 4]\n':
                     curr_q = 4
-                elif line == '[QUERY 5]':
+                elif line == '[QUERY 5]\n':
                     curr_q = 5
                 elif curr_q == 1:
                     self.q1_res.append(line)
@@ -78,6 +104,12 @@ class BugFinder:
                     titles_quantity =  len(line.split(','))
                     self.q5_res += titles_quantity
 
+        with open('./containers_list.txt') as f:
+            lines = f.readlines()
+
+            for line in lines:
+                self.containers.append(line.rstrip('\n'))
+
     def get_client_results(self, client_id):
         with open(f'./debug/results_{client_id}.txt', 'r') as f:
             lines = f.readlines()
@@ -89,15 +121,15 @@ class BugFinder:
 
             curr_q = 1
             for line in lines:
-                if line == '[QUERY 1]':
+                if line == '[QUERY 1]\n':
                     curr_q = 1
-                elif line == '[QUERY 2]':
+                elif line == '[QUERY 2]\n':
                     curr_q = 2
-                elif line == '[QUERY 3]':
+                elif line == '[QUERY 3]\n':
                     curr_q = 3
-                elif line == '[QUERY 4]':
+                elif line == '[QUERY 4]\n':
                     curr_q = 4
-                elif line == '[QUERY 5]':
+                elif line == '[QUERY 5]\n':
                     curr_q = 5
                 elif curr_q == 1:
                     cl_q1.append(line)
@@ -154,3 +186,6 @@ class BugFinder:
         if self.q5_res != cl_q5:
             print("ERROR ON Q5")
             raise Exception('Error')
+                
+bg = BugFinder()
+bg.run()

@@ -400,30 +400,37 @@ class ResultsCoordinator(MultipleQueueWorker):
         q3_results_with_params = lambda ch, method, properties, body: self.handle_data(method, body, Q3)
         q4_results_with_params = lambda ch, method, properties, body: self.handle_data(method, body, Q4)
         q5_results_with_params = lambda ch, method, properties, body: self.handle_data(method, body, Q5)
-        self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
-        self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
-        self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
-        self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+        self.middleware.receive_messages('QUEUE_q1_results' + '_' + self.id, q1_results_with_params)
+        self.middleware.receive_messages('QUEUE_q2_results' + '_' + self.id, q2_results_with_params)
+        self.middleware.receive_messages('QUEUE_q3_results' + '_' + self.id, q3_results_with_params)
+        self.middleware.receive_messages('QUEUE_q4_results' + '_' + self.id, q4_results_with_params)
+        self.middleware.receive_messages('QUEUE_q5_results' + '_' + self.id, q5_results_with_params)
         self.middleware.consume()
 
     def assemble_results(self, client_id):
         client_results_dict = self.clients_acum[client_id]
         results = []
         
-        results1 = Q1 + client_results_dict[Q1]
-        results.append(results1)
-        results2 = Q2 + client_results_dict[Q2]
-        results.append(results2)
-        results3 = Q3 + client_results_dict[Q3]
-        results.append(results3)
-        results4 = Q4 + client_results_dict[Q4]
-        results.append(results4)
-        results5 = Q5 + client_results_dict[Q5]
-        results.append(results5)
+        result1 = self.assemble_query_result(Q1, client_results_dict)
+        results.append(result1)
+        result2 = self.assemble_query_result(Q2, client_results_dict)
+        results.append(result2)
+        result3 = self.assemble_query_result(Q3, client_results_dict)
+        results.append(result3)
+        result4 = self.assemble_query_result(Q4, client_results_dict)
+        results.append(result4)
+        result5 = self.assemble_query_result(Q5, client_results_dict)
+        results.append(result5)
+
         
         results = '\n'.join(results)
         return results
+    
+    def assemble_query_result(self, query, client_results_dict):
+        result = query
+        if query in client_results_dict:
+            result += client_results_dict[query]
+        return result
 
     def send_results(self, client_id):
         # Create the result and add the client_id
