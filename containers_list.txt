@@ -1,8 +1,5 @@
 server
-query_coordinator_worker0
-container_coordinator_0
-container_coordinator_1
-container_coordinator_2
+query_coordinator_worker
 filter_category_computers_worker0
 filter_category_computers_worker1
 filter_category_computers_worker2

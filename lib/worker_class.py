@@ -462,7 +462,6 @@ class MultipleQueueWorker:
 
             if self.client_is_active(client_id):
                 if not self.is_EOF_repeated(client_id, worker_id, queue):
-                    print(f'Me llego el mensaje [{body}] por la queue [{queue}]')
                     if not self.is_queue_finished(client_id, queue):
                         self.add_unacked_queue_EOF(client_id, method, queue)
                         if self.received_all_client_queue_EOFs(client_id, queue):
