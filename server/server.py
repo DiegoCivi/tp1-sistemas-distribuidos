@@ -125,9 +125,9 @@ class ResultFordwarder:
         self.sockets_queue = sockets_queue
         self.log = log
         self.log_lock = log_lock
+        self.stop_worker = False
         self.middleware = None
         self.queue = queue.Queue()
-        
         try:
             middleware = Middleware(self.queue)
         except Exception as e:
@@ -138,6 +138,7 @@ class ResultFordwarder:
         self.results = Message("")
 
     def handle_signal(self, *args):
+        self.stop_worker = True
         self.queue.put('SIGTERM')
         try:
             if self.middleware != None:
@@ -162,14 +163,33 @@ class ResultFordwarder:
    
     def _receive_results(self):
         callback_with_params = lambda ch, method, properties, body: self.read_results(method, body)
-        self.middleware.receive_messages(RECEIVE_COORDINATOR_QUEUE, callback_with_params)
-        self.middleware.consume()
+        try:
+            self.middleware.receive_messages(RECEIVE_COORDINATOR_QUEUE, callback_with_params)
+            self.middleware.consume()
+        except Exception as e:
+                if self.stop_worker:
+                    print("Gracefully exited")
+                else:
+                    raise e
 
-    def _send_result(self, client_id, result_msg):
-        # If the id is not in our clients dictionary, it MUST be on the sockets_queue
+    def get_sockets(self):
         while not self.sockets_queue.empty():
             new_client_socket, new_client_id = self.sockets_queue.get()
             self.clients[new_client_id] = new_client_socket
+
+    def _send_result(self, client_id, result_msg):
+        # Get the sockets thet were on the queue
+        self.get_sockets()
+
+        if client_id not in self.clients:
+            # If the socket of the client we want to send the result is not yet
+            # available, it means the client couldn't reconnect yet.
+            # So we wait for 10 seconds. If the client didn't arrive after the wait,
+            # we discard his results.
+            self.get_sockets()
+
+        if client_id not in self.clients:
+            return
 
         client_socket = self.clients[client_id]
 

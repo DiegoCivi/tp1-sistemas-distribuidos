@@ -100,6 +100,7 @@ class DataCoordinator:
         self.middleware = middleware
 
     def handle_signal(self, *args):
+        self.stop = True
         self.queue.put('SIGTERM')
         if self.middleware != None:
             self.middleware.close_connection()
@@ -176,9 +177,15 @@ class DataCoordinator:
     def receive_and_fordward_data(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
 
-        # Read the data from the server, parse it and fordward it
-        self.middleware.receive_messages(RECEIVE_SERVER_QUEUE, callback_with_params)
-        self.middleware.consume()
+        try:
+            # Read the data from the server, parse it and fordward it
+            self.middleware.receive_messages(RECEIVE_SERVER_QUEUE, callback_with_params)
+            self.middleware.consume()
+        except Exception as e:
+            if self.stop:
+                print("Gracefully exited")
+            else:
+                raise e
 
     def send_to_pipelines(self, batch, client_id, msg_id):
         batch = self.drop_rows_with_missing_values(batch, ['Title', 'authors', 'categories', 'publishedDate'], client_id)
@@ -316,10 +323,11 @@ class ResultsCoordinator(MultipleQueueWorker):
         # This dict stores for each active client, the worker ids that sent an EOF in each query.
         self.queue_eof_worker_ids = {Q1: {}, Q2: {}, Q3: {}, Q4: {}, Q5: {}}
 
-        # For each query, there are different and especific filds we need for thr results
+        # For each query, there are different and especific filds we need for the results
         self.fields_to_print = {Q1: ['Title', 'authors', 'publisher'], Q2: ['authors'], Q3: ['Title', 'authors'], Q4: ['Title'], Q5: ['Title']}
 
     def handle_signal(self, *args):
+        self.stop = True
         self.queue.put('SIGTERM')
         if self.middleware != None:
             self.middleware.close_connection()
@@ -400,12 +408,18 @@ class ResultsCoordinator(MultipleQueueWorker):
         q3_results_with_params = lambda ch, method, properties, body: self.handle_data(method, body, Q3)
         q4_results_with_params = lambda ch, method, properties, body: self.handle_data(method, body, Q4)
         q5_results_with_params = lambda ch, method, properties, body: self.handle_data(method, body, Q5)
-        self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
-        self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
-        self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
-        self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
-        self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
-        self.middleware.consume()
+        try:
+            self.middleware.receive_messages('QUEUE_q1_results' + '_' +  self.id, q1_results_with_params)
+            self.middleware.receive_messages('QUEUE_q2_results' + '_' +  self.id, q2_results_with_params)
+            self.middleware.receive_messages('QUEUE_q3_results' + '_' +  self.id, q3_results_with_params)
+            self.middleware.receive_messages('QUEUE_q4_results' + '_' +  self.id, q4_results_with_params)
+            self.middleware.receive_messages('QUEUE_q5_results' + '_' +  self.id, q5_results_with_params)
+            self.middleware.consume()
+        except Exception as e:
+            if self.stop:
+                print("Gracefully exited")
+            else:
+                raise e
 
     def assemble_results(self, client_id):
         client_results_dict = self.clients_acum[client_id]
