@@ -2,4 +2,7 @@
 datasets/
 
 # Ignore the file with the .txts that create the workers
-persisted_data/ 
+persisted_data/
+
+# Ignore debug folder
+debug/
