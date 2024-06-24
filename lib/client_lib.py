@@ -54,9 +54,9 @@ class BooksAnalyzer:
                     print("Reconnecting to server...")
                     self._connect_server()
                     print("Reconnection succesful")
-
-                f.write(msg)
-                print(msg)
+                else:
+                    f.write(msg)
+                    print(msg)
 
             self.server_socket.close()
 

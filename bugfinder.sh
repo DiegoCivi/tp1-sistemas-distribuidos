@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -rf docker_logs/*
 
 # Primero leemos los contenedores que chequearemos cada cierto tiempo si murieron para ver si hay
 # que revivirlos
@@ -19,24 +20,21 @@ while IFS= read -r line; do
     lines+=("$line")
 done < "$FILE"
 
-
 COUNTER=0
 
 while true; do
 
     # Borra los archivos de los estados de la corrida anterior
     rm -rf persisted_data/*
+    rm -rf debug/workers_logs/*
 
     # Ejecuta el comando docker compose en segundo plano
     nohup docker compose -f docker-compose-test.yaml up --build --remove-orphans > "debug/docker_logs/docker_output_${COUNTER}.log" 2>&1 &
 
-    # Obtiene el PID del último proceso ejecutado
-    PID=$!
-
     # Verifica si el contenedor rabbit está en ejecución
     # Si esta en ejecucion es porq el sistema ya empezo
     while true; do
-        sleep 2
+        sleep 10
         if [ "$( docker container inspect -f '{{.State.Running}}' rabbit )" == "true" ]; then
             echo "rabbit is up and running"
             break
@@ -49,14 +47,16 @@ while true; do
     # Como el sistema ya empezo, los clientes tambien
     # Ahora esperamos a que los clientes mueran
     while true; do
-        sleep 2
+        sleep 5
         # Chequear cada contenedor para ver si esta vivo o no
         # Si no esta vivo, lo reiniciamos
         for line in "${lines[@]}"; do
             if [ line != client* ] && [ "$(docker inspect --format='{{.State.Running}}' $line)" == "false" ]; then
-                docker restart $line
+                docker stop $line
+                docker start $line
             fi
         done
+        sleep 5
 
         if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ] && [ "$(docker inspect --format='{{.State.Running}}' client_2)" == "false" ]; then
             echo "Both clients finished"
@@ -78,6 +78,11 @@ while true; do
         echo "Ejecucion [$COUNTER]: OK"
     else
         echo "Ejecucion [$COUNTER]: ¡¡ERROR!! con exit_code [$exit_code]"
+        nohup docker compose -f docker-compose-test.yaml stop -t 5 > "debug/docker_logs/docker_stop_${COUNTER}.log" 2>&1 &
+        nohup docker compose -f docker-compose-test.yaml down > "debug/docker_logs/docker_down_${COUNTER}.log" 2>&1 &
+
+        sleep 20
+        break
     fi
 
 
@@ -87,7 +92,5 @@ while true; do
     nohup docker compose -f docker-compose-test.yaml down > "debug/docker_logs/docker_down_${COUNTER}.log" 2>&1 &
 
     sleep 20
-    break
 
 done
-
