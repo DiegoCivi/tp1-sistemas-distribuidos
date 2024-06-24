@@ -13,13 +13,16 @@ class HealthChecker():
     for a little bit.
     """
 
-    def check_connection(self, container_id, port, conn, coords = False):
+    def check_connection(self, container_id, port, conn, coords = False, should_close = False):
         """
         Check the health of the connection with the container_id.
         """
         while True:
             try:
                 time.sleep(1)
+                if should_close and should_close.value:
+                    conn.close()
+                    break
                 print(f"Checking connection with container {container_id}", flush=True)
                 err = write_socket(conn, "HEALTH_CHECK")
                 if err:

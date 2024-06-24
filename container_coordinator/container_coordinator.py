@@ -183,6 +183,8 @@ class Connector(ProcessCreator):
                             raise err
                         print("Soy un coordinador mas, paso el id: ", host)
                         p = Process(target=self.initiate_connection, args=(f'container_coordinator_{self.id}', port, s , None, self.connections, False, str(id), total_len, leader))
+                        p.start()
+                        self.processes.append(p)
                             
                         if id > self.id:
                             leader.value = False
@@ -198,8 +200,6 @@ class Connector(ProcessCreator):
                                 except:
                                     print(f"Error sending election message to {name}, most probably died, skipping")
                                     continue
-                        p.start()
-                        self.processes.append(p)
                         break   
                     except Exception as e:
                         print(f"No se pudo conectar al coordinator {id}. Error: ", e)
@@ -264,6 +264,7 @@ class ContainerCoordinator(ProcessCreator):
         self.health_check_sockets = {}
         self.hc_socket = None
         self.hc_conn = None
+        self.should_close = self.manager.Value('b', False)
         self.leader = self.manager.Value('b', False)
 
     def im_last_coord(self):
@@ -317,9 +318,11 @@ class ContainerCoordinator(ProcessCreator):
             print(f"Could not connect to {identifier} for healthchecking")
             raise Exception(f"Could not connect to {identifier} for healthchecking")
         self.health_check_sockets[identifier] = hc_socket
-        health_checking_process = Process(target=health_checker.check_connection, args=(f'container_coordinator_{identifier}', HC_PORT, hc_socket, True))
+        health_checking_process = Process(target=health_checker.check_connection, args=(f'container_coordinator_{identifier}', HC_PORT, hc_socket, True, self.should_close.value))
+        self.health_checking_processes = []
+        self.health_checking_processes.append(health_checking_process)
         health_checking_process.start()
-        self.processes.append(health_checking_process)
+        
 
     def run(self):
         """
@@ -350,6 +353,7 @@ class ContainerCoordinator(ProcessCreator):
                     # I just became the leader, I have to start the healthchecking process with every other coordinator
                     print("I became the new leader, starting healthchecking with coords and workers")
                     # Start the healthchecking process with the other coordinators
+                    self.should_close.value = False
                     for name in self.coordinators_list:
                         current_coord_id = name[1]
                         if current_coord_id == self.id:
@@ -371,6 +375,7 @@ class ContainerCoordinator(ProcessCreator):
                 elif not self.leader.value and self.health_check_sockets: # I was the leader, but now I am not
                     # I have to stop the healthchecking process with the other coordinators
                     print("I am not the leader anymore, stopping healthchecking with coords and workers")
+                    self.should_close.value = True
                     for conn in self.health_check_sockets.values():
                         conn.close()
                     self.health_check_sockets = {}
@@ -386,6 +391,10 @@ class ContainerCoordinator(ProcessCreator):
                 print(f"Soy {self.id} y se me conecto: container_coordinator_{identifier}")
                 # Start the process responsible for receiving the data from the new connection
                 # if not self.leader.value:
+                # Put in the dict the identifier with the TCP socket, if it's already added, it will be replaced
+                self.add_connection(self.connections, identifier, conn)
+                p = Process(target=self.initiate_connection, args=(f'container_coordinator_{self.id}', self.coords_port, conn, None, self.connections, False, identifier, len(self.coordinators_list), self.leader))
+                p.start()
                 if int(identifier) > self.id:
                     self.leader.value = False
                     # If the new connection has a bigger id I have to begin a new election
@@ -401,15 +410,10 @@ class ContainerCoordinator(ProcessCreator):
                         except:
                             print(f"Error sending election message to {name}, most probably died, skipping")
                             continue
-                p = Process(target=self.initiate_connection, args=(f'container_coordinator_{self.id}', self.coords_port, conn, None, self.connections, False, identifier, len(self.coordinators_list), self.leader))
-                # if self.leader.value:
-                #     self.create_health_check(identifier)
+                if self.leader.value:
+                    self.create_health_check(identifier, health_checker=HealthChecker())
 
-
-                # Put in the dict the identifier with the TCP socket, if it's already added, it will be replaced
-                self.add_connection(self.connections, identifier, conn)
                 # if not self.leader.value:
-                p.start()
                 self.processes.append(p)
                 # self.processes.append(p)
 
