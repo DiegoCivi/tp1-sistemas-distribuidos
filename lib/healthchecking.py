@@ -13,7 +13,7 @@ class HealthChecker():
     for a little bit.
     """
 
-    def check_connection(self, container_id, port, conn, coords = False, should_close = False):
+    def check_connection(self, container_id, port, conn, coords = False, should_close = None):
         """
         Check the health of the connection with the container_id.
         """
@@ -86,13 +86,13 @@ class HealthCheckHandler():
         self.conn = conn
 
     def handle_health_check(self):
-        time.sleep(1)
         print("Listening for incoming connections")
         if not self.conn:
             self.conn, addr = self.socket.accept()
             print("Received connection from {addr}, beginning healthcheck handling", addr)
         while True:
             try:
+                time.sleep(1)
                 msg, err = read_socket(self.conn)
                 if err:
                     print("Error reading from socket: ", err)
@@ -129,7 +129,6 @@ class HealthCheckHandler():
         dead_connections = []
         # Bully leader election start  
         for name, conn in connections.items():
-            # name = name.split('_')[-1]
             if not name.isdigit() or name == self_id or int(name) < int(self_id):
                 continue
             try:
