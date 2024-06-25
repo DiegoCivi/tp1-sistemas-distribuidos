@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm -rf docker_logs/*
+rm -rf debug/docker_logs/*
 
 # Primero leemos los contenedores que chequearemos cada cierto tiempo si murieron para ver si hay
 # que revivirlos
@@ -58,7 +58,8 @@ while true; do
         done
         sleep 5
 
-        if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ] && [ "$(docker inspect --format='{{.State.Running}}' client_2)" == "false" ]; then
+        #if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ] && [ "$(docker inspect --format='{{.State.Running}}' client_2)" == "false" ]; then
+        if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ]; then
             echo "Both clients finished"
             break
         else

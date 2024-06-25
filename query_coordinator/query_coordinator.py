@@ -332,6 +332,13 @@ class ResultsCoordinator(MultipleQueueWorker):
         if self.middleware != None:
             self.middleware.close_connection()
 
+        print("Results: ", self.clients_acum)
+        print("Unacked eofs: ", self.clients_unacked_queue_eofs)
+        print("Acum msg ids: ", self.clients_acummulated_queue_msg_ids)
+        print("Unacked msgs: ", self.unacked_queue_msgs)
+        print("Eof worker ids: ", self.queue_eof_worker_ids)
+        print("Eof quantities: ", self.eof_quantity_queues)
+
     def run(self):
         self.initialize_state()
         self.manage_results()

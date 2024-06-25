@@ -71,7 +71,7 @@ class FilterWorker(NoStateWorker):
 class JoinWorker(MultipleQueueWorker):
 
     def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, log, max_unacked_msgs):
-        self.acum = True
+        self.acum = False
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
 
@@ -115,6 +115,12 @@ class JoinWorker(MultipleQueueWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        
+        # print("Unacked eofs: ", self.clients_unacked_queue_eofs)
+        # print("Acum msg ids: ", self.clients_acummulated_queue_msg_ids)
+        # print("Unacked msgs: ", self.unacked_queue_msgs)
+        # print("Eof worker ids: ", self.queue_eof_worker_ids)
+        # print("Eof quantities: ", self.eof_quantity_queues)
 
     def remove_active_client(self, client_id): # TODO: I think the msg_ids accumulated can also be erased
         if client_id in self.leftover_reviews:
@@ -177,7 +183,7 @@ class JoinWorker(MultipleQueueWorker):
         for row_dictionary in batch:
             title = row_dictionary['Title']
 
-            if client_id in self.clients_acummulated_queue_msg_ids[TITLES_QUEUE] and self.clients_acummulated_queue_msg_ids[TITLES_QUEUE][client_id] == 'FINISHED' and title not in self.clients_acum[client_id]:
+            if client_id in self.clients_acummulated_queue_msg_ids[TITLES_QUEUE] and (self.clients_acummulated_queue_msg_ids[TITLES_QUEUE][client_id] == 'FINISHED' or len(self.clients_unacked_queue_eofs[TITLES_QUEUE][client_id]) == self.eof_quantity_queues[TITLES_QUEUE]) and title not in self.clients_acum[client_id]:
                 # If all the titles already arrived and the title of this review has been already filtered,
                 # then this review has to be ignored.
                 continue
@@ -221,12 +227,21 @@ class JoinWorker(MultipleQueueWorker):
         return title_rating
 
     def check_leftover_reviews(self, client_id):
+        if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
+            self.middleware.send_message(f'DEBUG', f'eNTRE A CHEQUEAR')
         if client_id in self.leftover_reviews:
+            if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
+                self.middleware.send_message(f'DEBUG', f'HABIA [{len(self.leftover_reviews[client_id])}] REVIEWS PARA AGREGAR')
             self.add_review(client_id, self.leftover_reviews[client_id])
 
     def send_results(self, client_id):
+        if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
+            self.middleware.send_message(f'DEBUG', f'ANTES DE CHEQUEAR LOS LEFTOVERS')
         # Check if there are leftover reviews that need to be added to the counter_dict
         self.check_leftover_reviews(client_id)
+
+        if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
+            self.middleware.send_message(f'DEBUG', f'YA CHEQUEE LEFTOVER REVIEWS')
 
         # Send batch
         batch_size = 0
@@ -258,6 +273,9 @@ class JoinWorker(MultipleQueueWorker):
             batch_msg_id = self.worker_id + '_' + str(msg_id)
             serialized_message = serialize_message([serialize_dict(batch)], client_id, batch_msg_id)
             self.middleware.send_message(self.output_name, serialized_message)
+
+        if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
+            self.middleware.send_message(f'DEBUG', f'YA mandee los batches. ahora mando el eof')
 
         # Finally, send the EOF
         eof_msg = create_EOF(client_id, self.worker_id)
