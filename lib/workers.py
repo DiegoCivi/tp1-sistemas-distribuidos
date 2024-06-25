@@ -173,6 +173,23 @@ class JoinWorker(MultipleQueueWorker):
 
         self.add_review(client_id, data)
 
+    def ignore_review(self, client_id, title):
+        """
+        If all the titles already arrived and the title of this review has been already filtered,
+        then this review has to be ignored. We have two ways of knowing if the titles queue already finished.
+        1. Check if the clients_acummulated_queue_msg_ids dict for that queue has been set to FINISHED
+        2. Check if we received all the EOFS for that queue.
+        """
+        titles_finished = client_id in self.clients_acummulated_queue_msg_ids[TITLES_QUEUE] and self.clients_acummulated_queue_msg_ids[TITLES_QUEUE][client_id] == 'FINISHED'
+        reached_titles_eofs = client_id in self.clients_unacked_queue_eofs[TITLES_QUEUE] and len(self.clients_unacked_queue_eofs[TITLES_QUEUE][client_id]) == self.eof_quantity_queues[TITLES_QUEUE]
+        is_title_filtered = title not in self.clients_acum[client_id]
+
+        return (titles_finished or reached_titles_eofs) and is_title_filtered
+
+    #client_id in self.clients_acummulated_queue_msg_ids[TITLES_QUEUE] and 
+    # (self.clients_acummulated_queue_msg_ids[TITLES_QUEUE][client_id] == 'FINISHED' or len(self.clients_unacked_queue_eofs[TITLES_QUEUE][client_id]) == self.eof_quantity_queues[TITLES_QUEUE]) 
+    # and title not in self.clients_acum[client_id]
+
     def add_review(self, client_id, batch):
         """
         Add a review to a title. However as titles an reviews arrive from different queues, it can happen
@@ -183,9 +200,7 @@ class JoinWorker(MultipleQueueWorker):
         for row_dictionary in batch:
             title = row_dictionary['Title']
 
-            if client_id in self.clients_acummulated_queue_msg_ids[TITLES_QUEUE] and (self.clients_acummulated_queue_msg_ids[TITLES_QUEUE][client_id] == 'FINISHED' or len(self.clients_unacked_queue_eofs[TITLES_QUEUE][client_id]) == self.eof_quantity_queues[TITLES_QUEUE]) and title not in self.clients_acum[client_id]:
-                # If all the titles already arrived and the title of this review has been already filtered,
-                # then this review has to be ignored.
+            if self.ignore_review(client_id, title):
                 continue
             elif title not in self.clients_acum[client_id]:
                 # If the titles didnt finished to arrive and the title of this review is not in the counter_dict,

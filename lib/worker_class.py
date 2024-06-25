@@ -374,9 +374,9 @@ class NoStateWorker(Worker):
             ###################
             self.manage_message(client_id, data, method, msg_id)
             ###################
-            # if get_rand(4000) == 5:
-            #     debug_log(self.input_name, 'DESPUES manage_message')
-            #     raise Exception("Fallo para debugear")
+            if get_rand(4000) == 5:
+                debug_log(self.input_name, 'DESPUES manage_message')
+                raise Exception("Fallo para debugear")
             ###################
         
         self.middleware.ack_message(method)
@@ -440,9 +440,9 @@ class NoStateWorker(Worker):
 
     def _create_batches(self, batch, next_workers_quantity):
         ###################
-        # if get_rand(4000) == 5:
-        #     debug_log(self.input_name, 'INICIO _create_batches')
-        #     raise Exception("Fallo para debugear")
+        if get_rand(4000) == 5:
+            debug_log(self.input_name, 'INICIO _create_batches')
+            raise Exception("Fallo para debugear")
         ###################
         workers_batches = {}
         for row in batch:
@@ -456,9 +456,9 @@ class NoStateWorker(Worker):
     
     def manage_message(self, client_id, data, method, msg_id=NO_ID):
         ###################
-        # if get_rand(4000) == 5:
-        #     debug_log(self.input_name, 'INICIO manage_message')
-        #     raise Exception("Fallo para debugear")
+        if get_rand(4000) == 5:
+            debug_log(self.input_name, 'INICIO manage_message')
+            raise Exception("Fallo para debugear")
         ###################
         if not self.client_is_active(client_id):
             ###################
@@ -478,9 +478,9 @@ class NoStateWorker(Worker):
             return
         
         ###################
-        # if get_rand(4000) == 5:
-        #     debug_log(self.input_name, 'ANTES create_and_send_batches')
-        #     raise Exception("Fallo para debugear")
+        if get_rand(4000) == 5:
+            debug_log(self.input_name, 'ANTES create_and_send_batches')
+            raise Exception("Fallo para debugear")
         ###################
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
@@ -599,9 +599,11 @@ class MultipleQueueWorker:
         """
         if client_id not in self.clients_acummulated_queue_msg_ids[queue]:
             # If we havent received any messages from the queue for that client
-            # and we reeceeive an EOF. It means that there where no results for
-            # thhat client in the query
-            return True
+            # and we receive an EOF. It means that there where no results for
+            # that client in the query
+            if self.acum:
+                self.middleware.send_message('DEBUG_QC', f'NO HABIA LLEGADO NINGUN MENSAJE PARA [{queue}]')
+            return False
         
         return self.clients_acummulated_queue_msg_ids[queue][client_id] == 'FINISHED'
 
@@ -641,28 +643,38 @@ class MultipleQueueWorker:
 
             if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                 self.middleware.send_message(f'DEBUG', f'LLEGO EL EOF: [{body}]')
+            elif self.acum:
+                self.middleware.send_message(f'DEBUG_QC', f'LLEGO EL EOF: [{body}]')
             
             
             if self.client_is_active(client_id):
 
                 if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                     self.middleware.send_message(f'DEBUG', f'EL CLIENT [{client_id}] ESTA ACTIVO')
+                elif self.acum:
+                    self.middleware.send_message(f'DEBUG_QC', f'EL CLIENT [{client_id}] ESTA ACTIVO')
 
                 if not self.is_EOF_repeated(client_id, worker_id, queue):
 
                     if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                         self.middleware.send_message(f'DEBUG', f'EL EOF NO ESTA REPETIDO')
+                    elif self.acum:
+                        self.middleware.send_message(f'DEBUG_QC', f'EL EOF NO ESTA REPETIDO')
 
                     if not self.is_queue_finished(client_id, queue):
 
                         if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                             self.middleware.send_message(f'DEBUG', f'LA COLA [{queue}] NO ESTABA TERMINADA')
+                        elif self.acum:
+                            self.middleware.send_message(f'DEBUG_QC', f'LA COLA [{queue}] NO ESTABA TERMINADA')
 
                         self.add_unacked_queue_EOF(client_id, method, queue)
                         if self.received_all_client_queue_EOFs(client_id, queue):
 
                             if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                                 self.middleware.send_message(f'DEBUG', f'YA LLEGARON TODOS LOS EOFS PARA LA COLA [{queue}]')
+                            elif self.acum:
+                                self.middleware.send_message(f'DEBUG_QC', f'YA LLEGARON TODOS LOS EOFS PARA LA COLA [{queue}]')
 
                             # Persist on disk the acums and the received msg_ids
                             self.persist_state()
@@ -672,18 +684,24 @@ class MultipleQueueWorker:
 
                                 if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                                     self.middleware.send_message(f'DEBUG', f'YA LLEGARON TODOS LOS EOFS')
+                                elif self.acum:
+                                    self.middleware.send_message(f'DEBUG_QC', f'YA LLEGARON TODOS LOS EOFS')
 
                                 # Send the acum of the client and the EOF
                                 self.send_results(client_id)
 
                                 if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                                     self.middleware.send_message(f'DEBUG', f'SE MANDARON LOS RESULTADOS')
+                                elif self.acum:
+                                    self.middleware.send_message(f'DEBUG_QC', f'SE MANDARON LOS RESULTADOS')
                                 # Remove the acum of the client since it is not 
                                 # necessary anymore
                                 self.remove_active_client(client_id)
 
                                 if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
                                     self.middleware.send_message(f'DEBUG', f'SE BORRO EL CLIENTE')
+                                elif self.acum:
+                                    self.middleware.send_message(f'DEBUG_QC', f'SE BORRO EL CLIENTE')
                             else:
                                 self.finish_queue(client_id, queue)
 
