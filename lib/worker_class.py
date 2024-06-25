@@ -307,7 +307,6 @@ class NoStateWorker(Worker):
         desired_data = self.apply_filter(data)
         if not desired_data:
             return
-
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
     def apply_filter(self, data):
@@ -422,14 +421,14 @@ class MultipleQueueWorker:
         """
         if client_id not in self.clients_acummulated_queue_msg_ids[queue]:
             # If we havent received any messages from the queue for that client
-            # and we reeceeive an EOF. It means that there where no results for
-            # thhat client in the query
-            return True
+            # and we receive an EOF. It means that there where no results for
+            # that client in the query
+            return False
         
         return self.clients_acummulated_queue_msg_ids[queue][client_id] == 'FINISHED'
 
     def need_to_persist(self, queue):
-        return len(self.unacked_queue_msgs[queue]) == self.max_unacked_msgs # TODO: Make this a parameter for the worker! WARINIG: it always has to be lower than the prefetch count
+        return len(self.unacked_queue_msgs[queue]) == self.max_unacked_msgs
     
     def add_acummulated_message(self, client_id, method, msg_id, queue):
         if client_id not in self.clients_acummulated_queue_msg_ids[queue]:

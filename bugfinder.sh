@@ -58,8 +58,7 @@ while true; do
         done
         sleep 5
 
-        #if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ] && [ "$(docker inspect --format='{{.State.Running}}' client_2)" == "false" ]; then
-        if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ]; then
+        if [ "$(docker inspect --format='{{.State.Running}}' client_1)" == "false" ] && [ "$(docker inspect --format='{{.State.Running}}' client_2)" == "false" ]; then
             echo "Both clients finished"
             break
         else

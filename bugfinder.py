@@ -21,11 +21,11 @@ class BugFinder:
         if not ok:
             return 1
 
-        # cl_q1, cl_q2, cl_q3, cl_q4, cl_q5 = self.get_client_results(2)
-        # ok = self.check_client_results(cl_q1, cl_q2, cl_q3, cl_q4, cl_q5)
+        cl_q1, cl_q2, cl_q3, cl_q4, cl_q5 = self.get_client_results(2)
+        ok = self.check_client_results(cl_q1, cl_q2, cl_q3, cl_q4, cl_q5)
 
-        # if not ok:
-        #     return 1
+        if not ok:
+            return 1
 
         return 0
 
