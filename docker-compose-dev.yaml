@@ -46,6 +46,28 @@ services:
     volumes:
       - ./datasets:/datasets
 
+  query_coordinator_worker0:
+    container_name: query_coordinator_worker0
+    build:
+      context: .
+      dockerfile: ./query_coordinator/query_coordinator_worker.dockerfile
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+    environment:
+      - WORKERS_QUANTITY=1
+      - WORKERS_Q1=3,QUEUE_Q1|filter_category_worker
+      - WORKERS_Q2=3,QUEUE_Q2|decade_counter_worker
+      - WORKERS_Q3_TITLES=3,QUEUE_Q3|filter_year_worker
+      - WORKERS_Q3_REVIEWS=6,QUEUE_Q3|reviews_counter_worker_reviews
+      - WORKERS_Q5_TITLES=3,QUEUE_Q5|filter_category_worker
+      - WORKERS_Q5_REVIEWS=4,QUEUE_Q5|review_sentiment_worker
+      - EOF_QUANTITY=3,1,1,1,1
+      - HC_PORT=4321
+      - ADDRESS=query_coordinator_worker0
+      - PORT=4321
+
   container_coordinator_0:
     container_name: container_coordinator_0
     build:
@@ -96,5 +118,3 @@ services:
       - ADDRESS=container_coordinator_2
       - COORDS_PORT=1234
       - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
-
-  

@@ -99,6 +99,7 @@ with open("docker-compose-dev.yaml", "w") as outfile, open(container_config, "w"
     outfile.write("      - PORT=12345\n")
     outfile.write("      - LISTEN_BACKLOG=1\n")
     outfile.write("      - HC_PORT=4321\n")
+    outfile.write("      - RABBITMQ_LOGS=-1\n")
     outfile.write("\n")
     outfile.write("  client:\n")
     outfile.write("    container_name: client\n")

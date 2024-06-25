@@ -13,7 +13,7 @@ class HealthChecker():
     for a little bit.
     """
 
-    def check_connection(self, container_id, port, conn, coords = False, should_close = None):
+    def check_connection(self, container_id, port, conn, coords = False, should_close = None, health_check_sockets = None):
         """
         Check the health of the connection with the container_id.
         """
@@ -23,6 +23,10 @@ class HealthChecker():
                 if should_close and should_close.value:
                     conn.close()
                     break
+                if not conn and not coords:
+                    conn = self.reconnect_with_backoff(container_id, port)
+                    if health_check_sockets:
+                        health_check_sockets[container_id] = conn
                 print(f"Checking connection with container {container_id}", flush=True)
                 err = write_socket(conn, "HEALTH_CHECK")
                 if err:
@@ -36,12 +40,12 @@ class HealthChecker():
                     continue
                 else:
                     raise Exception(f"Unexpected message from container: {msg}", flush=True)
-            except:
-                print(f"REINICIO DE CONTAINER {container_id} POR TIMEOUT O ERROR", flush=True, end="\n")
+            except Exception as e:
+                print(f"REINICIO DE CONTAINER {container_id} POR TIMEOUT O ERROR, EL ERROR FUE {e}", flush=True, end="\n")
                 self.restart_container(container_id)
-                if coords: # Coordinators already have their own reconnection mechanism
-                    break
                 conn = self.reconnect_with_backoff(container_id, port)
+                if health_check_sockets:
+                    health_check_sockets[container_id] = conn
     
     def restart_container(self, container_id):
         """
@@ -96,13 +100,11 @@ class HealthCheckHandler():
                 msg, err = read_socket(self.conn)
                 if err:
                     print("Error reading from socket: ", err)
-                    break
+                    raise err
                 if msg == "HEALTH_CHECK":
                     write_socket(self.conn, "ACK")
             except:
                 self.conn, addr = self.socket.accept()
-            
-                
 
     def handle_health_check_with_timeout(self, timeout, self_id, connections):
         print("Listening for incoming connections")
