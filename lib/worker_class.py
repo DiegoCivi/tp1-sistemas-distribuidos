@@ -5,20 +5,6 @@ import random
 ACUM_KEY = 'acum'
 ACUM_MSG_IDS = 'acummulated_msgs'
 
-
-#####################################################################################################
-def get_rand(stop):
-    return random.randrange(0, stop)
-
-def debug_log(file, text):
-    file = './debug/workers_logs/' + file + '.txt'
-    with open(file, 'a') as f:
-        f.write(text)
-        f.write('\n')
-#####################################################################################################
-
-
-
 #### WORKER THAT HANDLES 1 QUEUE #### 
 
 class Worker:
@@ -118,43 +104,13 @@ class Worker:
             client_id = get_EOF_client_id(body)                                 # The id of the active client
             client_eof_workers_ids = self.eof_workers_ids.get(client_id, set()) # A set with the ids of the workers that already sent their EOF for this client
             
-            ###################
-            if get_rand(10000) == 5:
-                debug_log(self.input_name, 'ANTES is_EOF_repeated')
-                raise Exception("Fallo para debugear")
-            ###################
             if not self.is_EOF_repeated(worker_id, client_id, client_eof_workers_ids):
-                ###################
-                if get_rand(10000) == 5:
-                    debug_log(self.input_name, 'ENTRE is_EOF_repeated Y received_all_clients_EOFs')
-                    raise Exception("Fallo para debugear")
-                ###################
                 if self.received_all_clients_EOFs(client_id):
-                    ###################
-                    if get_rand(10000) == 5:
-                        debug_log(self.input_name, 'ANTES add_unacked_EOF')
-                        raise Exception("Fallo para debugear")
-                    ###################
                     self.add_unacked_EOF(client_id, method)
-                    ###################
-                    if get_rand(10000) == 5:
-                        debug_log(self.input_name, 'ANTES manage_EOF')
-                        raise Exception("Fallo para debugear")
-                    ###################
                     self.manage_EOF(body, method, client_id)
-                    ###################
-                    if get_rand(10000) == 5:
-                        debug_log(self.input_name, 'ANTES delete_client_EOF_counter')
-                        raise Exception("Fallo para debugear")
-                    ###################
                     self.delete_client_EOF_counter(client_id)
                     return
                 else:
-                    ###################
-                    if get_rand(10000) == 5:
-                        debug_log(self.input_name, 'ANTES client_is_active 1')
-                        raise Exception("Fallo para debugear")
-                    ###################
                     if self.client_is_active(client_id):
                         # Add the EOF delivery tag to the list of unacked EOFs
                         self.add_unacked_EOF(client_id, method)
@@ -196,32 +152,12 @@ class StateWorker(Worker):
             self.ack_messages()
 
     def handle_message(self, method, client_id, msg_id, data):
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO handle_message')
-            raise Exception("Fallo para debugear")
-        ###################
         if not self.is_message_repeated(client_id, msg_id):
-            ###################
-            if get_rand(10000) == 5:
-                debug_log(self.input_name, 'DESPUES is_message_repeated')
-                raise Exception("Fallo para debugear")
-            ###################
             self.manage_message(client_id, data, method, msg_id)
-            ###################
-            if get_rand(10000) == 5:
-                debug_log(self.input_name, 'DESPUES manage_message')
-                raise Exception("Fallo para debugear")
-            ###################
         else:
             self.middleware.ack_message(method)
 
     def is_message_repeated(self, client_id, msg_id):
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO is_message_repeated')
-            raise Exception("Fallo para debugear")
-        ###################
         if client_id in self.clients_acummulated_msgs:
             return msg_id in self.clients_acummulated_msgs[client_id]
         return False
@@ -230,29 +166,9 @@ class StateWorker(Worker):
         raise Exception('Function needs to be implemented')
 
     def manage_EOF(self, body, method, client_id):
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO manage_EOF')
-            raise Exception("Fallo para debugear")
-        ###################
         self.send_results(client_id)
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO send_results')
-            raise Exception("Fallo para debugear")
-        ###################
         self.ack_EOFs(client_id)
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO ack_EOFs')
-            raise Exception("Fallo para debugear")
-        ###################
         self.remove_active_client(client_id)
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO remove_active_client')
-            raise Exception("Fallo para debugear")
-        ###################
 
     def send_results(self, client_id):
         raise Exception('Function needs to be implemented')
@@ -294,42 +210,12 @@ class StateWorker(Worker):
         self.unacked_msgs = set()
             
     def manage_message(self, client_id, data, method, msg_id):
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'INICIO manage_message')
-            raise Exception("Fallo para debugear")
-        ###################
         self.acummulate_message(client_id, data)
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'DESPUES acummulate_message')
-            raise Exception("Fallo para debugear")
-        ###################
 
         self.add_acummulated_msg_id(client_id, method, msg_id)
-        ###################
-        if get_rand(10000) == 5:
-            debug_log(self.input_name, 'DESPUES add_acummulated_msg_id')
-            raise Exception("Fallo para debugear")
-        ###################
         if self.need_to_persist():
-            ###################
-            if get_rand(10000) == 5:
-                debug_log(self.input_name, 'DESPUES need_to_persist')
-                raise Exception("Fallo para debugear")
-            ###################
             self.persist_acum()
-            ###################
-            if get_rand(10000) == 5:
-                debug_log(self.input_name, 'DESPUES persist_acum')
-                raise Exception("Fallo para debugear")
-            ###################
             self.ack_messages()
-            ###################
-            if get_rand(10000) == 5:
-                debug_log(self.input_name, 'DESPUES ack_messages')
-                raise Exception("Fallo para debugear")
-            ###################
 
     def add_acummulated_msg_id(self, client_id, msg_method, msg_id):
         """
@@ -361,23 +247,8 @@ class NoStateWorker(Worker):
         pass
 
     def handle_message(self, method, client_id, msg_id, data):
-        ###################
-        if get_rand(4000) == 5:
-            debug_log(self.input_name, 'ANTES is_message_repeated')
-            raise Exception("Fallo para debugear")
-        ###################
         if not self.is_message_repeated(client_id, msg_id):
-            ###################
-            if get_rand(4000) == 5:
-                debug_log(self.input_name, 'DESPUES is_message_repeated')
-                raise Exception("Fallo para debugear")
-            ###################
             self.manage_message(client_id, data, method, msg_id)
-            ###################
-            # if get_rand(4000) == 5:
-            #     debug_log(self.input_name, 'DESPUES manage_message')
-            #     raise Exception("Fallo para debugear")
-            ###################
         
         self.middleware.ack_message(method)
 
@@ -406,31 +277,11 @@ class NoStateWorker(Worker):
         self.log.persist(self.active_clients)
 
     def manage_EOF(self, body, method, client_id):
-        ###################
-        if get_rand(4000) == 5:
-            debug_log(self.input_name, 'ANTES send_EOFs')
-            raise Exception("Fallo para debugear")
-        ###################
         self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
-        ###################
-        if get_rand(4000) == 5:
-            debug_log(self.input_name, 'ANTES ack_EOFs')
-            raise Exception("Fallo para debugear")
-        ###################
         self.ack_EOFs(client_id)
-        ###################
-        if get_rand(4000) == 5:
-            debug_log(self.input_name, 'ANTES remove_active_client')
-            raise Exception("Fallo para debugear")
-        ###################
         self.remove_active_client(client_id)
 
     def _send_batches(self, workers_batches, output_queue, client_id, msg_id):
-        ###################
-        if get_rand(4000) == 5:
-            debug_log(self.input_name, 'INICIO _send_batches')
-            raise Exception("Fallo para debugear")
-        ###################
         for worker_id, batch in workers_batches.items():
             serialized_batch = serialize_batch(batch)
             new_msg_id = self.worker_id + '_' + msg_id
@@ -439,11 +290,6 @@ class NoStateWorker(Worker):
             self.middleware.send_message(worker_queue, serialized_message)
 
     def _create_batches(self, batch, next_workers_quantity):
-        ###################
-        # if get_rand(4000) == 5:
-        #     debug_log(self.input_name, 'INICIO _create_batches')
-        #     raise Exception("Fallo para debugear")
-        ###################
         workers_batches = {}
         for row in batch:
             hashed_title = hash_title(row['Title'])
@@ -455,33 +301,13 @@ class NoStateWorker(Worker):
         return workers_batches
     
     def manage_message(self, client_id, data, method, msg_id=NO_ID):
-        ###################
-        # if get_rand(4000) == 5:
-        #     debug_log(self.input_name, 'INICIO manage_message')
-        #     raise Exception("Fallo para debugear")
-        ###################
         if not self.client_is_active(client_id):
-            ###################
-            if get_rand(4000) == 5:
-                debug_log(self.input_name, 'DESPUES client_is_active')
-                raise Exception("Fallo para debugear")
-            ###################
             self.add_new_active_client(client_id)
-            ###################
-            if get_rand(4000) == 5:
-                debug_log(self.input_name, 'DESPUES add_new_active_client')
-                raise Exception("Fallo para debugear")
-            ###################
         
         desired_data = self.apply_filter(data)
         if not desired_data:
             return
-        
-        ###################
-        # if get_rand(4000) == 5:
-        #     debug_log(self.input_name, 'ANTES create_and_send_batches')
-        #     raise Exception("Fallo para debugear")
-        ###################
+
         self.create_and_send_batches(desired_data, client_id, self.output_name, self.next_workers_quantity, msg_id)
 
     def apply_filter(self, data):
@@ -530,9 +356,6 @@ class MultipleQueueWorker:
         self.clients_unacked_queue_eofs[queue][client_id].add(eof_method.delivery_tag)
 
     def ack_queue_EOFs(self, client_id, queue):
-        if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-            eofs = ','.join([str(x) for x in self.clients_unacked_queue_eofs[queue][client_id]])
-            self.middleware.send_message(f'DEBUG', f'HAGO ACK DE TODOS LOS EOFS DE LA COLA [{queue}] que son [{eofs}]')
         unacked_eofs = self.clients_unacked_queue_eofs[queue][client_id]
         for tag in unacked_eofs:
             self.middleware.ack_message(tag)
@@ -638,52 +461,23 @@ class MultipleQueueWorker:
         if is_EOF(body):
             client_id = get_EOF_client_id(body)
             worker_id = get_EOF_worker_id(body)
-
-            if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                self.middleware.send_message(f'DEBUG', f'LLEGO EL EOF: [{body}]')
-            
             
             if self.client_is_active(client_id):
-
-                if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                    self.middleware.send_message(f'DEBUG', f'EL CLIENT [{client_id}] ESTA ACTIVO')
-
                 if not self.is_EOF_repeated(client_id, worker_id, queue):
-
-                    if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                        self.middleware.send_message(f'DEBUG', f'EL EOF NO ESTA REPETIDO')
-
                     if not self.is_queue_finished(client_id, queue):
-
-                        if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                            self.middleware.send_message(f'DEBUG', f'LA COLA [{queue}] NO ESTABA TERMINADA')
-
                         self.add_unacked_queue_EOF(client_id, method, queue)
                         if self.received_all_client_queue_EOFs(client_id, queue):
-
-                            if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                                self.middleware.send_message(f'DEBUG', f'YA LLEGARON TODOS LOS EOFS PARA LA COLA [{queue}]')
 
                             # Persist on disk the acums and the received msg_ids
                             self.persist_state()
                             # Ack last received messages of the queue
                             self.ack_last_queue_messages(queue)
                             if self.received_all_EOFs(client_id):
-
-                                if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                                    self.middleware.send_message(f'DEBUG', f'YA LLEGARON TODOS LOS EOFS')
-
                                 # Send the acum of the client and the EOF
                                 self.send_results(client_id)
-
-                                if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                                    self.middleware.send_message(f'DEBUG', f'SE MANDARON LOS RESULTADOS')
                                 # Remove the acum of the client since it is not 
                                 # necessary anymore
                                 self.remove_active_client(client_id)
-
-                                if not self.acum and self.input_titles_name == 'QUEUE_Q3|reviews_counter_worker_titles_1':
-                                    self.middleware.send_message(f'DEBUG', f'SE BORRO EL CLIENTE')
                             else:
                                 self.finish_queue(client_id, queue)
 
