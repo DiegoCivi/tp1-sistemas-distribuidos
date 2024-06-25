@@ -255,6 +255,7 @@ class ContainerCoordinator(ProcessCreator):
         self.coords_port = coords_port
         # This list of tuples has the address of the other coordinators with their id [(host1, port1, id1), (host2, port2, id2), ...]
         self.coordinators_list = coordinators_list
+        self.health_checking_processes = []
         # List to have all the created processes to join them later
         self.processes = []
         self.health_check_sockets = {}
@@ -315,7 +316,6 @@ class ContainerCoordinator(ProcessCreator):
             raise Exception(f"Could not connect to {identifier} for healthchecking")
         self.health_check_sockets[identifier] = hc_socket
         health_checking_process = Process(target=health_checker.check_connection, args=(f'container_coordinator_{identifier}', HC_PORT, hc_socket, True, self.should_close.value))
-        self.health_checking_processes = []
         self.health_checking_processes.append(health_checking_process)
         health_checking_process.start()
         
@@ -365,17 +365,22 @@ class ContainerCoordinator(ProcessCreator):
                             continue
 
                     # Also I will connect to the workers and start the healthchecking process with them
-                    p = Process(target=self.create_connector, args=(self.id, self.connections, [], self.containers_list, False, False, self.leader, self.should_close))
-                    p.start()
-                    self.processes.append(p)
+                    # p = Process(target=self.create_connector, args=(self.id, self.connections, [], self.containers_list, False, False, self.leader, self.should_close))
+                    # p.start()
+                    # self.processes.append(p)
                 elif not self.leader.value and self.health_check_sockets: # I was the leader, but now I am not
                     # I have to stop the healthchecking process with the other coordinators
                     print("I am not the leader anymore, stopping healthchecking with coords and workers")
                     self.should_close.value = True
                     for conn in self.health_check_sockets.values():
                         conn.close()
+                    for p in self.health_checking_processes:
+                        p.terminate()
+                    self.health_checking_processes = []
                     self.health_check_sockets = {}
-
+                    print("Killed all HC processes")
+                print(f'Soy lider: {self.leader.value}')
+                print(f'Valor should close: {self.should_close.value}')
                 self._socket.settimeout(1)
                 print("Entre")
                 conn, addr = self._socket.accept()
@@ -410,7 +415,6 @@ class ContainerCoordinator(ProcessCreator):
                             continue
                 if self.leader.value:
                     self.create_health_check(identifier, health_checker=HealthChecker())
-
                 # if not self.leader.value:
                 self.processes.append(p)
                 # self.processes.append(p)
