@@ -32,9 +32,3 @@ def read_csv_batch(file_reader, threshold=200):
     return batch
 
 
-"""
-CAMBIOS PARA DESP MIRAR SI REALMENTE VAN:
-    - En la funcion is_queue_finished() de MultipleQueueWorker se agrego un if. Chequear si la logica esta bien y se puede agreegar
-    - Se cambio assemble_results() en ResultCoordinator. Esto si se puede agregar ya que solo se fija si es que no lelgo ningun res de esa query
-"""
-
