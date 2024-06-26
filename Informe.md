@@ -1,6 +1,5 @@
 # <span style="color:#3d24c9"> Arquitectura TP2 </span>
-En este informe se detalla la arquitectura del sistema distribuido que se encargará de hacer las consultas para el sistema de recomendación de libros de Amazon, todo mientras es tolerante a fallas de los nodos. Tenemos como fin que se trate de un sistema escalable por lo que se ha utilizado una arquitectura de pipe and filter, con lo que cada nodo del sistema anidará múltiples workers que realizarán en paralelo la tarea de un filtro.  
-También hemos decidido que en el sistema las consultas se harán _X (secuencial/paralelo)_ por las ventajas y desventajas plasmadas en la siguiente tabla:
+En este informe se detalla la arquitectura del sistema distribuido que se encargará de hacer las consultas para el sistema de recomendación de libros de Amazon, todo mientras es tolerante a fallas de los nodos. Tenemos como fin que se trate de un sistema escalable por lo que se ha utilizado una arquitectura de pipe and filter, con lo que cada nodo del sistema anidará múltiples workers que realizarán en paralelo la tarea de un filtro. 
 
 ## <span style="color:#6e49ad"> Integrantes </span>
 - <span style="color:#09ff05"> Diego Civini </span>
@@ -14,7 +13,58 @@ En el TP1 teniamos una estructura en donde varios workers de un mismo stage leia
 <p align="center"><img src="./images/PipelineQ1.png" /> </p>
 En la Q1 ahora tenemos 9 colas (y esto porq hay 9 workers porque si hubiese mas, habria mas colas) donde antes habria solo 3 colas (sin importar la cantidad de workers). 
 
-Con esta nueva estructura, hay que tener una manera de saber a que worker mandar el mensaje y como manejar los EOFs. Para entender esto, tenemos los siguiente ejemplos:
+Con esta nueva estructura, hay que tener una manera de saber a que worker mandar el mensaje y como manejar los EOFs. Para entender esto, tenemos los siguiente ejemplos.
+
+#### <span style="color:#9669f0"> Comunicacion con multiple colas </span>
+Supongamos una situación donde tenemos 2 filtros los cuales están compuestos por múltiples workers cada uno, a modo de ejemplo usaremos 3 workers.
+Incialmente tendremos una configuración en la que si bien cada worker
+sabe el nombre de su cola de entrada, no sabe el nombre de la de salida.
+<p align="center"><img src="./images/ComunicacionParte1.png" /> </p>  
+
+Llega un mensaje a la cola del worker 1 del filtro A, entonces se dispone a ver a quien debe mandárselo.
+Utilizando configuraciones iniciales sabe que debe mandarlo a la cola de del filtro B, pero... ¿A qué worker?
+<p align="center"><img src="./images/ComunicacionParte2.png" /> </p> 
+
+Para poder decidir a qué worker se lo va a mandar de manera que la carga se encuentre bien
+distribuida entre ellos necesitamos una manera de que se considere el módulo o cantidad de
+workers que se tiene en la siguiente capa de workers y que la decisión de uno entre ellos sea
+igual de probable que el resto. ¡Para eso sirven las funciones de hashing! 
+Entonces para poder saber a qué worker mandará el mensaje decide un número que estará 
+en el rango de ID's de los workers del siguiente filtro utilizando una función de hashing  a
+la que se le puede especificar este módulo. Con eso tendríamos una distribución correcta
+ de los mensajes enviados.
+Asumamos que el hasheo de la primary key de la información nos dió 2 a fines de ejemplificar.
+<p align="center"><img src="./images/ComunicacionParte3.png" /> </p> 
+
+Una vez que sabe el ID del worker al mandará el mensaje, concatena ese ID para completar el nombre
+de la cola que se utilizará para la comunicación mediante el middleware y envía el mensaje a esa cola.
+Luego el siguiente filtro repetirá todo este procedimiento de la misma manera hasta llegar al final del
+pipeline y realizar una comunicación de muchos a uno (explicación en otro apartado)
+<p align="center"><img src="./images/ComunicacionParte4.png" /> </p>
+
+#### <span style="color:#9669f0"> Manejo de EOFs con multiple colas </span>
+Para el caso de la recepción e interpretación de los EOF's o finalización de una operación,
+el cliente del que venga el EOF en medio de la comunicación es indistinto a menos que se trate
+de un acumulador de resultados que requiera de un estado acumulado para poder retornar el 
+resultado final a ese cliente. Por el momento nos centraremos en explicar como funciona el
+mecanismo de EOF para múltiples workers con una cola cada uno.
+Se trata de un mecanismo bastante simple; Supongamos la configuración detallada arriba, 
+con dos filtros de 3 workers cada uno que procesan la información que les llega.
+<p align="center"><img src="./images/ManejoEOFsParte1.png" /> </p>  
+
+Cuando le llega un eof a cualquiera sea el worker de un filtro, este necesita esperar a cierta cantidad de EOF, correspondiente
+a la cantidad de  workers del filtro pasado (configurado automáticamente de antemano). Entonces para poder enviar el EOF al
+siguiente filtro primero debe contar esa cantidad de mensajes EOF  de manera que hasta que todos los workers del filtro anterior
+no hayan terminado, no terminarán todos los workers de mi filtro actual.
+Ahora entra un EOF al Worker 1 del Filtro A, asumiendo que este filtro solo necesita 1 EOF para terminar, empieza el proceso de 
+mandar los EOFs al siguiente filtro, entonces deposita un EOF en cada cola del siguiente filtro
+<p align="center"><img src="./images/ManejoEOFsParte2.png" /> </p> 
+
+De manera análoga llegan EOFs tanto al worker 2 como el 3 hasta que cada uno mandó 
+un EOF a cada worker del siguiente filtro, completando los EOFs esperados por ese 
+filtro en cada worker y permitiendo que se repita este proceso.
+<p align="center"><img src="./images/ManejoEOFsParte3.png" /> </p>
+
 
 ## <span style="color:#9669f0"> Diagrama de robustez </span>
 A continuación podemos observar el diagrama de robustez que nos indica cómo se relacionan las entidades del sistema y la manera de comunicación entre ellas mediante boundaries, controllers y entities.  
