@@ -397,11 +397,6 @@ class ContainerCoordinator(ProcessCreator):
 
             except Exception as e:
                 print("Error: ", e)
-            
-        # We wait for the end of the children processes
-        self.close_resources()
-        hc_socket.close()
-        self.hc_conn.close()
 
 # HOW TO START A CONTAINER AGAIN:
 # To start again a container, the command "docker start <container_name>" can be used.

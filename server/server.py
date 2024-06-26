@@ -127,8 +127,8 @@ class Server:
                 p.start()
                 self.clients[client_id] = p
     
-def initiate_data_fordwarder(socket, client_id):
-    data_fordwarder = DataFordwarder(socket, client_id)
+def initiate_data_fordwarder(socket, client_id, log, log_lock):
+    data_fordwarder = DataFordwarder(socket, client_id, log, log_lock)
     data_fordwarder.handle_client()
 
 def initiate_result_fordwarder(sockets_queue, log, log_lock):

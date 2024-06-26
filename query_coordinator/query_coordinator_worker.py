@@ -14,7 +14,7 @@ def main():
     log_data = os.getenv('LOG_DATA')
     log_results = os.getenv('LOG_RESULTS')
     max_unacked_msgs = int(os.getenv('MAX_UNACKED_MSGS'))
-    eof_quantity = sum(map(int, eof_quantity))
+    eof_quantity = list(map(int, eof_quantity))
     address = os.getenv('ADDRESS')
     port = int(os.getenv('PORT'))
 

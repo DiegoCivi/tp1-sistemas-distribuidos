@@ -11,6 +11,22 @@ class Worker:
     """
     This worker receives data from only one queue.
     """
+    def handle_signal(self, *args):
+        print("Gracefully exit")
+        self.queue.put('SIGTERM')
+        self.stop_worker = True
+        if self.middleware != None:
+            self.middleware.close_connection()
+
+        self.health_check.terminate()
+        self.health_check.join()
+        self.health_check.close()
+        try:
+            self.hc_socket.close()
+        except:
+            # If the closing fails, it means it has been already closed
+            # in the HealthCheckHandler process
+            pass
 
     def _create_batches(self, batch, next_workers_quantity):
         raise Exception('Function needs to be implemented')
@@ -326,6 +342,23 @@ class MultipleQueueWorker:
         self.clients_acummulated_queue_msg_ids = {}
         self.eof_quantity_queues = {}
         self.unacked_queue_msgs = {}
+
+    def handle_signal(self, *args):
+        print("Gracefully exit")
+        self.queue.put('SIGTERM')
+        self.stop_worker = True
+        if self.middleware != None:
+            self.middleware.close_connection()
+
+        self.health_check.terminate()
+        self.health_check.join()
+        self.health_check.close()
+        try:
+            self.hc_socket.close()
+        except:
+            # If the closing fails, it means it has been already closed
+            # in the HealthCheckHandler process
+            pass
 
 
     def is_EOF_repeated(self, client_id, worker_id, queue):

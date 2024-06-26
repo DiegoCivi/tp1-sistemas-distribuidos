@@ -50,10 +50,10 @@ class FilterWorker(NoStateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -68,13 +68,21 @@ class FilterWorker(NoStateWorker):
         self.stop_worker = False
         self.active_clients = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+        
+    #     try:
+        
+    #     except:
+    #         pass
+
+    #     self.health_check.terminate()
+    #     self.health_check.join()
+    #     self.health_check.close()
 
     def set_filter_type(self, type, filtering_function, value):
         self.filtering_function = filtering_function
@@ -120,10 +128,10 @@ class JoinWorker(MultipleQueueWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -138,13 +146,13 @@ class JoinWorker(MultipleQueueWorker):
 
         self.stop_worker = False
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     self.health_check.join()
 
     def remove_active_client(self, client_id): # TODO: I think the msg_ids accumulated can also be erased
         if client_id in self.leftover_reviews:
@@ -360,10 +368,10 @@ class DecadeWorker(NoStateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -382,13 +390,13 @@ class DecadeWorker(NoStateWorker):
 
         self.active_clients = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     self.health_check.join()
 
     def _create_batches(self, batch, next_workers_quantity):
         """
@@ -428,10 +436,10 @@ class GlobalDecadeWorker(StateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -446,13 +454,13 @@ class GlobalDecadeWorker(StateWorker):
         self.clients_acummulated_msgs = {}
         self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     self.health_check.join()
 
     def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
@@ -512,10 +520,10 @@ class PercentileWorker(StateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -530,13 +538,13 @@ class PercentileWorker(StateWorker):
         self.clients_acummulated_msgs = {}
         self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     self.health_check.join()
 
     def acummulate_message(self, client_id, data):
         if client_id not in self.clients_acum:
@@ -596,10 +604,10 @@ class TopNWorker(StateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -615,14 +623,14 @@ class TopNWorker(StateWorker):
         self.unacked_msgs = set()
 
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        print(self.eof_counter)
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     print(self.eof_counter)
+    #     self.health_check.join()
 
     def send_results(self, client_id):
         if not self.last:
@@ -695,10 +703,10 @@ class ReviewSentimentWorker(NoStateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -712,13 +720,13 @@ class ReviewSentimentWorker(NoStateWorker):
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.active_clients = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     self.health_check.join()
 
     def apply_filter(self, data):
         return calculate_review_sentiment(data)
@@ -747,10 +755,10 @@ class FilterReviewsWorker(StateWorker):
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
         #
@@ -766,13 +774,13 @@ class FilterReviewsWorker(StateWorker):
         self.clients_acummulated_msgs = {}
         self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-        self.health_check.join()
+    # def handle_signal(self, *args):
+    #     print("Gracefully exit")
+    #     self.queue.put('SIGTERM')
+    #     self.stop_worker = True
+    #     if self.middleware != None:
+    #         self.middleware.close_connection()
+    #     self.health_check.join()
 
     def send_results(self, client_id):
         # Send the results to the query 4 and the QueryCoordinator

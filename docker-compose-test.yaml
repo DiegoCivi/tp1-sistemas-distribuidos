@@ -692,7 +692,7 @@ services:
       - ACCUMULATOR=True
       - ITERATION_QUEUE=QUEUE_Q4|iteration_top10
       - NEXT_WORKERS_QUANTITY=1
-      - LOG=top10_worker_q4
+      - LOG=top10_last_worker_q4
     volumes:
       - ./persisted_data:/persisted_data
       - ./debug:/debug

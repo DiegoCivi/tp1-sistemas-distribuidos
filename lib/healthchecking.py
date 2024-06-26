@@ -70,13 +70,13 @@ class HealthChecker():
             try:
                 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 conn.settimeout(5)
-                print(f"Reconnecting to {(container_id, port)}", flush=True)
+                # print(f"Reconnecting to {(container_id, port)}", flush=True)
                 conn.connect((container_id, port))
                 print(f"Reconnected to {container_id}:{port}", flush=True)
                 return conn
             except Exception as e:
                 wait_time = (2 ** retries) + random.uniform(0, 1)
-                print(f"Reconnection failed (attempt {retries + 1}/{max_retries}): {e}. Retrying in {wait_time:.2f} seconds.")
+                # print(f"Reconnection failed (attempt {retries + 1}/{max_retries}): {e}. Retrying in {wait_time:.2f} seconds.")
                 conn.close()  # Ensure the socket is closed before retrying
                 time.sleep(wait_time)
                 retries += 1
