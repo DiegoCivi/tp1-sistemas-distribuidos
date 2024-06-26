@@ -1,4 +1,35 @@
 services:
+
+  container_coordinator_0:
+    container_name: container_coordinator_0
+    build:
+      context: .
+      dockerfile: ./container_coordinator/container_coordinator.dockerfile
+    environment:
+      - ID=0
+      - COORDINATORS_LIST=container_coordinator_0,12340,0,container_coordinator_1,12341,1,container_coordinator_2,12342,2
+      - LISTEN_BACKLOG=10
+
+  container_coordinator_1:
+    container_name: container_coordinator_1
+    build:
+      context: .
+      dockerfile: ./container_coordinator/container_coordinator.dockerfile
+    environment:
+      - ID=1
+      - COORDINATORS_LIST=container_coordinator_0,12340,0,container_coordinator_1,12341,1,container_coordinator_2,12342,2
+      - LISTEN_BACKLOG=10
+
+  container_coordinator_2:
+    container_name: container_coordinator_2
+    build:
+      context: .
+      dockerfile: ./container_coordinator/container_coordinator.dockerfile
+    environment:
+      - ID=2
+      - COORDINATORS_LIST=container_coordinator_0,12340,0,container_coordinator_1,12341,1,container_coordinator_2,12342,2
+      - LISTEN_BACKLOG=10
+
   rabbitmq:
     container_name: rabbit
     build:
@@ -22,7 +53,6 @@ services:
     links:
       - rabbitmq
     environment:
-      - PYTHONUNBUFFERED=1
       - HOST=server
       - PORT=12345
       - LISTEN_BACKLOG=1

@@ -5,6 +5,11 @@ import signal
 import queue
 from logger import Logger
 from worker_class import NoStateWorker, StateWorker, MultipleQueueWorker
+import socket
+import os
+from multiprocessing import Process
+from communications import read_socket, write_socket
+from healthchecking import HealthCheckHandler
 
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
@@ -41,6 +46,17 @@ class FilterWorker(NoStateWorker):
         self.next_workers_quantity = next_workers_quantity
         self.clients_unacked_eofs = {}
         self.last_clients_msg = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -58,6 +74,7 @@ class FilterWorker(NoStateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def set_filter_type(self, type, filtering_function, value):
         self.filtering_function = filtering_function
@@ -99,8 +116,20 @@ class JoinWorker(MultipleQueueWorker):
         self.leftover_reviews = {}
         self.clients_acum = {}
         self.query = query
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
+
         try:
             middleware = Middleware(self.queue)
         except Exception as e:
@@ -115,6 +144,7 @@ class JoinWorker(MultipleQueueWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def remove_active_client(self, client_id): # TODO: I think the msg_ids accumulated can also be erased
         if client_id in self.leftover_reviews:
@@ -326,6 +356,17 @@ class DecadeWorker(NoStateWorker):
         self.stop_worker = False
         self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.eof_quantity = eof_quantity
         self.eof_counter = {}
@@ -347,6 +388,7 @@ class DecadeWorker(NoStateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def _create_batches(self, batch, next_workers_quantity):
         """
@@ -379,9 +421,20 @@ class GlobalDecadeWorker(StateWorker):
         self.iteration_queue = iteration_queue
         self.next_workers_quantity = next_workers_quantity
         self.eof_counter = {}
-        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.eof_workers_ids = {}                       # This dict stores for each active client, the workers ids of the eofs received.
         self.clients_unacked_eofs = {}
         self.clients_acum = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -399,6 +452,7 @@ class GlobalDecadeWorker(StateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
         for worker_id, batch in workers_batches.items():
@@ -453,8 +507,18 @@ class PercentileWorker(StateWorker):
         self.eof_counter = {}
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.clients_unacked_eofs = {}
-        # self.titles_with_sentiment = {}
         self.clients_acum = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -472,6 +536,7 @@ class PercentileWorker(StateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def acummulate_message(self, client_id, data):
         if client_id not in self.clients_acum:
@@ -527,6 +592,17 @@ class TopNWorker(StateWorker):
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.clients_unacked_eofs = {}
         self.clients_acum = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -546,6 +622,7 @@ class TopNWorker(StateWorker):
         if self.middleware != None:
             self.middleware.close_connection()
         print(self.eof_counter)
+        self.health_check.join()
 
     def send_results(self, client_id):
         if not self.last:
@@ -614,6 +691,17 @@ class ReviewSentimentWorker(NoStateWorker):
         self.eof_counter = {}
         self.clients_unacked_eofs = {}
         self.last_clients_msg = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -630,6 +718,7 @@ class ReviewSentimentWorker(NoStateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def apply_filter(self, data):
         return calculate_review_sentiment(data)
@@ -653,8 +742,18 @@ class FilterReviewsWorker(StateWorker):
         self.eof_counter = {}
         self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
         self.clients_unacked_eofs = {}
-        # self.filtered_client_titles = {}
         self.clients_acum = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -673,6 +772,7 @@ class FilterReviewsWorker(StateWorker):
         self.stop_worker = True
         if self.middleware != None:
             self.middleware.close_connection()
+        self.health_check.join()
 
     def send_results(self, client_id):
         # Send the results to the query 4 and the QueryCoordinator

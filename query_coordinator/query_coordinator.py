@@ -5,6 +5,8 @@ from logger import Logger
 import signal
 import queue
 from multiprocessing import Process
+from healthchecking import HealthCheckHandler
+import socket
 
 TITLES_MODE = 'titles'
 REVIEWS_MODE = 'reviews'
@@ -38,7 +40,7 @@ EOF_TYPES = 'eof_types'
 
 class QueryCoordinator:
 
-    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, log_data, log_results, max_unacked_msgs):
+    def __init__(self, workers_q1, workers_q2, workers_q3_titles, workers_q3_reviews, workers_q5_titles, workers_q5_reviews, eof_quantity, address, port, log_data, log_results, max_unacked_msgs):
         """
         Initializes the query coordinator with the title parse mode
         """
@@ -53,13 +55,30 @@ class QueryCoordinator:
         self.processes = []
         self.max_unacked_msgs = max_unacked_msgs   
 
-    def handle_signal(self, *args):
-        self.stop_coordinator = True
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((address, port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check_handler_p = Process(target=self.health_checker.handle_health_check)
+        self.health_check_handler_p.start()
+        self.middleware = None
+        self.queue = queue.Queue()
+        try:
+            middleware = Middleware(self.queue)
+        except Exception as e:
+            raise e
+        self.middleware = middleware    
 
+    def handle_signal(self, *args):
         for p in self.processes:
             p.terminate()
             p.join()
-        
+            p.close()
+
+        self.health_check_handler_p.terminate()    
+        self.health_check_handler_p.join()
+        self.health_check_handler_p.close()
+
 
     def run(self):
         data_coordinator_p = Process(target=self.initiate_data_coordinator, args=())

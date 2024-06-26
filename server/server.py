@@ -7,6 +7,7 @@ import signal
 import queue
 from multiprocessing import Process, Queue, Lock
 from logger import Logger
+from healthchecking import HealthCheckHandler
 
 
 SEND_COORDINATOR_QUEUE = 'query_coordinator'
@@ -26,7 +27,7 @@ STATE_INDEX = 1
 
 class Server:
 
-    def __init__(self, host, port, listen_backlog, log):
+    def __init__(self, host, port, health_check_port, listen_backlog, log):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
         self.clients = {}
@@ -35,16 +36,29 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog)
-        self.clients_accepted = 1
+        self.clients_accepted = 0
         self.active_clients = {}                            # Key = client ip, Value = (client id, client state)
         self.sockets_queue = Queue()
         self.log = Logger(log, '0')
         self.log_lock = Lock()
 
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((host, health_check_port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
+        self.health_check_handler_p = Process(target=self.health_checker.handle_health_check)
+        self.health_check_handler_p.start()
+
     def handle_signal(self, *args):
         self._stop_server = True
         self.join_processes()
         self._server_socket.close()
+        try:
+            self.hc_socket.close()
+        except:
+            # If the closing fails, it means it has been already closed
+            # in the HealthCheckHandler process
+            pass
 
     def join_processes(self):
         for process in self.clients.values():
@@ -55,6 +69,10 @@ class Server:
         self.results_p.terminate()
         self.results_p.join()
         self.results_p.close()
+
+        self.health_check_handler_p.terminate()
+        self.health_check_handler_p.join()
+        self.health_check_handler_p.close()
 
     def persist_state(self):
         curr_state = {}
@@ -71,6 +89,7 @@ class Server:
         if prev_state != None:
             self.active_clients = prev_state[CLIENTS]
             self.clients_accepted = prev_state[CLIENTS_QUANTITY]
+
 
     def run(self):
         # Get the previous state if there was one
@@ -107,9 +126,9 @@ class Server:
                 p = Process(target=initiate_data_fordwarder, args=(conn, client_id, self.log, self.log_lock,))
                 p.start()
                 self.clients[client_id] = p
-
-def initiate_data_fordwarder(socket, client_id, log, log_lock):
-    data_fordwarder = DataFordwarder(socket, client_id, log, log_lock)
+    
+def initiate_data_fordwarder(socket, client_id):
+    data_fordwarder = DataFordwarder(socket, client_id)
     data_fordwarder.handle_client()
 
 def initiate_result_fordwarder(sockets_queue, log, log_lock):
@@ -291,6 +310,7 @@ class DataFordwarder:
         
         self.message_parser.clean()
         print(f'CLIENT_{self.id} HAS FINISHED')
+        self.message_parser.clean()
 
     def handle_signal(self, *args):
         print("Gracefully exit")
@@ -304,11 +324,15 @@ class DataFordwarder:
             pass
         if self._client_socket != None:
             self._client_socket.close()
+        if self._server_socket != None:
+            self._server_socket.shutdown(socket.SHUT_RDWR)
+        
+
 
 
 def main():    
-    HOST, PORT, LISTEN_BACKLOG, LOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv('LISTEN_BACKLOG'), os.getenv('LOG')
-    server = Server(HOST, int(PORT), int(LISTEN_BACKLOG), LOG)
+    HOST, PORT, HEALTH_CHECK_PORT, LISTEN_BACKLOG, LOG = os.getenv('HOST'), os.getenv('PORT'), os.getenv("HC_PORT"), os.getenv('LISTEN_BACKLOG'), os.getenv('LOG')
+    server = Server(HOST, int(PORT), int(HEALTH_CHECK_PORT), int(LISTEN_BACKLOG), LOG)
     server.run()
 
 main()
