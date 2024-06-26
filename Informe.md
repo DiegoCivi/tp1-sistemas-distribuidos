@@ -65,6 +65,19 @@ un EOF a cada worker del siguiente filtro, completando los EOFs esperados por es
 filtro en cada worker y permitiendo que se repita este proceso.
 <p align="center"><img src="./images/ManejoEOFsParte3.png" /> </p>
 
+#### <span style="color:#9669f0"> Server </span>
+El server es nuestro boundary object, y con el agregado de multiples clientes se le hicieron unos cambios. Por cada conexion de un cliente nuevo, el server lanza un proceso llamado DataFordwarder que se encarga de recibir los datos del cliente por TCP y pasarselos por una cola de Rabbit a el QueryCoordinator. Ademas de eso lanza un proceso llamado ResultFordwarder, este es unico y se encarga de recibir los resultados desde el QueryCoordinator y enviarselos al cliente correspondiente.
+
+<p align="center"><img src="./images/EstructuraServer.png" /> </p>
+
+#### <span style="color:#9669f0"> QueryCoordinator </span>
+Del lado del QueryCoordinator pasa algo similar. Recordemos que este worker se encarga de parsear los datos de los clientes dependiendo de lo que necesite cada pipeline y en la parte de resultados, se encarga re juntar todos los resultados del cliente, formatearlos debidamente y enviarlos. Para esto, ambas funcionalidades se dividen en 2 procesos. El ResultsCoordinator y el DataCoordinator.
+
+<p align="center"><img src="./images/EstructuraQueryCoordinator.png" /> </p>
+
+#### <span style="color:#9669f0"> Conexion Server-QueryCoordinator </span>
+Asi se veria como estan conectados ambos workers para la entrada y salida de datos del sistema.
+
 
 ## <span style="color:#9669f0"> Diagrama de robustez </span>
 A continuación podemos observar el diagrama de robustez que nos indica cómo se relacionan las entidades del sistema y la manera de comunicación entre ellas mediante boundaries, controllers y entities.  
