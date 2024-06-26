@@ -17,22 +17,24 @@ class HealthChecker():
         """
         Check the health of the connection with the container_id.
         """
+        self.conn = conn
+        self.cont_id = container_id
         while True:
             try:
                 time.sleep(1)
                 if should_close and should_close.value:
-                    conn.close()
+                    self.conn.close()
                     break
                 if not conn and not coords:
-                    conn = self.reconnect_with_backoff(container_id, port)
+                    self.conn = self.reconnect_with_backoff(container_id, port)
                     if health_check_sockets:
-                        health_check_sockets[container_id] = conn
+                        health_check_sockets[container_id] = self.conn
                 print(f"Checking connection with container {container_id}", flush=True)
-                err = write_socket(conn, "HEALTH_CHECK")
+                err = write_socket(self.conn, "HEALTH_CHECK")
                 if err:
                     print(f"Error in container {container_id}, err was: {err}", flush=True)
                     raise err
-                msg, err = read_socket(conn, timeout=5)
+                msg, err = read_socket(self.conn, timeout=5)
                 if err:
                     print(f"Error in container {container_id}, err was: {err}", flush=True)
                     raise err
@@ -43,9 +45,9 @@ class HealthChecker():
             except Exception as e:
                 print(f"REINICIO DE CONTAINER {container_id} POR TIMEOUT O ERROR, EL ERROR FUE {e}", flush=True, end="\n")
                 self.restart_container(container_id)
-                conn = self.reconnect_with_backoff(container_id, port)
+                self.conn = self.reconnect_with_backoff(container_id, port)
                 if health_check_sockets:
-                    health_check_sockets[container_id] = conn
+                    health_check_sockets[container_id] = self.conn
     
     def restart_container(self, container_id):
         """
@@ -80,8 +82,9 @@ class HealthChecker():
                 retries += 1
         raise Exception(f"Failed to reconnect to {container_id} after {max_retries} attempts")
     
-    def close(self, conn):
-        conn.close()
+    def handle_signal(self, signum, frame):
+        print(f"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa {self.cont_id}")
+        self.conn.close()
 
 class HealthCheckHandler():
 
@@ -92,8 +95,11 @@ class HealthCheckHandler():
     def handle_health_check(self):
         print("Listening for incoming connections")
         if not self.conn:
-            self.conn, addr = self.socket.accept()
-            print("Received connection from {addr}, beginning healthcheck handling", addr)
+            try:
+                self.conn, addr = self.socket.accept()
+                print("Received connection from {addr}, beginning healthcheck handling", addr)
+            except:
+                print("Error accepting initial connection")
         while True:
             try:
                 time.sleep(1)
@@ -102,8 +108,12 @@ class HealthCheckHandler():
                     print("Error reading from socket: ", err)
                     raise err
                 if msg == "HEALTH_CHECK":
-                    write_socket(self.conn, "ACK")
+                    err = write_socket(self.conn, "ACK")
+                    if err:
+                        print("Error writing to socket: ", err)
+                        raise err
             except:
+                print("Error reading from socket, listening for new connections")
                 self.conn, addr = self.socket.accept()
 
     def handle_health_check_with_timeout(self, timeout, self_id, connections):

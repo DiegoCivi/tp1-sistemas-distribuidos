@@ -41,15 +41,6 @@ class Worker:
             
     def run(self):
         callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        self.address = os.getenv("ADDRESS")
-        self.port = int(os.getenv("PORT"))
-        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.address, self.port))
-        self.socket.listen(1)
-        self.health_checker = HealthCheckHandler(self.socket)
-        self.health_check = Process(target=self.health_checker.handle_health_check)
-        self.health_check.start()
         try:
             # Read the data
             self.middleware.receive_messages(self.input_name, callback_with_params)
@@ -75,6 +66,17 @@ class FilterWorker(Worker):
         self.output_name = output_name
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -165,8 +167,7 @@ class JoinWorker:
         self.counter_dicts = {}
         self.leftover_reviews = {}
         self.query = query
-        self.middleware = None
-        self.queue = queue.Queue()
+        #
         self.address = os.getenv("ADDRESS")
         self.port = int(os.getenv("PORT"))
         print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
@@ -176,6 +177,9 @@ class JoinWorker:
         self.health_checker = HealthCheckHandler(self.socket)
         self.health_check = Process(target=self.health_checker.handle_health_check)
         self.health_check.start()
+        #
+        self.middleware = None
+        self.queue = queue.Queue()
 
         try:
             middleware = Middleware(self.queue)
@@ -344,6 +348,17 @@ class DecadeWorker(Worker):
         self.input_name = create_queue_name(input_name, worker_id) # input_name + '_' + worker_id
         self.output_name = output_name
         self.iteration_queue = iteration_queue
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -416,6 +431,17 @@ class GlobalDecadeWorker(Worker):
         self.next_workers_quantity = next_workers_quantity
         self.eof_counter = {}
         self.counter_dicts = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -491,6 +517,17 @@ class PercentileWorker(Worker):
         self.eof_quantity = eof_quantity
         self.eof_counter = {}
         self.titles_with_sentiment = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -565,6 +602,17 @@ class TopNWorker(Worker):
         self.iteration_queue = iteration_queue
         self.eof_counter = {}
         self.tops = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -651,6 +699,17 @@ class ReviewSentimentWorker(Worker):
         self.eof_queue = eof_queue
         self.iteration_queue = iteration_queue
         self.eof_counter = 0
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
@@ -713,6 +772,17 @@ class FilterReviewsWorker(Worker):
         self.next_workers_quantity = next_workers_quantity
         self.eof_counter = {}
         self.filtered_client_titles = {}
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.address, self.port))
+        self.socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
         try:
