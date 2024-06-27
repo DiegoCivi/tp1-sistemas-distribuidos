@@ -120,7 +120,6 @@ class ContainerKiller:
         for container_name in containers:
             container = self.docker_client.containers.get(container_name)
             container.kill(signal=signal.SIGKILL)
-            #container.stop(timeout=10)
 
 
 def main():
