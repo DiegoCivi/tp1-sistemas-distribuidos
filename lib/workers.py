@@ -68,22 +68,6 @@ class FilterWorker(NoStateWorker):
         self.stop_worker = False
         self.active_clients = set()
 
-    # def handle_signal(self, *args):
-    #     print("Gracefully exit")
-    #     self.queue.put('SIGTERM')
-    #     self.stop_worker = True
-    #     if self.middleware != None:
-    #         self.middleware.close_connection()
-        
-    #     try:
-        
-    #     except:
-    #         pass
-
-    #     self.health_check.terminate()
-    #     self.health_check.join()
-    #     self.health_check.close()
-
     def set_filter_type(self, type, filtering_function, value):
         self.filtering_function = filtering_function
         self.filter_condition = type

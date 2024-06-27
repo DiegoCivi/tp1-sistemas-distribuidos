@@ -35,8 +35,12 @@ class ContainerKiller:
             self.random_mode()
         elif self.mode == 'coord':
             self.coord_mode()
+        elif self.mode == 'gateway':
+            self.gateway_mode()
         else:
             raise Exception('Unknown mode.')
+        
+        self.docker_client.close()
 
     def coord_mode(self):
         """
@@ -63,6 +67,30 @@ class ContainerKiller:
         containers_to_stop =    [   'container_coordinator_2', 'mean_review_sentiment_worker1',
                                     'review_sentiment_worker0', 'review_sentiment_worker1', 'percentile_worker0'
                                 ]
+        self.stop_containers(containers_to_stop)
+
+    def gateway_mode(self):
+        """
+        In this mode, we will kill the QueryCoordinator and the server.
+        Also some other workers will be killed.
+        """
+        time.sleep(10)
+
+        containers_to_stop = ['server', 'reviews_counter_worker2', 'filter_year_worker_q1-2', 'filter_year_worker_q1-0']
+        self.stop_containers(containers_to_stop)
+
+        time.sleep(2)
+
+        containers_to_stop = ['query_coordinator_worker0', 'top_10_worker_last0', 'filter_review_quantity_worker0']
+
+        time.sleep(10)
+
+        containers_to_stop = ['query_coordinator_worker0', 'server', 'mean_review_sentiment_worker1']
+        self.stop_containers(containers_to_stop)
+
+        time.sleep(10)
+
+        containers_to_stop = ['server', 'mean_review_sentiment_worker0']
         self.stop_containers(containers_to_stop)
         
 
@@ -91,7 +119,7 @@ class ContainerKiller:
     def stop_containers(self, containers):
         for container_name in containers:
             container = self.docker_client.containers.get(container_name)
-            container.stop()
+            container.stop(timeout=10)
 
 
 def main():

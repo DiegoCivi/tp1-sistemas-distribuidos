@@ -13,14 +13,29 @@ class Worker:
     """
     def handle_signal(self, *args):
         print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-
-        self.health_check.terminate()
-        self.health_check.join()
-        self.health_check.close()
+        try:
+            self.queue.put('SIGTERM')
+        except:
+            # There is a chance that the SIGTERM arrived
+            # before declaring the queue
+            pass
+        
+        try:
+            self.stop_worker = True
+            if self.middleware != None:
+                self.middleware.close_connection()
+        except:
+            # There is a chance that the SIGTERM arrived
+            # before declaring the middleware
+            pass
+        try:
+            self.health_check.terminate()
+            self.health_check.join()
+            self.health_check.close()
+        except:
+            # There is a chance that the SIGTERM arrived
+            # before declaring the middleware
+            pass
         try:
             self.hc_socket.close()
         except:
@@ -345,14 +360,31 @@ class MultipleQueueWorker:
 
     def handle_signal(self, *args):
         print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+        try:
+            self.queue.put('SIGTERM')
+        except:
+            # There is a chance that the SIGTERM arrived
+            # before declaring the queue
+            pass
 
-        self.health_check.terminate()
-        self.health_check.join()
-        self.health_check.close()
+        try:
+            self.stop_worker = True
+            if self.middleware != None:
+                self.middleware.close_connection()
+        except:
+            # There is a chance that the SIGTERM arrived
+            # before declaring the middleware
+            pass
+        
+        try:
+            self.health_check.terminate()
+            self.health_check.join()
+            self.health_check.close()
+        except:
+            # There is a chance that the SIGTERM arrived
+            # before declaring the middleware
+            pass
+
         try:
             self.hc_socket.close()
         except:
