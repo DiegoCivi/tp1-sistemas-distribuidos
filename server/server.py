@@ -62,18 +62,23 @@ class Server:
 
     def join_processes(self):
         for process in self.clients.values():
-            process.terminate()
-            process.join()
-            process.close()
+            try:
+                process.terminate()
+                process.join()
+                process.close()
+            except ValueError:
+                # A proecess had already been closed.
+                # So we ignore it.
+                pass
 
-        if self.results_p != None:
-            self.results_p.terminate()
-            self.results_p.join()
-            self.results_p.close()
+        self.results_p.terminate()
+        self.results_p.join()
+        self.results_p.close()
 
         self.health_check_handler_p.terminate()
         self.health_check_handler_p.join()
         self.health_check_handler_p.close()
+
 
     def persist_state(self):
         curr_state = {}

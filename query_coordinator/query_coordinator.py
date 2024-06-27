@@ -71,9 +71,14 @@ class QueryCoordinator:
 
     def handle_signal(self, *args):
         for p in self.processes:
-            p.terminate()
-            p.join()
-            p.close()
+            try:
+                p.terminate()
+                p.join()
+                p.close()
+            except ValueError:
+                # A proecess had already been closed.
+                # So we ignore it.
+                pass
 
         self.health_check_handler_p.terminate()    
         self.health_check_handler_p.join()
