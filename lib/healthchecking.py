@@ -23,7 +23,8 @@ class HealthChecker():
             try:
                 time.sleep(1)
                 if should_close and should_close.value:
-                    self.conn.close()
+                    if self.conn:
+                        self.conn.close()
                     break
                 if not conn and not coords:
                     self.conn = self.reconnect_with_backoff(container_id, port)

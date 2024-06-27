@@ -33,8 +33,8 @@ services:
     volumes:
       - ./persisted_data:/persisted_data
 
-  client:
-    container_name: client
+  client_1:
+    container_name: client_1
     build:
       context: .
       dockerfile: ./client/client.dockerfile
@@ -43,14 +43,15 @@ services:
     links:
       - server
     environment:
+      - ID=1
       - PYTHONUNBUFFERED=1
       - HOST=server
       - PORT=12345
-      - ID=0
-      - TITLES_FILEPATH=./datasets/books_data_sample_bugfinder2.csv
-      - REVIEWS_FILEPATH=./datasets/books_rating_sample_bugfinder.csv
+      - TITLES_FILEPATH=./datasets/books_data.csv
+      - REVIEWS_FILEPATH=./datasets/books_rating_sample.csv
     volumes:
       - ./datasets:/datasets
+      - ./debug:/debug
 
   query_coordinator_worker0:
     container_name: query_coordinator_worker0
@@ -78,56 +79,63 @@ services:
       - ADDRESS=query_coordinator_worker0
       - PORT=4321
 
-  # container_coordinator_0:
-  #   container_name: container_coordinator_0
-  #   build:
-  #     context: .
-  #     dockerfile: ./container_coordinator/container_coordinator.dockerfile
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   user: root
-  #   environment:
-  #     - LISTEN_BACKLOG=10
-  #     - ID=0
-  #     - WORKERS_PORT=4321
-  #     - WORKERS_QUANTITY=3
-  #     - ADDRESS=container_coordinator_0
-  #     - COORDS_PORT=1234
-  #     - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
+  container_coordinator_2:
+    container_name: container_coordinator_2
+    build:
+      context: .
+      dockerfile: ./container_coordinator/container_coordinator.dockerfile
+    depends_on:
+      - rabbitmq
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    environment:
+      - LISTEN_BACKLOG=10
+      - ID=2
+      - WORKERS_PORT=4321
+      - WORKERS_QUANTITY=3
+      - ADDRESS=container_coordinator_2
+      - COORDS_PORT=1234
+      - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
 
-  # container_coordinator_1:
-  #   container_name: container_coordinator_1
-  #   build:
-  #     context: .
-  #     dockerfile: ./container_coordinator/container_coordinator.dockerfile
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   user: root
-  #   environment:
-  #     - LISTEN_BACKLOG=10
-  #     - ID=1
-  #     - WORKERS_PORT=4321
-  #     - WORKERS_QUANTITY=3
-  #     - ADDRESS=container_coordinator_1
-  #     - COORDS_PORT=1234
-  #     - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
+  container_coordinator_0:
+    container_name: container_coordinator_0
+    build:
+      context: .
+      dockerfile: ./container_coordinator/container_coordinator.dockerfile
+    depends_on:
+      - rabbitmq
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    environment:
+      - LISTEN_BACKLOG=10
+      - ID=0
+      - WORKERS_PORT=4321
+      - WORKERS_QUANTITY=3
+      - ADDRESS=container_coordinator_0
+      - COORDS_PORT=1234
+      - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
 
-  # container_coordinator_2:
-  #   container_name: container_coordinator_2
-  #   build:
-  #     context: .
-  #     dockerfile: ./container_coordinator/container_coordinator.dockerfile
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   user: root
-  #   environment:
-  #     - LISTEN_BACKLOG=10
-  #     - ID=2
-  #     - WORKERS_PORT=4321
-  #     - WORKERS_QUANTITY=3
-  #     - ADDRESS=container_coordinator_2
-  #     - COORDS_PORT=1234
-  #     - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
+  container_coordinator_1:
+    container_name: container_coordinator_1
+    build:
+      context: .
+      dockerfile: ./container_coordinator/container_coordinator.dockerfile
+    depends_on:
+      - rabbitmq
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    environment:
+      - LISTEN_BACKLOG=10
+      - ID=1
+      - WORKERS_PORT=4321
+      - WORKERS_QUANTITY=3
+      - ADDRESS=container_coordinator_1
+      - COORDS_PORT=1234
+      - COORDS_LIST=container_coordinator_0,container_coordinator_1,container_coordinator_2
+
 
   filter_category_computers_worker0:
     container_name: filter_category_computers_worker0

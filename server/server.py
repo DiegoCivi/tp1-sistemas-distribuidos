@@ -36,7 +36,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind((host, port))
         self._server_socket.listen(listen_backlog)
-        self.clients_accepted = 0
+        self.clients_accepted = 1
         self.active_clients = {}                            # Key = client ip, Value = (client id, client state)
         self.sockets_queue = Queue()
         self.log = Logger(log, '0')
@@ -66,9 +66,10 @@ class Server:
             process.join()
             process.close()
 
-        self.results_p.terminate()
-        self.results_p.join()
-        self.results_p.close()
+        if self.results_p != None:
+            self.results_p.terminate()
+            self.results_p.join()
+            self.results_p.close()
 
         self.health_check_handler_p.terminate()
         self.health_check_handler_p.join()
@@ -324,10 +325,6 @@ class DataFordwarder:
             pass
         if self._client_socket != None:
             self._client_socket.close()
-        if self._server_socket != None:
-            self._server_socket.shutdown(socket.SHUT_RDWR)
-        
-
 
 
 def main():    

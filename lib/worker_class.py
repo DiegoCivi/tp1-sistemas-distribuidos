@@ -493,18 +493,44 @@ class MultipleQueueWorker:
         if is_EOF(body):
             client_id = get_EOF_client_id(body)
             worker_id = get_EOF_worker_id(body)
+
+            #############################
+            if not self.acum:
+                self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'Por la cola [{queue}] me llego el EOF [{body}]')
+            #############################
             
             if self.client_is_active(client_id):
+                #############################
+                if not self.acum:
+                    self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'Por la cola [{queue}] el cliente esta activo')
+                #############################
                 if not self.is_EOF_repeated(client_id, worker_id, queue):
+                    #############################
+                    if not self.acum:
+                        self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'Por la cola [{queue}] el EOF no esta repetido')
+                    #############################   
                     if not self.is_queue_finished(client_id, queue):
+                        #############################
+                        if not self.acum:
+                            self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'La cola [{queue}] no estaba terminada')
+                        #############################  
                         self.add_unacked_queue_EOF(client_id, method, queue)
                         if self.received_all_client_queue_EOFs(client_id, queue):
+
+                            #############################
+                            if not self.acum:
+                                self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'La cola [{queue}] ya reecibio todos los EOFs')
+                            #############################  
 
                             # Persist on disk the acums and the received msg_ids
                             self.persist_state()
                             # Ack last received messages of the queue
                             self.ack_last_queue_messages(queue)
                             if self.received_all_EOFs(client_id):
+                                #############################
+                                if not self.acum:
+                                    self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'Ya se recibieron todos los EOFs de las colas')
+                                #############################  
                                 # Send the acum of the client and the EOF
                                 self.send_results(client_id)
                                 # Remove the acum of the client since it is not 
@@ -518,6 +544,11 @@ class MultipleQueueWorker:
                             self.ack_queue_EOFs(client_id, queue)
 
                         return
+                    
+            #############################
+            if not self.acum:
+                self.middleware.send_message(f'DEBUG_{self.query}_{self.worker_id}', f'Se ignora el mensaje [{body}] de la cola [{queue}]')
+            #############################  
 
             self.middleware.ack_message(method)
             return
