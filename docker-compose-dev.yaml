@@ -99,6 +99,19 @@ services:
       - ADDRESS=query_coordinator_worker0
       - PORT=4321
 
+  container_killer:
+    container_name: container_killer
+    build:
+      context: .
+      dockerfile: ./container_killer/container_killer.dockerfile
+    depends_on:
+      - rabbitmq
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    environment:
+      - MODE=coord
+
   container_coordinator_2:
     container_name: container_coordinator_2
     build:
