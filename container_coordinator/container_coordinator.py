@@ -176,8 +176,6 @@ class Connector(ProcessCreator):
                             leader.value = False
                             should_close.value = True
                             print("I have to begin a new election, because I connected to a coordinator with a bigger id")
-                            print(f"Connections: {self.connections}")
-                            print(f"Coordinators list: {self.coordinators_list}")
                             for name, conn in self.connections.items():
                                 if not name.isdigit() or int(name) < self.id:
                                     continue
@@ -287,8 +285,6 @@ class ContainerCoordinator(ProcessCreator):
         print("I became the new leader, starting healthchecking with coords and workers")
         # Start the healthchecking process with the other coordinators
         self.should_close.value = False
-        print(f'Coords list {self.coordinators_list}')
-        print(f'Containers list {self.containers_list}')
         for name in self.coordinators_list:
             current_coord = name[0]
             current_coord_id = name[1]
@@ -396,7 +392,7 @@ class ContainerCoordinator(ProcessCreator):
                 # self.processes.append(p)
 
             except Exception as e:
-                print("Error: ", e)
+                pass
 
 # HOW TO START A CONTAINER AGAIN:
 # To start again a container, the command "docker start <container_name>" can be used.

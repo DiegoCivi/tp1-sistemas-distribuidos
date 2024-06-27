@@ -84,7 +84,6 @@ class HealthChecker():
         raise Exception(f"Failed to reconnect to {container_id} after {max_retries} attempts")
     
     def handle_signal(self, signum, frame):
-        print(f"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa {self.cont_id}")
         self.conn.close()
 
 class HealthCheckHandler():
