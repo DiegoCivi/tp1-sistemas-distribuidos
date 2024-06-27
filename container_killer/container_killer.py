@@ -5,7 +5,7 @@ import time
 import signal
 
 CONTAINERS_FILE = './containers_list.config'
-SLEEP_START = 3
+SLEEP_START = 4
 SLEEP_STOP = 10
 QUANTITY_START = 1
 QUANTITY_STOP = 4

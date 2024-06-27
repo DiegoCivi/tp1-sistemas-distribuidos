@@ -130,7 +130,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     user: root
     environment:
-      - MODE=gateway
+      - MODE=random
 
   container_coordinator_2:
     container_name: container_coordinator_2
