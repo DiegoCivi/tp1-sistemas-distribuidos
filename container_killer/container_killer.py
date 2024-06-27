@@ -5,7 +5,7 @@ import time
 import signal
 
 CONTAINERS_FILE = './containers_list.config'
-SLEEP_START = 5
+SLEEP_START = 10
 SLEEP_STOP = 15
 QUANTITY_START = 1
 QUANTITY_STOP = 3
@@ -119,13 +119,13 @@ class ContainerKiller:
     def stop_containers(self, containers):
         for container_name in containers:
             container = self.docker_client.containers.get(container_name)
-            container.stop(timeout=10)
+            container.kill(signal=signal.SIGKILL)
+            #container.stop(timeout=10)
 
 
 def main():
     mode = os.getenv('MODE')
     ck = ContainerKiller(mode)
     ck.run()
-
 
 main()
