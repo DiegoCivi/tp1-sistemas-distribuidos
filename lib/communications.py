@@ -3,34 +3,40 @@ HEADER_LENGHT = 10
 MSG_SIZE_LENGTH = 9
 
 
-def read_socket(socket):
+def read_socket(socket, timeout=None):
     """
     Reads from the received socket. It supports short-read.
     """
     try: 
         # Read header
-        header = _handle_short_read(socket, HEADER_LENGHT)
+        header = _handle_short_read(socket, HEADER_LENGHT, timeout)
 
         # Read message
+        # print(header[:-1], flush=True)
+        # print(header[-1], flush=True)
         msg_len = int(header[:-1])
         end_flag = int(header[-1])
         if end_flag == 1:
             return "EOF", None
-        bet_msg = _handle_short_read(socket, msg_len)
+        bet_msg = _handle_short_read(socket, msg_len, timeout)
 
         return bet_msg, None
     
     except Exception as e:
         return None, e
 
-def _handle_short_read(socket, bytes_to_read):
+def _handle_short_read(socket, bytes_to_read, timeout):
     """
     Handler of the short-read. Called by read_socket().
     """
     bytes_read = 0
     bytes_array = bytearray()
     while bytes_read < bytes_to_read:
+        if timeout:
+            socket.settimeout(timeout)
         msg_bytes = socket.recv(bytes_to_read - bytes_read)
+        if msg_bytes == b'':
+            raise Exception("Empty read")
         bytes_read += len(msg_bytes)
         bytes_array.extend(msg_bytes)
     
@@ -89,40 +95,3 @@ def sendEOF(socket):
         return None
     except Exception as e:
         return e
-    
-class Message:
-
-    def __init__(self, msg):
-        self.msg = msg
-        self.end_flag = False
-
-    def push(self, msg):
-        if self.end_flag:
-            raise Exception("Message already ended")
-        self.msg += msg
-
-    def set_end_flag(self):
-        self.end_flag = True
-    
-    def is_ended(self):
-        return self.end_flag
-
-    def get_message(self):
-        return self.msg
-    
-    def encode(self):
-        return self.msg.encode('utf-8')
-    
-    def decode(self):
-        try:
-            msg = self.msg.decode('utf-8')
-        except:
-            msg = self.msg
-        return msg
-
-    def __str__(self):
-        return self.msg
-    
-
-
-

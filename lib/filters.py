@@ -11,6 +11,9 @@
 import re
 from textblob import TextBlob
 
+COUNTER_FIELD = 'counter'
+TITLE_FIELD = 'Title'
+
 
 # Generic filter that returns the desired rows from a dataset according to a given condition and value
 def filter_by(batch, condition, values):
@@ -72,7 +75,6 @@ def different_decade_counter(batch):
             continue
         authors = row_dict['authors']
         splitted_authors = re.sub(r'[^\w,\s]', '',authors).split(',')
-        #splitted_authors = re.sub(r'[^\D]', '', authors).split(',')
         year = row_dict['publishedDate'].split('-')[0]
         year = re.sub(r'\D', '', year)
         year = int(year)
@@ -124,7 +126,6 @@ def calculate_review_sentiment(batch):
         text_sentiment = blob.sentiment.polarity
         sentiment_dict['Title'] = title
         sentiment_dict['text_sentiment'] = str(text_sentiment)
-        #sentiment_dict['text_sentiment'] = str(0.3)
         result.append(sentiment_dict)
     return result
 
@@ -138,38 +139,19 @@ def calculate_percentile(sentiment_scores, percentile):
             titles.append(title) # TODO: This is much more complex than this
     return titles
 
-def hash_djb2(s):                                                                                                                                
-    hash = 5381
-    for x in s:
-        hash = (( hash << 5) + hash) + ord(x)
-    return hash & 0xFFFFFFFF    
-
-def hash_title(batch):
-    for row_dictionary in batch:
-        title = row_dictionary['Title']
-        hashed_title = hash_djb2(title) # TODO: This returns an int. Maybe we need a string
-        row_dictionary['hashed_title'] = hashed_title  
-
 
 def get_top_n(batch, top, top_n, last):
-    """
-    In this case the batch only has 1 dictionary that will have different titles 
-    with their counter. The counter is a string with this format -> 'reviews_quantity,ratings_summation,authors'.
-
-    If last is set to True, it means this funcion is being called by the top 10 worker calculator in the last layer. This means
-    that the job to do is the same as the other workers in the other layers, but the format of the message is not the same. Being in the
-    last layer means the worker wont have to calculate the mean_rating since it is already in the message.
-    """
-    titles_counters_dict = batch[0]
     batch_top = []
-    for title, value in titles_counters_dict.items():
+    for title_dict in batch:
+        title = title_dict[TITLE_FIELD]
+        counter = title_dict[COUNTER_FIELD]
         if last:
-            mean_rating = float(value)
+            mean_rating = counter
         else:
-            splitted_counter = value.split(',', 2) # Only split until the second ','. This is to not split the authors field which may have also a ','.
+            splitted_counter = counter.split(',', 2) # Only split until the second ','. This is to not split the authors field which may have also a ','.
             mean_rating = float(splitted_counter[1]) / float(splitted_counter[0])
-        
-        batch_top.append((title, mean_rating))
+
+        batch_top.append({TITLE_FIELD: title, COUNTER_FIELD: mean_rating})
 
     batch_top.sort(key=sorting_key, reverse=True)
     top = top + batch_top[:top_n]
@@ -177,8 +159,8 @@ def get_top_n(batch, top, top_n, last):
     return top[:top_n]
 
 
-def sorting_key(tup):
-    return tup[1]
+def sorting_key(title_dict):
+    return title_dict[COUNTER_FIELD]
 
 def titles_in_the_n_percentile(review_sentiment_dict, n):
     vals = list(review_sentiment_dict.values())

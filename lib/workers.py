@@ -1,8 +1,15 @@
 from middleware import Middleware
-from filters import filter_by, eof_manage_process, hash_title, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n, calculate_review_sentiment, review_quantity_value
-from serialization import serialize_message, serialize_dict, deserialize_titles_message
+from filters import filter_by, accumulate_authors_decades, different_decade_counter, titles_in_the_n_percentile, get_top_n, calculate_review_sentiment, review_quantity_value, COUNTER_FIELD
+from serialization import *
 import signal
 import queue
+from logger import Logger
+from worker_class import NoStateWorker, StateWorker, MultipleQueueWorker
+import socket
+import os
+from multiprocessing import Process
+from communications import read_socket, write_socket
+from healthchecking import HealthCheckHandler
 
 YEAR_CONDITION = 'YEAR'
 TITLE_CONDITION = 'TITLE'
@@ -10,349 +17,183 @@ CATEGORY_CONDITION = 'CATEGORY'
 QUERY_5 = 5
 QUERY_3 = 3
 BATCH_SIZE = 100
-PREFETCH_COUNT = 200
+QUERY_COORDINATOR_QUANTITY = 1
+ACUMS_KEY = 'acums'
+ACUM_TITLES_MSG_KEY = 'acum_titles_msgs'
+ACUM_REVIEWS_MSG_KEY = 'acum_reviews_msgs'
+LEFTOVER_REVIEWS_KEY = 'leftover_reviews'
+REVIEWS_QUEUE = 'reviews'
+TITLES_QUEUE = 'titles'
 
-class FilterWorker:
 
-    def __init__(self, id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue):
+class FilterWorker(NoStateWorker):
+
+    def __init__(self, worker_id, input_name, output_name, eof_queue, workers_quantity, next_workers_quantity, iteration_queue, eof_quantity, last, log):
         signal.signal(signal.SIGTERM, self.handle_signal)
 
-        self.id = id
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
+        self.last = last
         self.eof_queue = eof_queue
-        self.input_name = input_name
+        self.input_name = create_queue_name(input_name, worker_id) 
         self.iteration_queue = iteration_queue
-        self.eof_counter = 0
+        self.eof_counter = {}
+        self.eof_workers_ids = {}           # This dict stores for each active client, the workers ids of the eofs received.
+        self.eof_quantity = eof_quantity
         self.output_name = output_name
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
-        
+        self.clients_unacked_eofs = {}
+        self.last_clients_msg = {}
         self.stop_worker = False
-        self.filtered_results_quantity = 0
+        self.active_clients = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-    
     def set_filter_type(self, type, filtering_function, value):
         self.filtering_function = filtering_function
         self.filter_condition = type
         self.filter_value = value
 
-    def handle_eof(self, method, body):
-        if body != b'EOF':
-            print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
-        
-        self.eof_counter += 1
-        if self.eof_counter == self.workers_quantity - 1:
-            # Send the EOFs to the next filter stage
-            for _ in range(self.next_workers_quantity):
-                self.middleware.send_message(self.output_name, 'EOF')
-            self.middleware.stop_consuming()
-
-            # Notify the workers in my filter stage that they can start another loop
-            for _ in range(self.workers_quantity - 1):
-                self.middleware.send_message(self.iteration_queue, 'OK')
-
-            self.eof_counter = 0
-
-        self.middleware.ack_message(method)
-
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration 
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()
-
-    def eof_manage_process(self):
-        if self.id == '0':
-            if self.workers_quantity == 1:
-                for _ in range(self.next_workers_quantity):
-                    self.middleware.send_message(self.output_name, 'EOF')
-                return
-            eof_callback = lambda ch, method, properties, body: self.handle_eof(method, body)
-            self.middleware.receive_messages(self.eof_queue, eof_callback)
-            self.middleware.consume()
-        else:
-            self.middleware.send_message(self.eof_queue, 'EOF')
-            callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-            self.middleware.receive_messages(self.iteration_queue, callback)
-            self.middleware.consume()
-
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
-
-        desired_data = filter_by(data, self.filtering_function, self.filter_value)
-        if not desired_data:
-            self.middleware.ack_message(method)
-            return
-        
-        self.filtered_results_quantity += len(desired_data)
-        serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
-        self.middleware.send_message(self.output_name, serialized_data)
-
-        self.middleware.ack_message(method)
-
-    def run(self):
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        while not self.stop_worker:
-            try:
-                # Declare the output
-                print("Voy a leer titulos")
-                if not self.output_name.startswith("QUEUE_"):
-                    self.middleware.define_exchange(self.output_name, {self.exchange_queue: [self.exchange_queue]})
-
-                # Read the data
-                self.middleware.receive_messages(self.input_name, callback_with_params)
-
-                self.middleware.consume()
-
-                print(f'El worker se quedo con {self.filtered_results_quantity} cantidad de titulos')
-                self.filtered_results_quantity = 0
-                # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
-                # after receiving WORKER_QUANTITY EOF messages.
-                self.eof_manage_process()
-
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
+    def apply_filter(self, data):
+        return filter_by(data, self.filtering_function, self.filter_value)
 
 
-class HashWorker:
+class JoinWorker(MultipleQueueWorker):
 
-    def __init__(self, id, input_titles_q3, input_titles_q5, input_reviews_q3, input_reviews_q5, output, hash_modulus, q3_quantity, q5_quantity, workers_quantity, eof_queue, iteration_queue):
-        signal.signal(signal.SIGTERM, self.handle_signal)
-        self.id = id
-        self.stop_worker = False
-        self.input_titles_q3 = input_titles_q3
-        self.input_titles_q5 = input_titles_q5
-        self.input_reviews_q3 = input_reviews_q3
-        self.input_reviews_q5 = input_reviews_q5
-        self.output = output
-        self.hash_modulus = hash_modulus
-        self.eof_queue = eof_queue
-        self.iteration_queue = iteration_queue
-        self.q3_quantity = q3_quantity
-        self.q5_quantity = q5_quantity
-        self.workers_quantity = workers_quantity
-        self.eof_counter = 0
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
-
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-
-    def handle_data(self, method, body, dataset_and_query):
-        if body == b'EOF':
-            routing_key = 'EOF' + '_' + dataset_and_query
-            print('Me llego un EOF para la routing_key ', routing_key)
-            self.middleware.publish_message(self.output, 'direct', routing_key, "EOF")
-            self.middleware.stop_consuming(method)
-            self.middleware.ack_message(method)
-
-            return
-        data = deserialize_titles_message(body)
-
-        hash_title(data)
-
-        for row_dictionary in data:
-                    
-            worker_id = str(row_dictionary['hashed_title'] % self.hash_modulus)
-
-            row_dictionary.pop('hashed_title')
-            serialized_message = serialize_message([serialize_dict(row_dictionary)])
-            routing_key = worker_id + '_' + dataset_and_query
-            self.middleware.publish_message(self.output, 'direct', routing_key, serialized_message)
-        
-        self.middleware.ack_message(method)
-
-    def handle_eof(self, method, body):
-        """
-        Only notify the workers in the same stage they can continue with the next iteration,
-        after receiving that they all finished with their current iteration.
-        """
-        if body != b'EOF':
-            print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
-        
-        self.eof_counter += 1
-        if self.eof_counter == self.workers_quantity - 1:
-            # Notify the workers in my filter stage that they can start another loop
-            for _ in range(self.workers_quantity - 1):
-                self.middleware.send_message(self.iteration_queue, 'OK')
-
-            self.middleware.stop_consuming()
-
-            self.eof_counter = 0
-
-        self.middleware.ack_message(method)
-
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration.
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()
-
-    def eof_manage_process(self):
-        if self.id == '0':
-            eof_callback = lambda ch, method, properties, body: self.handle_eof(method, body)
-            self.middleware.receive_messages(self.eof_queue, eof_callback)
-            self.middleware.consume()
-        else:
-            self.middleware.send_message(self.eof_queue, 'EOF')
-            callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-            self.middleware.receive_messages(self.iteration_queue, callback)
-            self.middleware.consume()
-    
-    def _define_exchange(self):
-        queues_dict = {}
-        # Titles and reviews for Q3
-        for i in range(self.q3_quantity):
-            key_titles = f'{i}_titles_Q3'
-            key_reviews = f'{i}_reviews_Q3'
-            value_titles = [key_titles, 'EOF_titles_Q3']
-            value_reviews = [key_reviews, 'EOF_reviews_Q3'] 
-            queues_dict[key_titles] = value_titles
-            queues_dict[key_reviews] = value_reviews
-        # Titles and reviews for Q5
-        for i in range(self.q5_quantity):
-            key_titles = f'{i}_titles_Q5'
-            key_reviews = f'{i}_reviews_Q5'
-            value_titles = [key_titles, 'EOF_titles_Q5']
-            value_reviews = [key_reviews, 'EOF_reviews_Q5'] 
-            queues_dict[key_titles] = value_titles
-            queues_dict[key_reviews] = value_reviews
-
-        # Declare the output exchange for query 3 and query 5
-        self.middleware.define_exchange(self.output, queues_dict)
-
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params_titles_q3 = lambda ch, method, properties, body: self.handle_data(method, body, 'titles_Q3')
-        callback_with_params_reviews_q3 = lambda ch, method, properties, body: self.handle_data(method, body, 'reviews_Q3')
-
-        callback_with_params_titles_q5 = lambda ch, method, properties, body: self.handle_data(method, body, 'titles_Q5')
-        callback_with_params_reviews_q5 = lambda ch, method, properties, body: self.handle_data(method, body, 'reviews_Q5')
-        # Define the exchangge where joiners will read
-        self._define_exchange()
-        while not self.stop_worker:
-            try:
-                # Declare the source queue for the titles
-                print("Voy a recibir los titulos")
-                # For Q3
-                self.middleware.receive_messages(self.input_titles_q3, callback_with_params_titles_q3)
-                # For Q5
-                self.middleware.receive_messages(self.input_titles_q5, callback_with_params_titles_q5)
-                self.middleware.consume()
-                        
-                # Declare and subscribe to the reviews exchange
-                print("Voy a recibir los reviews")
-                # For Q3
-                self.middleware.receive_messages(self.input_reviews_q3, callback_with_params_reviews_q3)
-                # For Q5
-                self.middleware.receive_messages(self.input_reviews_q5, callback_with_params_reviews_q5)
-                self.middleware.consume()
-
-                # Once received the EOF, if I am the leader (WORKER_ID == 0), propagate the EOF to the next filter
-                # after receiving WORKER_QUANTITY EOF messages.
-                self.eof_manage_process()
-            except Exception as e:
-               if self.stop_worker:
-                   print("Gracefully exited")
-               else:
-                   print("An errror ocurred: ", e)
-                   return
-
-class JoinWorker:
-
-    def __init__(self, id, input_name, output_name, eof_quantity, query, iteration_queue):
+    def __init__(self, worker_id, input_titles_name, input_reviews_name, output_name, eof_quantity_titles, eof_quantity_reviews, query, log, max_unacked_msgs):
+        self.acum = False
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
 
         if query != QUERY_5 and query != QUERY_3:
             raise Exception('Query not supported')
 
-        self.id = id
-        self.input_name = input_name
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
+        self.input_titles_name = create_queue_name(input_titles_name, worker_id)
+        self.input_reviews_name = create_queue_name(input_reviews_name, worker_id) 
         self.output_name = output_name
-        self.iteration_queue = iteration_queue
-        self.eof_counter = 0
-        self.eof_quantity = eof_quantity
-        self.counter_dict = {}
+        self.max_unacked_msgs = max_unacked_msgs
+
+        # This dict stores for each active client, the delivery tags of the unacked EOFs for each query.
+        self.clients_unacked_queue_eofs = {TITLES_QUEUE: {}, REVIEWS_QUEUE: {}}
+        # We have to keep record of the msg_ids received for each client in each query  
+        self.clients_acummulated_queue_msg_ids = {TITLES_QUEUE: {}, REVIEWS_QUEUE: {}}
+        # For each query, we save the delivery_tags of the unacked messages so they can be acked later  
+        self.unacked_queue_msgs = {TITLES_QUEUE: set(), REVIEWS_QUEUE: set()}
+        # This dict stores for each active client, the worker ids that sent an EOF in each query.
+        self.queue_eof_worker_ids = {TITLES_QUEUE: {}, REVIEWS_QUEUE: {}}
+        # We need to know for each queue how many EOFs we need to receive
+        self.eof_quantity_queues = {TITLES_QUEUE: eof_quantity_titles, REVIEWS_QUEUE: eof_quantity_reviews}
+        
+        self.leftover_reviews = {}
+        self.clients_acum = {}
         self.query = query
+        #
+        self.address = os.getenv("ADDRESS")
+        self.port = int(os.getenv("PORT"))
+        print("SOY EL WORKER {address}:{port}".format(address=self.address, port=self.port))
+        self.hc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.hc_socket.bind((self.address, self.port))
+        self.hc_socket.listen(1)
+        self.health_checker = HealthCheckHandler(self.hc_socket)
+        self.health_check = Process(target=self.health_checker.handle_health_check)
+        self.health_check.start()
+        #
         self.middleware = None
         self.queue = queue.Queue()
+
         try:
             middleware = Middleware(self.queue)
         except Exception as e:
             raise e
         self.middleware = middleware
-    
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
 
-    def handle_titles_data(self, method, body):
-        if body == b'EOF':
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
+        self.stop_worker = False
 
+    def remove_active_client(self, client_id): # TODO: I think the msg_ids accumulated can also be erased
+        if client_id in self.leftover_reviews:
+            del self.leftover_reviews[client_id]
+        
+        del self.clients_acum[client_id]
+
+    def initialize_state(self):
+        prev_state = self.log.read_persisted_data()
+        if prev_state != None:
+            self.clients_acum = prev_state[ACUMS_KEY]
+            self.leftover_reviews = prev_state[LEFTOVER_REVIEWS_KEY]
+            self.clients_acummulated_queue_msg_ids = prev_state[ACUM_TITLES_MSG_KEY]
+
+    def curr_state(self):
+        """
+        Unifies all the necessary data thats in different dictionaries
+        into one big dictionary.
+        """
+        curr_state = {}
+        curr_state[ACUMS_KEY] = self.clients_acum
+        curr_state[ACUM_TITLES_MSG_KEY] = self.clients_acummulated_queue_msg_ids
+        curr_state[LEFTOVER_REVIEWS_KEY] = self.leftover_reviews
+
+        return curr_state
+
+    ##########  START TITLES MESSAGES HANDLING ##########
+
+    def acummulate_title_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = {}
+
+        self.add_title(client_id, data)
+
+    def add_title(self, client_id, data):
         for row_dictionary in data:
             title = row_dictionary['Title']
             if self.query == QUERY_5:
-                self.counter_dict[title] = [0,0] # [reviews_quantity, review_sentiment_summation]
+                self.clients_acum[client_id][title] = [0,0] # [reviews_quantity, review_sentiment_summation]
             else:
-                self.counter_dict[title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
-        
-        self.middleware.ack_message(method)
+                self.clients_acum[client_id][title] = [0, 0, row_dictionary['authors']] # [reviews_quantity, ratings_summation, authors]
 
-    def handle_reviews_data(self, method, body):
-        if body == b'EOF':
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
+    ###########  END TITLES MESSAGES HANDLING ###########
 
-        for row_dictionary in data:
+    ##########  START REVIEWS MESSAGES HANDLING ##########
+    
+    def acummulate_review_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = {}
+
+        self.add_review(client_id, data)
+
+    def ignore_review(self, client_id, title):
+        """
+        If all the titles already arrived and the title of this review has been already filtered,
+        then this review has to be ignored. We have two ways of knowing if the titles queue already finished.
+        1. Check if the clients_acummulated_queue_msg_ids dict for that queue has been set to FINISHED
+        2. Check if we received all the EOFS for that queue.
+        """
+        titles_finished = client_id in self.clients_acummulated_queue_msg_ids[TITLES_QUEUE] and self.clients_acummulated_queue_msg_ids[TITLES_QUEUE][client_id] == 'FINISHED'
+        reached_titles_eofs = client_id in self.clients_unacked_queue_eofs[TITLES_QUEUE] and len(self.clients_unacked_queue_eofs[TITLES_QUEUE][client_id]) == self.eof_quantity_queues[TITLES_QUEUE]
+        is_title_filtered = title not in self.clients_acum[client_id]
+
+        return (titles_finished or reached_titles_eofs) and is_title_filtered
+
+    def add_review(self, client_id, batch):
+        """
+        Add a review to a title. However as titles an reviews arrive from different queues, it can happen
+        that a review from a title arrives but the title didn't arrive yet. If this is the casee, we have a
+        separate dict to store thos reviews so we can check later if the title has been really filtered by
+        previous workers or it just arrived late.
+        """
+        for row_dictionary in batch:
             title = row_dictionary['Title']
-            if title not in self.counter_dict:
+
+            if self.ignore_review(client_id, title):
                 continue
-            
+            elif title not in self.clients_acum[client_id]:
+                # If the titles didnt finished to arrive and the title of this review is not in the counter_dict,
+                # we have to save the review to check later if the title has been filtered or not
+                if client_id not in self.leftover_reviews:
+                    self.leftover_reviews[client_id] = []
+                self.leftover_reviews[client_id].append(row_dictionary)
+                continue
+
             try:
                 if self.query == QUERY_5:
                     parsed_value = self.parse_text_sentiment(row_dictionary['text_sentiment'])
@@ -361,12 +202,12 @@ class JoinWorker:
             except:
                 continue
 
-            counter = self.counter_dict[title]
+            counter = self.clients_acum[client_id][title]
             counter[0] += 1
-            counter[1] += parsed_value 
-            self.counter_dict[title] = counter
-        
-        self.middleware.ack_message(method)
+            counter[1] += parsed_value
+            self.clients_acum[client_id][title] = counter
+    
+    ###########  END REVIEWS MESSAGES HANDLING ###########
 
     def parse_text_sentiment(self, text_sentiment):
         try:
@@ -375,7 +216,7 @@ class JoinWorker:
             print(f"Error: [{e}] when parsing 'text_sentiment' to float.")
             raise e
         return text_sentiment
-        
+
     def parse_review_rating(self, rating):
         try:
             title_rating = float(rating)
@@ -383,495 +224,339 @@ class JoinWorker:
             print(f"Error: [{e}] when parsing 'review/score' to float.")
             raise e
         return title_rating
-    
-    def send_results(self):
+
+    def check_leftover_reviews(self, client_id):
+        if client_id in self.leftover_reviews:
+            self.add_review(client_id, self.leftover_reviews[client_id])
+
+    def send_results(self, client_id):
+        # Check if there are leftover reviews that need to be added to the counter_dict
+        self.check_leftover_reviews(client_id)
+
+        # Send batch
         batch_size = 0
         batch = {}
-        for title, counter in self.counter_dict.items():
+        msg_id = 0
+        for title, counter in self.clients_acum[client_id].items():
             # Ignore titles with no reviews
             if counter[0] == 0:
                 continue
+
+            # Serialization of the message depends on which query is using the JoinWorker
             if self.query == QUERY_5:
                 batch[title] = str(counter[1] / counter[0])
             else:
                 batch[title] = counter
 
+            # Once the batch reached the BATCH_SIZE. It can be sent.
             batch_size += 1
             if batch_size == BATCH_SIZE:
-                serialized_message = serialize_message([serialize_dict(batch)])
+                batch_msg_id = self.worker_id + '_' + str(msg_id)
+                serialized_message = serialize_message([serialize_dict(batch)], client_id, batch_msg_id)
                 self.middleware.send_message(self.output_name, serialized_message)
                 batch = {}
                 batch_size = 0
+                msg_id += 1
 
+        # If the for loop ended with a batch that was never sent, send it
         if len(batch) != 0:
-            serialized_message = serialize_message([serialize_dict(batch)])
+            batch_msg_id = self.worker_id + '_' + str(msg_id)
+            serialized_message = serialize_message([serialize_dict(batch)], client_id, batch_msg_id)
             self.middleware.send_message(self.output_name, serialized_message)
-            
-        self.middleware.send_message(self.output_name, "EOF")
 
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration 
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()  
-            
+        # Finally, send the EOF
+        eof_msg = create_EOF(client_id, self.worker_id)
+        self.middleware.send_message(self.output_name, eof_msg)
+
+    def acummulate_message(self, client_id, data, queue):
+        if queue == REVIEWS_QUEUE:
+            self.acummulate_review_message(client_id, data)
+        else:
+            self.acummulate_title_message(client_id, data)
+
+    def manage_message(self, client_id, data, queue, method, msg_id):
+        self.acummulate_message(client_id, data, queue)
+
+        self.add_acummulated_message(client_id, method, msg_id, queue)
+        if self.need_to_persist(queue):
+            self.persist_state()
+            self.ack_queue_msgs(queue)
+
     def run(self):
+        self.initialize_state()
 
         # Define a callback wrappers
-        callback_with_params_titles = lambda ch, method, properties, body: self.handle_titles_data(method, body)
-        callback_with_params_reviews = lambda ch, method, properties, body: self.handle_reviews_data(method, body)
+        callback_with_params_titles = lambda ch, method, properties, body: self.handle_data(method, body, TITLES_QUEUE)
+        callback_with_params_reviews = lambda ch, method, properties, body: self.handle_data(method, body, REVIEWS_QUEUE)
 
-        # The name of the queues the worker will read data
-        titles_queue = self.id + '_titles_Q' + str(self.query)
-        reviews_queue = self.id + '_reviews_Q' + str(self.query)
-
-        while not self.stop_worker:
-            try:
-                # Declare and subscribe to the titles queue in the exchange
-                self.middleware.define_exchange(self.input_name, {titles_queue: [titles_queue], reviews_queue: [reviews_queue]})
-
-                # Read from the titles queue
-                print("Voy a leer titles")
-                self.middleware.subscribe(self.input_name, titles_queue, callback_with_params_titles, PREFETCH_COUNT)
-                self.middleware.consume()
-
-                self.eof_counter = 0 
-
-                # Read from the reviews queue
-                print("Voy a leer reviews")
-                self.middleware.subscribe(self.input_name, reviews_queue,  callback_with_params_reviews, PREFETCH_COUNT)
-                self.middleware.consume()
-
-
-                # Once all the reviews were received, the counter_dict needs to be sent to the next stage
-                self.send_results()
-
-                # Wait for the accumulator worker in the next stage to notify
-                # when to start the next iteration
-                callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-                self.middleware.receive_messages(self.iteration_queue, callback)
-                self.middleware.consume()
-                
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
-
-class DecadeWorker:
-
-    def __init__(self, input_name, output_name, iteration_queue):
-        signal.signal(signal.SIGTERM, self.handle_signal)
-        self.stop_worker = False
-        self.input_name = input_name
-        self.output_name = output_name
-        self.iteration_queue = iteration_queue
-        self.middleware = None
-        self.queue = queue.Queue()
         try:
-            middleware = Middleware(self.queue)
+            # Titles messages
+            self.middleware.receive_messages(self.input_titles_name, callback_with_params_titles)
+            # Reviews messages
+            self.middleware.receive_messages(self.input_reviews_name, callback_with_params_reviews)
+
+            self.middleware.consume()
+
         except Exception as e:
-            raise e
-        self.middleware = middleware
-
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
-
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.middleware.stop_consuming()
-            self.middleware.send_message(self.output_name, "EOF")
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
-
-        desired_data = different_decade_counter(data)
-        if not desired_data:
-            self.middleware.ack_message(method)
-            return
-
-        serialized_data = serialize_message([serialize_dict(filtered_dictionary) for filtered_dictionary in desired_data])
-        self.middleware.send_message(self.output_name, serialized_data)
-
-        self.middleware.ack_message(method)
-
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration 
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()
-
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-
-        while not self.stop_worker:
-            try:
-                # Declare and subscribe to the titles exchange
-                self.middleware.receive_messages(self.input_name, callback_with_params)
-                self.middleware.consume()
-
-                # Wait for the accumulator worker in the next stage to notify
-                # when to start the next iteration
-                callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-                self.middleware.receive_messages(self.iteration_queue, callback)
-                self.middleware.consume()
-
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
+            if self.stop_worker:
+                print("Gracefully exited")
+            else:
+                raise e
 
 
-class GlobalDecadeWorker:
+class DecadeWorker(NoStateWorker):
 
-    def __init__(self, input_name, output_name, eof_quantity, iteration_queue):
+    def __init__(self, input_name, output_name, worker_id, next_workers_quantity, eof_quantity, log):
+        self.acum = False
         signal.signal(signal.SIGTERM, self.handle_signal)
+        
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
+        self.next_workers_quantity = next_workers_quantity
         self.stop_worker = False
-        self.input_name = input_name
+        self.input_name = create_queue_name(input_name, worker_id)
+        self.output_name = output_name
+        self.eof_quantity = eof_quantity
+        self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.clients_unacked_eofs = {}
+        self.last_clients_msg = {}
+
+        self.active_clients = set()
+
+    def _create_batches(self, batch, next_workers_quantity):
+        """
+        Doesnt't use the NoStateWorker's implementation of _create_batches(),
+        because it handles serialization of filtered results different than the
+        other NoStateWorkers. 
+        """
+        workers_batches = {}
+        for worker_id in range(next_workers_quantity):
+            workers_batches[worker_id] = batch
+
+        return workers_batches
+    
+    def apply_filter(self, data):
+        return different_decade_counter(data)
+
+
+class GlobalDecadeWorker(StateWorker):
+
+    def __init__(self, worker_id, input_name, output_name, eof_quantity, iteration_queue, next_workers_quantity, log):
+        self.acum = True
+        signal.signal(signal.SIGTERM, self.handle_signal)
+
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
+        self.stop_worker = False
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
         self.eof_quantity = eof_quantity
         self.iteration_queue = iteration_queue
-        self.eof_counter = 0
-        self.counter_dict = {}
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
+        self.next_workers_quantity = next_workers_quantity
+        self.eof_counter = {}
+        self.eof_workers_ids = {}                       # This dict stores for each active client, the workers ids of the eofs received.
+        self.clients_unacked_eofs = {}
+        self.clients_acum = {}
+        self.clients_acummulated_msgs = {}
+        self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
+        for worker_id, batch in workers_batches.items():
+            worker_queue = create_queue_name(output_queue, worker_id)
+            self.middleware.send_message(worker_queue, batch)
 
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for worker_id in range(next_workers_quantity):
+            workers_batches[str(worker_id)] = batch
 
-        accumulate_authors_decades(data, self.counter_dict)
+        return workers_batches
 
-        self.middleware.ack_message(method)
+    def send_results(self, client_id):
+        # Collect the results
+        results = {'results': []}
+        for key, value in self.clients_acum[client_id].items():
+            if len(value) >= 10:
+                results['results'].append(key)
+        # Send the results to the output queue
+        serialized_dict = serialize_batch([results])
+        # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
+        # So whoever receives messages from this worker only needs to receive one message per client.
+        # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
+        serialized_message = serialize_message(serialized_dict, client_id, '0') 
 
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
+        self.create_and_send_batches(serialized_message, client_id, self.output_name, self.next_workers_quantity)
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
+
+    def acummulate_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = {}
+
+        accumulate_authors_decades(data, self.clients_acum[client_id])
         
-        while not self.stop_worker:
-            try:
-                # Declare the source queue
-                self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
-                self.middleware.consume()
 
-                # Collect the results
-                results = []
-                for key, value in self.counter_dict.items():
-                    if len(value) >= 10:
-                        results.append(key)
-                # Send the results to the output queue
-                serialized_message = serialize_message(results)
-                
-                self.middleware.send_message(self.output_name, serialized_message)
-                self.middleware.send_message(self.output_name, 'EOF')
+class PercentileWorker(StateWorker):
 
-                # Notify the workers in the previous stage they can continue
-                # with the next iteration
-                for _ in range(self.eof_quantity): # The eof quantity represents the quantity of workers in the previous stage
-                    self.middleware.send_message(self.iteration_queue, 'OK')
-
-
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
-        
-class PercentileWorker:
-
-    def __init__(self, input_name, output_name, percentile, eof_quantity, iteration_queue):
+    def __init__(self, worker_id, input_name, output_name, percentile, eof_quantity, iteration_queue, next_workers_quantity, log):
+        self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
-        self.stop_worker = False
         
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
+        self.stop_worker = False
         self.input_name = input_name
+        self.next_workers_quantity = next_workers_quantity
         self.output_name = output_name
         self.iteration_queue = iteration_queue
         self.percentile = percentile
         self.eof_quantity = eof_quantity
-        self.eof_counter = 0
-        self.titles_with_sentiment = {}
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
+        self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.clients_unacked_eofs = {}
+        self.clients_acum = {}
+        self.clients_acummulated_msgs = {}
+        self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+    def acummulate_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = {}
 
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        
-        data = deserialize_titles_message(body)
-        
-        for key, value in data[0].items():
-            self.titles_with_sentiment[key] = float(value)
+        for title, sentiment_value in data[0].items():
+            self.clients_acum[client_id][title] = float(sentiment_value)
 
-        self.middleware.ack_message(method)
+    def send_results(self, client_id):
+        titles = titles_in_the_n_percentile(self.clients_acum[client_id], self.percentile)
+        titles = [{'results': titles}] # This needs to be done so it can be serialized correctly
+        self.create_and_send_batches(titles, client_id, self.output_name, self.next_workers_quantity)
 
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        
-        while not self.stop_worker:
-            try:
-                # Read the titles with their sentiment
-                self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
-                self.middleware.consume()
+        self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-                titles = titles_in_the_n_percentile(self.titles_with_sentiment, self.percentile)
+        print(len(titles[0]['results']))
 
-                serialized_data = serialize_message(titles)
-                self.middleware.send_message(self.output_name, serialized_data)
-                self.middleware.send_message(self.output_name, "EOF")
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
+            # So whoever receives messages from this worker only needs to receive one message per client.
+            # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
+            serialized_message = serialize_message(serialized_batch, client_id, '0')
+            worker_queue = create_queue_name(output_queue, worker_id)
+            self.middleware.send_message(worker_queue, serialized_message)
 
-                # Send the OKs to the workers in the previous stage
-                for _ in range(self.eof_quantity): # The eof_quantity represents the quantity of workers in the previous stage 
-                    self.middleware.send_message(self.iteration_queue, 'OK')
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for worker_id in range(next_workers_quantity):
+            workers_batches[str(worker_id)] = batch
 
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
+        return workers_batches
 
-class TopNWorker:
 
-    def __init__(self, input_name, output_name, eof_quantity, n, last, iteration_queue):
+class TopNWorker(StateWorker):
+
+    def __init__(self, worker_id, input_name, output_name, eof_quantity, n, last, iteration_queue, next_workers_quantity, log):
+        self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
-        self.stop_worker = False
         
-        self.input_name = input_name
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
+        self.stop_worker = False
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
+        self.next_workers_quantity = next_workers_quantity
         self.top_n = n
         self.last = last
         self.eof_quantity = eof_quantity
         self.iteration_queue = iteration_queue
-        self.eof_counter = 0
-        self.top = []
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
+        self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.clients_unacked_eofs = {}
+        self.clients_acum = {}
+        self.clients_acummulated_msgs = {}
+        self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+    def send_results(self, client_id):
+        if not self.last:
+            if client_id in self.clients_acum:
+                self.parse_top(client_id)
+                # If the top isnt empty, then we send it
+                self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name, self.next_workers_quantity, '0')
 
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.eof_counter += 1
-            if self.last and self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
-            elif not self.last:
-                self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
+            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
 
-        self.top = get_top_n(data, self.top, self.top_n, self.last)
-        self.middleware.ack_message(method) 
+        else:
+            if client_id in self.clients_acum:
+                # Send the results to the query_coordinator
+                self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name, self.next_workers_quantity, '0')
 
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration 
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()      
-
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        
-        while not self.stop_worker:
-            try:
-                self.middleware.receive_messages(self.input_name, callback_with_params)
-                self.middleware.consume()
-
-                dict_to_send = {title:str(mean_rating) for title,mean_rating in self.top}
-                serialized_data = serialize_message([serialize_dict(dict_to_send)])
-                if not self.last:
-                    if len(self.top) != 0:
-                        self.middleware.send_message(self.output_name, serialized_data)
-                    self.middleware.send_message(self.output_name, 'EOF')
-
-                    # Wait for the accumulator worker in the next stage to notify
-                    # when to start the next iteration
-                    callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-                    self.middleware.receive_messages(self.iteration_queue, callback)
-                    self.middleware.consume()
-                else:
-                    # Send the results to the query_coordinator
-                    self.middleware.send_message(self.output_name, serialized_data)
-                    self.middleware.send_message(self.output_name, 'EOF')
-
-                    # Notify the workers in the previous stage they can continue
-                    # with the next iteration
-                    for _ in range(self.eof_quantity): # The eof qquantity represents the quantity of workers in the previous stage
-                        self.middleware.send_message(self.iteration_queue, 'OK')
-
-                # As the iteration finished, it means a new client will arrive. So the top is emptied
-                self.top = []
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
-                
-
-class ReviewSentimentWorker:
+            self.send_EOFs(client_id, self.output_name, self.next_workers_quantity)
     
-    def __init__(self, input_name, output_name, worker_id, workers_quantity, next_workers_quantity, eof_queue, iteration_queue):
+    def acummulate_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = []
+
+        self.clients_acum[client_id] = get_top_n(data, self.clients_acum[client_id], self.top_n, self.last)
+        
+
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            # Since from this side, only one message is sent per client. We always set the msg_id equal to 0.
+            # So whoever receives messages from this worker only needs to receive one message per client.
+            # If the recipient receives 2 messages with msg_id==0, this means that the unique message was sent more than once.
+            new_msg_id = self.worker_id + '_' + msg_id
+            serialized_message = serialize_message(serialized_batch, client_id, new_msg_id)
+            worker_queue = create_queue_name(output_queue, worker_id)
+            self.middleware.send_message(worker_queue, serialized_message)
+
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for row in batch:
+            hashed_title = hash_title(row['Title'])
+            choosen_worker = str(hashed_title % next_workers_quantity)
+            if choosen_worker not in workers_batches:
+                workers_batches[choosen_worker] = []
+            workers_batches[choosen_worker].append(row)
+
+        return workers_batches
+
+    def parse_top(self, client_id):
+        for title_dict in self.clients_acum[client_id]:
+            title_dict[COUNTER_FIELD] = str(title_dict[COUNTER_FIELD])
+
+
+class ReviewSentimentWorker(NoStateWorker):
+
+    def __init__(self, input_name, output_name, worker_id, workers_quantity, next_workers_quantity, eof_quantity, log):
+        self.acum = False
         signal.signal(signal.SIGTERM, self.handle_signal)
         self.stop_worker = False
-        
-        self.input_name = input_name
+
+        self.input_name = create_queue_name(input_name, worker_id)
         self.output_name = output_name
-        self.id = worker_id
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
         self.workers_quantity = workers_quantity
         self.next_workers_quantity = next_workers_quantity
-        self.eof_queue = eof_queue
-        self.iteration_queue = iteration_queue
-        self.eof_counter = 0
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
+        self.eof_quantity = eof_quantity
+        self.eof_counter = {}
+        self.clients_unacked_eofs = {}
+        self.last_clients_msg = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.active_clients = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+    def apply_filter(self, data):
+        return calculate_review_sentiment(data)
 
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        data = deserialize_titles_message(body)
 
-        desired_data = calculate_review_sentiment(data)
-        serialized_data = serialize_message([serialize_dict(filtered_dict) for filtered_dict in desired_data])
-        self.middleware.send_message(self.output_name, serialized_data)
-        
-        self.middleware.ack_message(method)
+class FilterReviewsWorker(StateWorker):
 
-    def handle_eof(self, method, body):
-        if body != b'EOF':
-            print("[ERROR] Not an EOF on handle_eof(), system BLOCKED!. Received: ", body)
-        
-        self.eof_counter += 1
-        if self.eof_counter == self.workers_quantity - 1:
-            # Send the EOFs to the next filter stage
-            for _ in range(self.next_workers_quantity):
-                self.middleware.send_message(self.output_name, 'EOF')
-            self.middleware.stop_consuming()
-
-            # Notify the workers in my filter stage that they can start another loop
-            for _ in range(self.workers_quantity - 1):
-                self.middleware.send_message(self.iteration_queue, 'OK')
-            
-            self.eof_counter = 0
-
-        self.middleware.ack_message(method)
-
-    def handle_ok(self, method, body):
-        """
-        If an 'OK' was received, it means we can continue to the next iteration 
-        """
-        self.middleware.ack_message(method)
-        self.middleware.stop_consuming()
-
-    def eof_manage_process(self):
-        if self.id == '0':
-            if self.workers_quantity == 1:
-                for _ in range(self.next_workers_quantity):
-                    self.middleware.send_message(self.output_name, 'EOF')
-                return
-            eof_callback = lambda ch, method, properties, body: self.handle_eof(method, body)
-            self.middleware.receive_messages(self.eof_queue, eof_callback)
-            self.middleware.consume()
-        else:
-            self.middleware.send_message(self.eof_queue, 'EOF')
-            callback = lambda ch, method, properties, body: self.handle_ok(method, body)
-            self.middleware.receive_messages(self.iteration_queue, callback)
-            self.middleware.consume()
-
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        while not self.stop_worker:
-            try:
-                # Declare and subscribe to the titles exchange
-                self.middleware.receive_messages(self.input_name, callback_with_params)
-                self.middleware.consume()
-
-                self.eof_manage_process()
-
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
-        
-class FilterReviewsWorker:
-    
-    def __init__(self, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue):
+    def __init__(self, worker_id, input_name, output_name1, output_name2, minimum_quantity, eof_quantity, next_workers_quantity, iteration_queue, log):
+        self.acum = True
         signal.signal(signal.SIGTERM, self.handle_signal)
 
+        self.worker_id = worker_id
+        self.log = Logger(log, worker_id)
         self.input_name = input_name
         self.output_name1 = output_name1
         self.iteration_queue = iteration_queue
@@ -879,72 +564,54 @@ class FilterReviewsWorker:
         self.eof_quantity = eof_quantity
         self.minimum_quantity = minimum_quantity
         self.next_workers_quantity = next_workers_quantity
-        self.eof_counter = 0
-        self.filtered_titles = {}
-        self.middleware = None
-        self.queue = queue.Queue()
-        try:
-            middleware = Middleware(self.queue)
-        except Exception as e:
-            raise e
-        self.middleware = middleware
-        
+        self.eof_counter = {}
+        self.eof_workers_ids = {} # This dict stores for each active client, the workers ids of the eofs received.
+        self.clients_unacked_eofs = {}
+        self.clients_acum = {}
         self.stop_worker = False
-        self.filtered_results_quantity = 0
+        self.clients_acummulated_msgs = {}
+        self.unacked_msgs = set()
 
-    def handle_signal(self, *args):
-        print("Gracefully exit")
-        self.queue.put('SIGTERM')
-        self.stop_worker = True
-        if self.middleware != None:
-            self.middleware.close_connection()
+    def send_results(self, client_id):
+        # Send the results to the query 4 and the QueryCoordinator
+        if len(self.clients_acum[client_id]) != 0:
+            # First to the Query Coordinator
+            self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY)
+            # Then to the query 4
+            self.create_and_send_batches(self.clients_acum[client_id], client_id, self.output_name2, self.next_workers_quantity)
+
+        # Send the EOF to the QueryCoordinator
+        self.send_EOFs(client_id, self.output_name1, QUERY_COORDINATOR_QUANTITY)
+
+        # Send the EOFs to the workers on the query 4
+        self.send_EOFs(client_id, self.output_name2, self.next_workers_quantity)
 
 
-    def handle_data(self, method, body):
-        if body == b'EOF':
-            self.eof_counter += 1
-            if self.eof_counter == self.eof_quantity:
-                self.middleware.stop_consuming()
-            self.middleware.ack_message(method)
-            return
-        
-        data = deserialize_titles_message(body)
-        
+    def _create_batches(self, batch, next_workers_quantity):
+        workers_batches = {}
+        for row in batch:
+            hashed_title = hash_title(row['Title'])
+            choosen_worker = hashed_title % next_workers_quantity
+            if choosen_worker not in workers_batches:
+                workers_batches[choosen_worker] = []
+            workers_batches[choosen_worker].append(row)
+
+        return workers_batches
+
+    def _send_batches(self, workers_batches, output_queue, client_id, msg_id=NO_ID):
+        msg_id = 0
+        for worker_id, batch in workers_batches.items():
+            serialized_batch = serialize_batch(batch)
+            new_msg_id = self.worker_id + '_' + str(msg_id)
+            serialized_message = serialize_message(serialized_batch, client_id, new_msg_id)
+            worker_queue = create_queue_name(output_queue, str(worker_id))
+            self.middleware.send_message(worker_queue, serialized_message)
+            msg_id += 1
+
+    def acummulate_message(self, client_id, data):
+        if client_id not in self.clients_acum:
+            self.clients_acum[client_id] = []
+
         desired_data = review_quantity_value(data, self.minimum_quantity)
-        for key, value in desired_data[0].items():
-            self.filtered_titles[key] = value
-    
-        self.middleware.ack_message(method)
-
-    def run(self):
-        # Define a callback wrapper
-        callback_with_params = lambda ch, method, properties, body: self.handle_data(method, body)
-        while not self.stop_worker:
-            try:
-
-                self.middleware.receive_messages(self.input_name, callback_with_params, PREFETCH_COUNT)
-                self.middleware.consume()
-
-                # Send the results to the query 4 and the QueryCoordinator
-                serialized_data = serialize_message([serialize_dict(self.filtered_titles)])
-                if serialized_data != '':
-                    self.middleware.send_message(self.output_name1, serialized_data)
-                    self.middleware.send_message(self.output_name2, serialized_data)
-
-                # Send the EOFs to the workers on the query 4
-                for _ in range(self.next_workers_quantity):
-                    self.middleware.send_message(self.output_name2, 'EOF')
-
-                # Send the EOF to the QueryCoordinator
-                self.middleware.send_message(self.output_name1, 'EOF')
-
-                # Send the OKs to the workers in the previous stage
-                for _ in range(self.eof_quantity): # The eof_quantity represents the quantity of workers in the previous stage 
-                    self.middleware.send_message(self.iteration_queue, 'OK')
-
-            except Exception as e:
-                if self.stop_worker:
-                    print("Gracefully exited")
-                else:
-                    print("An errror ocurred: ", e)
-                    return
+        for title, counter in desired_data[0].items():
+            self.clients_acum[client_id].append({'Title': title, 'counter': counter})
